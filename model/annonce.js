@@ -8,5 +8,5 @@ class Annonce {
         this.expiringDate = expiringDate;
         this.creationDate = creationDate;
     }
-
 }
+module.exports = Annonce;

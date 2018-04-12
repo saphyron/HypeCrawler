@@ -1,4 +1,5 @@
-const ORM = require('./ORM/general-orm');
+const ORM = require('./data/general-orm-0.0.2');
+const Annonce = require('./model/annonce');
 
-
-ORM.CreateRegionTable();
+let a1 = new Annonce('Job', 'Meget lang tekst', '1970-01-01 00:00:01', '1000-01-01', '1000-01-01');
+ORM.InsertAnnonce(a1);
