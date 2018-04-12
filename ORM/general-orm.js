@@ -5,23 +5,12 @@ const DBCREDS = require('../credentials/database-credentials').testdbcreds;
 //</editor-fold>
 
 //<editor-fold desc="MySQL-connection">
-
-// Create connection
-// REQUIRES: credential file for database.
 const connection = mysql.createConnection({
     host: DBCREDS.host,
     user: DBCREDS.user,
     password: DBCREDS.password,
     database: DBCREDS.database
 });
-
-
-// Create connection to DB
-connection.connect(function (err) {
-    if (err) throw err;
-    console.log('Connected!');
-});
-
 //</editor-fold>
 
 //<editor-fold desc="ORM-implementation">
@@ -47,6 +36,8 @@ class ORM {
     }
 
 }
+module.exports = ORM;
+
 //</editor-fold>
 
 
