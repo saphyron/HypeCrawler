@@ -62,4 +62,4 @@ typings/
 .idea
 
 # credentials
-credentials/
+credentials/credentials/database-credentials.js 
