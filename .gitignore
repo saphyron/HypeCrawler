@@ -60,3 +60,6 @@ typings/
 # .idea
 .DS_Store
 .idea
+
+# credentials
+credentials/
