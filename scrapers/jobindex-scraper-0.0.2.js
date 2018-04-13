@@ -7,7 +7,6 @@ const SUBJECT_CATEGORIES_LEVEL = 'https://it.jobindex.dk/job/it/database';
 async function run() {
     // DOM Selectors:
     const JOBLIST_SELECTOR = 'PaidJob';
-    const LIST = '#result_list_box > div';
 
     // Initialization:
     const browser = await puppeteer.launch({
@@ -25,32 +24,12 @@ async function run() {
     console.log(listLength);
 
 
-    // UNSTABLE
+    // Indsæt XPath
+    const title = await page.$x("//*[@id=\"result_list_box\"]/div/div[2]/div[1]/div");
+    let text = await page.evaluate(div => div.textContent, title[0]);
+    console.log(text);
 
-    let divs = await page.evaluate((selector) => {
-        return document.getElementsByClassName(selector);
-    }, JOBLIST_SELECTOR);
-
-    let divChildren = divs.children;
-    for(let i = 0; i < divChildren.length; i++) {
-        let child = divChildren[i];
-        console.log(child);
-
-    }
-
-    console.log(divs);
-
-
-//    await page.goto(TARGET_WEBSITE);
-
-    /*
-        // First Level:
-        await page.goto(SUBJECT_AREA_LEVEL);
-
-        // Second Level:
-        await page.goto(SUBJECT_CATEGORIES_LEVEL);*/
-
-    // let a = '#result_list_box > div > div.results.component--default'
+    //browser.close();
 }
 
 run();
