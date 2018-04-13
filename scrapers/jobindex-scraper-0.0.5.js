@@ -14,7 +14,7 @@ async function run() {
 
     // Initialization:
     const browser = await puppeteer.launch({
-        //headless: false
+        headless: false
     });
     const page = await browser.newPage();
 
@@ -32,13 +32,13 @@ async function run() {
 
     // goto next page:
     const GENERIC_PAGE_SELECTOR = 'https://it.jobindex.dk/jobsoegning/it/database/storkoebenhavn?page=PAGE_INDEX';
-    const NUM_PAGES = getNumPages(page, listLength);
+    const NUM_PAGES = await getNumPages(page, listLength);
 
-  /*  for(let index = 2; index <= 10; index++) {
+    for(let index = 2; index <= NUM_PAGES; index++) {
         const PAGE_SELECTOR = GENERIC_PAGE_SELECTOR.replace('PAGE_INDEX', index);
 
         await page.goto(PAGE_SELECTOR);
-    }*/
+    }
 
 
     // Clean up:
@@ -74,7 +74,7 @@ async function getNumPages(page, listLength) {
     let rawText = await page.evaluate(div => div.textContent, advertContent[0]);    // Extracting info.
     let filteredText = rawText.replace(TEXT_FILTER_REGEX, '');                      // Filtering number from text.
 
-    let numPages = Math.ceil(filteredText / ADVERTS_PER_PAGE);                      // Finding actual page numbers.
+    let numPages = Math.ceil(filteredText / ADVERTS_PER_PAGE);                      // Calculating page numbers.
     return numPages;
 }
 
