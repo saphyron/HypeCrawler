@@ -25,9 +25,10 @@ async function run() {
 
 
     // Indsæt XPath
-    const title = await page.$x("//*[@id=\"result_list_box\"]/div/div[2]/div[1]/div");
-    let text = await page.evaluate(div => div.textContent, title[0]);
-    console.log(text);
+    const LIST_ITEM_URL = await page.$x('//*[@id="result_list_box"]/div/div[2]/div[1]/div/a/@href');
+    //const title = await page.$x("//*[@id=\"result_list_box\"]/div/div[2]/div[1]/div");
+    let url = await page.evaluate(div => div.textContent, LIST_ITEM_URL[0]);
+    console.log(url);
 
     //browser.close();
 }
