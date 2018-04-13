@@ -14,7 +14,7 @@ async function run() {
 
     // Initialization:
     const browser = await puppeteer.launch({
-        headless: false
+        //headless: false
     });
     const page = await browser.newPage();
 
@@ -66,12 +66,16 @@ async function scrapePage(page, listLength) {
 }
 
 async function getNumPages(page, listLength) {
-    const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2';
+    const TEXT_FILTER_REGEX = /[^0-9]/g;
+    const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
     const ADVERTS_PER_PAGE = listLength;
 
-    let advertAmount = await page.evaluate(div => div.textContent, TOTAL_ADVERTS_SELECTOR[0]);
-    console.log(advertAmount);
+    let advertContent = await page.$x(TOTAL_ADVERTS_SELECTOR);                      // Collecting the part.
+    let rawText = await page.evaluate(div => div.textContent, advertContent[0]);    // Extracting info.
+    let filteredText = rawText.replace(TEXT_FILTER_REGEX, '');                      // Filtering number from text.
 
+    let numPages = Math.ceil(filteredText / ADVERTS_PER_PAGE);                      // Finding actual page numbers.
+    return numPages;
 }
 
 run();
