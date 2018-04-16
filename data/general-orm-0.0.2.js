@@ -16,7 +16,7 @@ const connection = mysql.createConnection({
 //<editor-fold desc="data-implementation">
 class ORM {
 
-    //<editor-fold desc="Table Constructors">
+
 
     //<editor-fold desc="Annonce Methods">
 
@@ -24,22 +24,38 @@ class ORM {
         const query = 'CREATE TABLE IF NOT EXISTS ANNONCE (' +
             'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
             'TITLE TEXT, ' +
-            'BODY BLOB, ' +
-            'TIMESTAMP DATETIME,' +
-            'EXPIRING_DATE DATE, ' +
-            'CREATION_DATE DATE, ' +
+            'BODY MEDIUMBLOB, ' +
             'REGION_ID INTEGER, ' +
+            'TIMESTAMP DATETIME,' +
+            'CHECKSUM TEXT, ' +
             'FOREIGN KEY(REGION_ID) REFERENCES REGION(ID))';
 
         await connection.query(query, function (err, result) {
             if (err) throw err;
             console.log('SUCCESS!');
-          //  console.log(result.serverStatus);
+            //  console.log(result.serverStatus);
             for (let propName in result.OkPacket) {
                 let propValue = result.OkPacket[propName];
                 console.log(propName, ': ', propValue);
             }
         });
+    }
+
+    // SHA-1 selection:
+    static async FindChecksum(incomingChecksum) {
+        const query =
+            'SELECT * ' +
+            'FROM ANNONCE ' +
+            'WHERE CHECKSUM = ? ' +
+            'LIMIT 1';
+
+        await connection.query(query, [incomingChecksum] , function (error, result, fields) {
+            if(error) throw error;
+            else if(result) {
+                console.log(result);
+                return result;
+            }
+        })
     }
 
     /**
@@ -49,14 +65,14 @@ class ORM {
      * @constructor
      */
     static async InsertAnnonce(newRecord) {
-        let query = 'INSERT INTO ANNONCE (TITLE, BODY, TIMESTAMP, EXPIRING_DATE, CREATION_DATE) ' +
-            'VALUES (?, ?, ?, ?, ?)';
+        let query = 'INSERT INTO ANNONCE (TITLE, BODY, TIMESTAMP, CHECKSUM) ' +
+            'VALUES (?, ?, ?, ?)';
 
-        await connection.query(query, [newRecord.title, newRecord.body, newRecord.timestamp, newRecord.expiringDate,
-        newRecord.creationDate], function (error, result) {
-            if(error) throw error;
-            //console.log('1 record inserted!');
-        })
+        await connection.query(query, [newRecord.titel, newRecord.body, newRecord.timestamp, newRecord.checksum],
+            function (error, result) {
+                if (error) throw error;
+                console.log('1 record inserted!');
+            })
     }
 
     //</editor-fold>
@@ -73,8 +89,6 @@ class ORM {
         });
     }
 
-    //</editor-fold>
-
 
 
     // WIP
@@ -83,13 +97,13 @@ class ORM {
         let recordColumnLength = Object.keys(newRecord).length;
         let index = 0;
 
-        while(index < recordColumnLength-1) {
+        while (index < recordColumnLength - 1) {
             query += newRecord[index] + ', ';
             index++;
         }
 
         Object.keys(newRecord).forEach(function (key, index) {
-           console.log(key, ': ', index);
+            console.log(key, ': ', index);
         });
 
 
@@ -98,7 +112,7 @@ class ORM {
         }
         query += ') VALUES(';
         for (let propName in newRecord) {
-            if(newRecord[propName] === undefined) {
+            if (newRecord[propName] === undefined) {
                 query += '\'null\', ';
             }
             else if (isNaN(newRecord[propName])) {
@@ -121,6 +135,7 @@ class ORM {
 }
 
 module.exports = ORM;
+
 
 //</editor-fold>
 

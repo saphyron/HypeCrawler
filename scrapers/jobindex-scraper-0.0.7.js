@@ -1,5 +1,10 @@
+// Imports:
 const puppeteer = require('puppeteer');
+const ORM = require('../data/general-orm-0.0.2');
+const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
+
+// XPath selectors:
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
 const SUBJECT_AREA_LEVEL = `https://www.jobindex.dk/job/it`;
 const SUBJECT_CATEGORIES_LEVEL = 'https://it.jobindex.dk/job/it/database';
@@ -12,12 +17,12 @@ const LIST_ITEM_TITLE_XPATH = '//*[@id="result_list_box"]/div/div[2]/div[INDEX]/
 async function main() {
     // DOM Selectors:
     const JOBLIST_SELECTOR = 'PaidJob';
-
     // Initialization:
     const browser = await puppeteer.launch({
         headless: false
     });
     const page = await browser.newPage();
+    ORM.CreateAnnonceTable();
 
     await page.goto('https://it.jobindex.dk/jobsoegning/it/database/storkoebenhavn');
 
@@ -28,9 +33,8 @@ async function main() {
     }, JOBLIST_SELECTOR);
 
 
-    let res = await scrapePageList(page, listLength);
-    console.log(res);
-
+     let res = await scrapePageList(page, listLength);
+     console.log(res);
 
 
     // Clean up:
@@ -38,7 +42,7 @@ async function main() {
 
 }
 
-async function scrapeCatagory(page, listLength) {
+async function scrapeCategory(page, listLength) {
     // goto next page:
     const GENERIC_PAGE_SELECTOR = 'https://it.jobindex.dk/jobsoegning/it/database/storkoebenhavn?page=PAGE_INDEX';
     const NUM_PAGES = await getNumPages(page, listLength);
@@ -49,13 +53,13 @@ async function scrapeCatagory(page, listLength) {
         await page.goto(PAGE_SELECTOR);
         let res = await scrapePageList(page, listLength);
         console.log(res);
+
     }
 
 }
 
 
 async function scrapePageList(page, listLength) {
-    let dictionary = [];
     // Iterate through a single page list and get linked sites for each advertisement:
     for (let index = 1; index <= listLength; index++) {
         console.log('Run ' + index + ': begun');
@@ -83,18 +87,27 @@ async function scrapePageList(page, listLength) {
         //console.log(rawBodyText);
 
 
-        // Push data to annonce dictionary:
-        dictionary.push({
-            annonceTitle: annonceTitle,
-            annonceBody: rawBodyText
-        });
+        // SHA1 checksum comparison for duplicates:
+        let newChecksum = sha1(rawBodyText);
+
+        let temp = ORM.FindChecksum(newChecksum);
+        await page.waitFor(2000);
+        console.log(temp);
+        /*        if(ORM.FindChecksum(newChecksum).length > 0) {
+                    console.log("Exists already");
+                } else
+                    console.log("New Entry!");*/
+
+
+        // Insert into database with ORM:
+        let res = await createAnnonce(annonceTitle, rawBodyText, null, newChecksum);
+        await ORM.InsertAnnonce(res);
 
 
         // Return to advertisement list on Jobindex.dk:
         await page.goBack();
         console.timeEnd('runTime');
     }
-    return dictionary;
 }
 
 async function getNumPages(page, listLength) {
@@ -111,11 +124,15 @@ async function getNumPages(page, listLength) {
 }
 
 
-async function createAnnonce(title, body, regionId, timestamp, expirationTime, creationTime) {
-    let d = new Date().getTime();
+async function createAnnonce(title, body, regionId = null, checksum) {
+    // Format Timestamp:
+    let newDate = new Date();
+    let timestampFormat = newDate.getFullYear() + '-' + (newDate.getMonth() < 9 ? '0' : '') + (newDate.getMonth() + 1)
+        + '-' + (newDate.getDate() < 9 ? '0' : '') + (newDate.getDate()) + ' ' + newDate.getHours() + ':' +
+        newDate.getMinutes() + ':' + newDate.getSeconds();
 
-    let newAnnonce = new annonceModel(title, body, timestamp, expirationTime, creationTime);
-
+    // model data into Annonce class:
+    return new annonceModel(title, body, regionId, timestampFormat, checksum.toString());
 }
 
 main();

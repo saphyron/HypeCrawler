@@ -1,12 +1,12 @@
 const mysql = require('mysql');
 
 class Annonce {
-    constructor(title, body, timestamp, expiringDate, creationDate) {
+    constructor(title, body, regionId, timestamp, checksum) {
         this.titel = title;
         this.body = body;
+        this.regionId = regionId;
         this.timestamp = timestamp;
-        this.expiringDate = expiringDate;
-        this.creationDate = creationDate;
+        this.checksum = checksum;
     }
 }
 module.exports = Annonce;
