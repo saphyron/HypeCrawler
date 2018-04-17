@@ -1,6 +1,6 @@
 // Imports:
 const puppeteer = require('puppeteer');
-const ORM = require('../data/general-orm-0.0.2');
+const ORM = require('../data/general-orm-0.0.4');
 const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
 
@@ -19,10 +19,10 @@ async function main() {
     const JOBLIST_SELECTOR = 'PaidJob';
     // Initialization:
     const browser = await puppeteer.launch({
-        headless: false
+        headless: true
     });
     const page = await browser.newPage();
-    ORM.CreateAnnonceTable();
+    //await ORM.CreateAnnonceTable();
 
     await page.goto('https://it.jobindex.dk/jobsoegning/it/database/storkoebenhavn');
 
@@ -33,8 +33,8 @@ async function main() {
     }, JOBLIST_SELECTOR);
 
 
-     let res = await scrapePageList(page, listLength);
-     console.log(res);
+    let res = await scrapePageList(page, listLength);
+    console.log(res);
 
 
     // Clean up:
@@ -66,10 +66,16 @@ async function scrapePageList(page, listLength) {
         console.time('runTime');
 
 
+
+
         // Extracting url
         const LIST_ITEM_SELECTOR = LIST_ITEM_URL_XPATH.replace("INDEX", index);
         const LIST_ITEM_URL = await page.$x(LIST_ITEM_SELECTOR);
-        let itemUrl = await page.evaluate(div => div.textContent, LIST_ITEM_URL[0]);
+        let temp = LIST_ITEM_URL.length;
+
+
+        let itemUrl = await page.evaluate(div => div.textContent, LIST_ITEM_URL[temp-1]);
+        //console.log(itemUrl);
 
 
         // Extracting title for advertisement:
@@ -84,31 +90,18 @@ async function scrapePageList(page, listLength) {
 
         const LINKED_SITE_BODY = await page.$x('/html/body');
         let rawBodyText = await page.evaluate(div => div.textContent, LINKED_SITE_BODY[0]);
-        //console.log(rawBodyText);
 
 
-        // SHA1 checksum comparison for duplicates:
-        let newChecksum = sha1(rawBodyText);
-
-        let temp = ORM.FindChecksum(newChecksum);
-        await page.waitFor(2000);
-        console.log(temp);
-        /*        if(ORM.FindChecksum(newChecksum).length > 0) {
-                    console.log("Exists already");
-                } else
-                    console.log("New Entry!");*/
-
-
-        // Insert into database with ORM:
-        let res = await createAnnonce(annonceTitle, rawBodyText, null, newChecksum);
-        await ORM.InsertAnnonce(res);
-
+        // Insert or update annonce to database:
+        await insertAnnonce(annonceTitle, rawBodyText);
 
         // Return to advertisement list on Jobindex.dk:
-        await page.goBack();
+        await page.goto('https://it.jobindex.dk/jobsoegning/it/database/storkoebenhavn');
         console.timeEnd('runTime');
     }
 }
+
+//<editor-fold desc="HelperMethods">
 
 async function getNumPages(page, listLength) {
     const TEXT_FILTER_REGEX = /[^0-9]/g;
@@ -123,8 +116,22 @@ async function getNumPages(page, listLength) {
     return numPages;
 }
 
+async function insertAnnonce(annonceTitle, rawBodyText) {
+    let sha1Checksum = sha1(rawBodyText);
+    let callResult = await ORM.FindChecksum(sha1Checksum);
 
-async function createAnnonce(title, body, regionId = null, checksum) {
+    if(callResult.length === 0) {
+        let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, null, sha1Checksum);
+        await ORM.InsertAnnonce(newAnnonceModel);
+    }
+    else {
+        // Do nothing - TODO create update method.
+    }
+
+
+}
+
+async function createAnnonceModel(title, body, regionId = null, checksum) {
     // Format Timestamp:
     let newDate = new Date();
     let timestampFormat = newDate.getFullYear() + '-' + (newDate.getMonth() < 9 ? '0' : '') + (newDate.getMonth() + 1)
@@ -134,5 +141,6 @@ async function createAnnonce(title, body, regionId = null, checksum) {
     // model data into Annonce class:
     return new annonceModel(title, body, regionId, timestampFormat, checksum.toString());
 }
+//</editor-fold>
 
 main();
