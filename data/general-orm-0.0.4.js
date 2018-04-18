@@ -1,7 +1,7 @@
 //<editor-fold desc="Modules">
 // Load npm modules:
 const MYSQL = require('mysql');
-const DBCREDS = require('../credentials/database-credentials').dbcreds;
+const DBCREDS = require('../credentials/database-credentials').testdbcreds;
 //</editor-fold>
 
 //<editor-fold desc="MySQL-connection">
