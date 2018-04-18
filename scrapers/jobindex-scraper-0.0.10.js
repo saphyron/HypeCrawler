@@ -12,7 +12,7 @@ const SUBJECT_CATEGORIES_LEVEL = 'https://it.jobindex.dk/job/it/database';
 // Generic XPath to linked website element location:
 const LIST_ITEM_URL_XPATH = '//*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a/@href';
 const LIST_ITEM_TITLE_XPATH =
-    '//*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a/b or //*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a'; // TODO! Skal have imeplementeret en or i XPATH.
+    '//*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a/b or //*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a'; // TODO! Skal have implementeret en OR i XPATH.
 
 // Counters:
 let succesCounter = 0, existingCounter = 0, errorCounter = 0;
