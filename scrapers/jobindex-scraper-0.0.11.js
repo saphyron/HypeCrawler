@@ -18,18 +18,18 @@ const LIST_ITEM_TITLE_XPATH_TWO =
 // Counters:
 let successCounter = 0, existingCounter = 0, errorCounter = 0;
 
-// Variabels:
+// Variables:
 const ADVERTS_PER_PAGE = 20;
 const AREA_NAMES = ['storkoebenhavn', 'region-sjaelland', 'fyn', 'region-nordjylland', 'fyn', 'region-midtjylland',
     'sydjylland', 'bornholm', 'skaane', 'groenland', ''];
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
-        TITLE_ATTRIBUTES: '/a/*[1]'
+        TITLE_XPATH_ATTRIBUTES: '/a/*[1]'
     },
     {
         URL_XPATH_CLASS: 'jix_robotjob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'jix_robotjob',
-        TITLE_ATTRIBUTES: '/a/strong'
+        TITLE_XPATH_ATTRIBUTES: '/a/strong'
     }
 ];
 
@@ -104,6 +104,53 @@ async function getPageUrls(page, listClassName, pathAfterClass) {
     return resList;
 }
 
+// TODO - Fetch all URLs and titles before scraping:
+async function getCurrentPageURLTitles(page, PAGE_SELECTOR) {
+    await page.goto(PAGE_SELECTOR);
+
+    let counter = 0;
+    let titles = [], urls = [];
+
+    while (titles.length === 0 && counter < PATH_VARIATIONS.length) {
+        let currentObject = PATH_VARIATIONS[counter];
+        titles = await getPageTitles(page, currentObject.TITLE_XPATH_CLASS, currentObject.TITLE_XPATH_ATTRIBUTES);
+        urls = await getPageUrls(page, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
+        counter++;
+    }
+
+    return {PAGE_TITLES: titles, PAGE_URLS: urls}; // TODO Håndter object i scrapePageListV3
+}
+
+// TODO W.I.P - Separation of URL and TITLE lists, and actual scraping.
+async function scrapePageListV3(PageTitlesAndURLObject) {
+    for (let index = 0; index < titles.length; index++) {
+        try {
+            console.log('Run ' + (index + 1) + ': begun');
+            console.time('runTime');
+
+            let annonceTitle = titles[index];
+            let itemUrl = urls[index];
+
+            // Goto linked site and scrape it:
+            await page.goto(itemUrl, {
+                // timeout: 1000  -- For later reference
+            });
+
+            const LINKED_SITE_BODY = await page.$x('/html/body');
+            let rawBodyText = await page.evaluate(div => div.textContent, LINKED_SITE_BODY[0]);
+            //console.log(rawBodyText);
+
+            // Insert or update annonce to database:
+            await insertAnnonce(annonceTitle, rawBodyText, itemUrl);
+            console.timeEnd('runTime');
+
+        } catch (e) {
+            console.log("SOMETHING WENT WRONG");
+            errorCounter++;
+        }
+    }
+}
+
 async function scrapePageListV2(page, PAGE_SELECTOR) {
 
     await page.goto(PAGE_SELECTOR);
@@ -114,7 +161,7 @@ async function scrapePageListV2(page, PAGE_SELECTOR) {
 
     while (titles.length === 0 && counter < PATH_VARIATIONS.length) {
         let currentObject = PATH_VARIATIONS[counter];
-        titles = await getPageTitles(page, currentObject.TITLE_XPATH_CLASS, currentObject.TITLE_ATTRIBUTES);
+        titles = await getPageTitles(page, currentObject.TITLE_XPATH_CLASS, currentObject.TITLE_XPATH_ATTRIBUTES);
         urls = await getPageUrls(page, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
         counter++;
     }
