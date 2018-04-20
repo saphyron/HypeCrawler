@@ -15,6 +15,7 @@ const CONNECTION = MYSQL.createConnection({
 
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
+
 //<editor-fold desc="data-implementation">
 class ORM {
 
@@ -32,7 +33,7 @@ class ORM {
                 'CHECKSUM TEXT, ' +
                 'FOREIGN KEY(REGION_ID) REFERENCES REGION(ID))';
 
-            CONNECTION.on('error', function(err) {
+            CONNECTION.on('error', function (err) {
                 console.log(err);
                 return;
             });
@@ -51,6 +52,21 @@ class ORM {
         })
     }
 
+    static CreateRegionTable() {
+        return new Promise(resolve => {
+            const query = 'CREATE TABLE IF NOT EXISTS REGION (' +
+                'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
+                'NAME VARCHAR(255) UNIQUE' +
+                ');';
+
+            CONNECTION.query(query, function (err, result) {
+                if (err) throw err;
+                console.log('SUCCESS!');
+                resolve(result);
+            });
+        });
+    }
+
     // SHA-1 selection:
     static FindChecksum(incomingChecksum) {
         return new Promise(resolve => {
@@ -67,14 +83,12 @@ class ORM {
         })
     }
 
-
-
-    static FindRegion(incomingRegionName) {
+    static FindRegionID(incomingRegionName) {
         return new Promise(resolve => {
             const query =
-                'SELECT * ' +
+                'SELECT id ' +
                 `FROM ${REGION_TABLE_NAME} ` +
-                'WHERE checksum = ? ' +
+                'WHERE name = ? ' +
                 'LIMIT 1';
 
             CONNECTION.query(query, [incomingRegionName], function (error, result) {
@@ -92,10 +106,11 @@ class ORM {
      */
     static InsertAnnonce(newRecord) {
         return new Promise(resolve => {
-            let query = `INSERT INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, TIMESTAMP, CHECKSUM) ` +
-                'VALUES (?, ?, ?, ?)';
+            let query = `INSERT INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM) ` +
+                'VALUES (?, ?, ?, ?, ?)';
 
-            CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.timestamp, newRecord.checksum],
+            CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
+                    newRecord.checksum],
                 function (error, result) {
                     if (error) throw error;
                     console.log('1 record inserted!');
@@ -106,7 +121,7 @@ class ORM {
 
     static InsertRegion(newRegion) {
         return new Promise(resolve => {
-            let query = `INSERT INTO ${REGION_TABLE_NAME} (NAVN) ` +
+            let query = `INSERT IGNORE INTO ${REGION_TABLE_NAME} (NAME) ` +
                 'VALUES (?)';
 
             CONNECTION.query(query, [newRegion.name],
@@ -118,19 +133,8 @@ class ORM {
         });
     }
 
+
     //</editor-fold>
-
-
-    static async CreateRegionTable() {
-        const query = 'CREATE TABLE IF NOT EXISTS REGION (' +
-            'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
-            'NAME TEXT)';
-
-        await CONNECTION.query(query, function (err, result) {
-            if (err) throw err;
-            console.log('SUCCESS!');
-        });
-    }
 
 
     // WIP

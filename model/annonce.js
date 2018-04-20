@@ -1,5 +1,3 @@
-const mysql = require('mysql');
-
 class Annonce {
     constructor(title, body, regionId, timestamp, checksum) {
         this.titel = title;

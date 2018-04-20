@@ -1,26 +1,19 @@
 // Imports:
 const puppeteer = require('puppeteer');
-const ORM = require('../data/general-orm-0.0.4');
+const ORM = require('../data/general-orm-0.0.5');
 const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
+const regionModel = require('../model/region');
 
 // XPath selectors:
-const TARGET_WEBSITE = 'https://www.jobindex.dk';
-const SUBJECT_AREA_LEVEL = `https://www.jobindex.dk/job/it`;
-const SUBJECT_CATEGORIES_LEVEL = 'https://it.jobindex.dk/job/it/database';
-
-// Generic XPath to linked website element location:
-const LIST_ITEM_URL_XPATH = '//*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a/@href';
-const LIST_ITEM_TITLE_XPATH = '//*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a/*[1]';
-const LIST_ITEM_TITLE_XPATH_TWO =
-    '//*[@id="result_list_box"]/div/div[2]/div[INDEX]/div/a/strong'; // TODO! Jobindex increments index by TWO!
+const TARGET_WEBSITE = 'https://www.jobindex.dk/';
 
 // Counters:
 let successCounter = 0, existingCounter = 0, errorCounter = 0;
 
-// Variables:
+
 const ADVERTS_PER_PAGE = 20;
-const AREA_NAMES = ['storkoebenhavn', 'nordsjaelland' , 'region-sjaelland', 'fyn', 'region-nordjylland',
+const AREA_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
     'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
 const PATH_VARIATIONS = [
     {
@@ -34,38 +27,34 @@ const PATH_VARIATIONS = [
 ];
 
 async function main() {
-    // DOM Selectors:
-    const JOBLIST_SELECTOR = 'PaidJob';
     // Initialization:
     const browser = await puppeteer.launch({
         headless: true
     });
     const page = await browser.newPage();
-    await ORM.CreateAnnonceTable();
 
-    await page.goto('https://it.jobindex.dk/jobsoegning/');
+    await initializeDatabase();
 
-    // List length on single page: Put in scrapelist
-    let listLength = await page.evaluate((selector) => {
-        return document.getElementsByClassName(selector).length;
-    }, JOBLIST_SELECTOR);
+    await scrapeRegions(page);
 
-    await scrapeRegions(page, listLength);
-    //let res = await scrapePageList(page, listLength);
-    console.log("SCRAPING DONE!");
     printDatabaseResult();
-
 
     // Clean up:
     browser.close();
 
 }
 
+let currentRegionObject = 0;
+let currentRegionID;
+
 async function scrapeRegions(page) {
     // goto next page:
     for (let i = 0; i < AREA_NAMES.length; i++) {
+        currentRegionObject = await ORM.FindRegionID(AREA_NAMES[i]);
+        currentRegionID = currentRegionObject[0].id;
+
         console.log(`BEGINNING SCRAPING IN REGION: ${AREA_NAMES[i]}`);
-        const GENERIC_PAGE_SELECTOR = `https://jobindex.dk/jobsoegning/${AREA_NAMES[i]}?page=PAGE_INDEX`;
+        const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}${AREA_NAMES[i]}?page=PAGE_INDEX`;
 
         await page.goto(`https://jobindex.dk/jobsoegning/${AREA_NAMES[i]}`);
         const NUM_PAGES = await getNumPages(page, ADVERTS_PER_PAGE);
@@ -73,9 +62,7 @@ async function scrapeRegions(page) {
         for (let index = 1; index <= NUM_PAGES; index++) {
             console.log('BEGINNING SCRAPING ON PAGE: ' + index);
 
-            const PAGE_SELECTOR = GENERIC_PAGE_SELECTOR.replace('PAGE_INDEX', index);
-
-            //await scrapePageListV2(page, PAGE_SELECTOR);
+            const PAGE_SELECTOR = REGION_PAGE_SELECTOR.replace('PAGE_INDEX', index);
 
             let pageURLsAndTitles = await getCurrentPageURLTitles(page, PAGE_SELECTOR);
             await scrapePageList(page, pageURLsAndTitles);
@@ -195,7 +182,7 @@ async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
     let callResult = await ORM.FindChecksum(sha1Checksum);
 
     if (callResult.length === 0) {
-        let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, null, sha1Checksum);
+        let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum);
         await ORM.InsertAnnonce(newAnnonceModel);
         successCounter++;
     }
@@ -218,127 +205,16 @@ async function createAnnonceModel(title, body, regionId = null, checksum) {
     return new annonceModel(title, body, regionId, timestampFormat, checksum.toString());
 }
 
+async function initializeDatabase() {
+    await ORM.CreateRegionTable();
+    await ORM.CreateAnnonceTable();
+
+    // Insert the regions:
+    for (let element of AREA_NAMES) {
+        await ORM.InsertRegion(new regionModel(element));
+    }
+}
 //</editor-fold>
 
 
 main();
-
-
-//<editor-fold desc="Depricated Metods - For documentation purposes.">
-async function getPageTitles(page, listClassName, pathAfterClass) {
-
-    let xpathData = await page.$x(`//div[@class="${listClassName}"]${pathAfterClass}`);
-    let resList = [];
-    for (let i = 0; i < xpathData.length; i++) {
-        let xpathTextContent = await xpathData[i].getProperty('textContent');
-        let text = await xpathTextContent.jsonValue();
-        resList.push(text);
-    }
-
-    return resList;
-}
-
-async function getPageUrls(page, listClassName, pathAfterClass) {
-    let xpathData = await page.$x(`//div[@class="${listClassName}"]${pathAfterClass}`);
-    let resList = [];
-    for (let i = 0; i < xpathData.length; i++) {
-        let xpathTextContent = await xpathData[i].getProperty('textContent');
-        let text = await xpathTextContent.jsonValue();
-        resList.push(text);
-    }
-
-    return resList;
-}
-
-async function scrapePageListV1(page, listLength, currentPageUrl) {
-    // Iterate through a single page list and get linked sites for each advertisement:
-    for (let index = 1; index <= listLength; index++) {
-        try {
-            console.log('Run ' + index + ': begun');
-            console.time('runTime');
-
-
-            // Extracting url
-            const LIST_ITEM_SELECTOR = LIST_ITEM_URL_XPATH.replace("INDEX", index);
-            const LIST_ITEM_URL = await page.$x(LIST_ITEM_SELECTOR);
-            let temp = LIST_ITEM_URL.length;
-
-
-            let itemUrl = await page.evaluate(div => div.textContent, LIST_ITEM_URL[temp - 1]);
-            console.log(itemUrl);
-
-
-            // Extracting title for advertisement:
-            const LIST_ITEM_TITLE_SELECTOR = LIST_ITEM_TITLE_XPATH.replace(/INDEX/g, index);
-            const LIST_ITEM_TITLE = await page.$x(LIST_ITEM_TITLE_SELECTOR);
-            let annonceTitle = await page.evaluate(div => div.textContent, LIST_ITEM_TITLE[0]);
-            console.log(annonceTitle);
-
-            // Goto linked site and scrape it:
-            await page.goto(itemUrl, {
-                // timeout: 1000  -- For later reference
-            });
-
-            const LINKED_SITE_BODY = await page.$x('/html/body');
-            let rawBodyText = await page.evaluate(div => div.textContent, LINKED_SITE_BODY[0]);
-            //console.log(rawBodyText);
-
-            // Insert or update annonce to database:
-            await insertAnnonce(annonceTitle, rawBodyText, itemUrl);
-
-        } catch (e) {
-            console.log("SOMETHING WENT WRONG");
-            errorCounter++;
-        }
-        // Return to advertisement list on Jobindex.dk:
-        await page.goto(currentPageUrl);
-        console.timeEnd('runTime');
-    }
-}
-
-async function scrapePageListV2(page, PAGE_SELECTOR) {
-
-    await page.goto(PAGE_SELECTOR);
-
-    // TODO FLYT IND I METODE:
-    let counter = 0;
-    let titles = [], urls = [];
-
-    while (titles.length === 0 && counter < PATH_VARIATIONS.length) {
-        let currentObject = PATH_VARIATIONS[counter];
-        titles = await getPageTitles(page, currentObject.TITLE_XPATH_CLASS, currentObject.TITLE_XPATH_ATTRIBUTES);
-        urls = await getPageUrls(page, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
-        counter++;
-    }
-    // =======================================================================================================
-    for (let index = 0; index < titles.length; index++) {
-        try {
-            console.log('Run ' + (index + 1) + ': begun');
-            console.time('runTime');
-
-            let annonceTitle = titles[index];
-            let itemUrl = urls[index];
-
-            // Goto linked site and scrape it:
-            await page.goto(itemUrl, {
-                // timeout: 1000  -- For later reference
-            });
-
-            const LINKED_SITE_BODY = await page.$x('/html/body');
-            let rawBodyText = await page.evaluate(div => div.textContent, LINKED_SITE_BODY[0]);
-            //console.log(rawBodyText);
-
-            // Insert or update annonce to database:
-            await insertAnnonce(annonceTitle, rawBodyText, itemUrl);
-            console.timeEnd('runTime');
-
-        } catch (e) {
-            console.log("SOMETHING WENT WRONG");
-            errorCounter++;
-        }
-    }
-
-}
-
-
-//</editor-fold>
