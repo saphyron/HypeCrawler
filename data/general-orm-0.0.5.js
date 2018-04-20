@@ -14,6 +14,7 @@ const CONNECTION = MYSQL.createConnection({
 //</editor-fold>
 
 const ANNONCE_TABLE_NAME = 'annonce';
+const REGION_TABLE_NAME = 'region';
 //<editor-fold desc="data-implementation">
 class ORM {
 
@@ -66,6 +67,23 @@ class ORM {
         })
     }
 
+
+
+    static FindRegion(incomingRegionName) {
+        return new Promise(resolve => {
+            const query =
+                'SELECT * ' +
+                `FROM ${REGION_TABLE_NAME} ` +
+                'WHERE checksum = ? ' +
+                'LIMIT 1';
+
+            CONNECTION.query(query, [incomingRegionName], function (error, result) {
+                if (error) throw error;
+                resolve(result);
+            });
+        })
+    }
+
     /**
      * Inserts a new Annonce record into the database
      * @param {Annonce} newRecord - Annonce to add.
@@ -78,6 +96,20 @@ class ORM {
                 'VALUES (?, ?, ?, ?)';
 
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.timestamp, newRecord.checksum],
+                function (error, result) {
+                    if (error) throw error;
+                    console.log('1 record inserted!');
+                    resolve(result);
+                })
+        });
+    }
+
+    static InsertRegion(newRegion) {
+        return new Promise(resolve => {
+            let query = `INSERT INTO ${REGION_TABLE_NAME} (NAVN) ` +
+                'VALUES (?)';
+
+            CONNECTION.query(query, [newRegion.name],
                 function (error, result) {
                     if (error) throw error;
                     console.log('1 record inserted!');
