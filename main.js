@@ -1,6 +1,11 @@
 const ORM = require('./data/general-orm-0.0.5');
 const Annonce = require('./model/annonce');
 
+const test = require('./scrapers/jobindex-scraper-0.0.12');
+// import test from './scrapers/jobindex-scraper-0.0.12';
+
+test.testMethod('Morten');
+
 
 
 /*

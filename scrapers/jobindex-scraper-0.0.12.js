@@ -1,3 +1,4 @@
+
 // Imports:
 const puppeteer = require('puppeteer');
 const ORM = require('../data/general-orm-0.0.5');
@@ -8,10 +9,7 @@ const regionModel = require('../model/region');
 // XPath selectors:
 const TARGET_WEBSITE = 'https://www.jobindex.dk/';
 
-// Counters:
-let successCounter = 0, existingCounter = 0, errorCounter = 0;
-
-
+// Constants:
 const ADVERTS_PER_PAGE = 20;
 const AREA_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
     'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
@@ -25,6 +23,11 @@ const PATH_VARIATIONS = [
         TITLE_XPATH_ATTRIBUTES: '/a/strong'
     }
 ];
+
+// Counters:
+let successCounter = 0, existingCounter = 0, errorCounter = 0;
+
+
 
 async function main() {
     // Initialization:
@@ -47,7 +50,8 @@ async function main() {
 let currentRegionObject = 0;
 let currentRegionID;
 
-async function scrapeRegions(page) {
+module.exports = {
+    scrapeRegions : async function (page) {
     // goto next page:
     for (let i = 0; i < AREA_NAMES.length; i++) {
         currentRegionObject = await ORM.FindRegionID(AREA_NAMES[i]);
@@ -68,7 +72,10 @@ async function scrapeRegions(page) {
             await scrapePageList(page, pageURLsAndTitles);
         }
     }
-}
+},
+    testMethod : async function (msg) {
+        console.log("Hej " + msg);
+}};
 
 // Returnerer en liste med alle overskrifter:
 

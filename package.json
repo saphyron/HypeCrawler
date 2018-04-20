@@ -1,0 +1,26 @@
+{
+  "name": "hypecrawler",
+  "version": "1.0.0",
+  "description": "Final AP-grade project",
+  "main": "main.js",
+  "dependencies": {
+    "mysql": "^2.15.0",
+    "puppeteer": "^1.2.0",
+    "sha1": "^1.1.1",
+    "npm": "^5.8.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eqliphex/HypeCrawler.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Eqliphex/HypeCrawler/issues"
+  },
+  "homepage": "https://github.com/Eqliphex/HypeCrawler#readme"
+}
