@@ -19,7 +19,6 @@ const REGION_TABLE_NAME = 'region';
 //<editor-fold desc="data-implementation">
 class ORM {
 
-
     //<editor-fold desc="Annonce Methods">
 
     static CreateAnnonceTable() {
@@ -31,6 +30,7 @@ class ORM {
                 'REGION_ID INTEGER, ' +
                 'TIMESTAMP DATETIME,' +
                 'CHECKSUM TEXT, ' +
+                'URL TEXT, ' +
                 'FOREIGN KEY(REGION_ID) REFERENCES REGION(ID))';
 
             CONNECTION.on('error', function (err) {
@@ -106,11 +106,11 @@ class ORM {
      */
     static InsertAnnonce(newRecord) {
         return new Promise(resolve => {
-            let query = `INSERT INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM) ` +
-                'VALUES (?, ?, ?, ?, ?)';
+            let query = `INSERT INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL) ` +
+                'VALUES (?, ?, ?, ?, ?, ?)';
 
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
-                    newRecord.checksum],
+                    newRecord.checksum, newRecord.url],
                 function (error, result) {
                     if (error) throw error;
                     console.log('1 record inserted!');

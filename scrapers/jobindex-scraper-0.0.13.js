@@ -1,13 +1,13 @@
 
 // Imports:
 const puppeteer = require('puppeteer');
-const ORM = require('../data/general-orm-0.0.5');
+const ORM = require('../data/general-orm-0.0.6');
 const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
 const regionModel = require('../model/region');
 
 // XPath selectors:
-const TARGET_WEBSITE = 'https://www.jobindex.dk/';
+const TARGET_WEBSITE = 'https://www.jobindex.dk';
 
 // Constants:
 const ADVERTS_PER_PAGE = 20;
@@ -35,7 +35,7 @@ async function main() {
         headless: true
     });
     const page = await browser.newPage();
-
+    // let startTime = Date.now();
     await initializeDatabase();
 
     await scrapeRegions(page);
@@ -50,34 +50,29 @@ async function main() {
 let currentRegionObject = 0;
 let currentRegionID;
 
-module.exports = {
-    scrapeRegions : async function (page) {
+async function scrapeRegions(page) {
     // goto next page:
     for (let i = 0; i < AREA_NAMES.length; i++) {
         currentRegionObject = await ORM.FindRegionID(AREA_NAMES[i]);
         currentRegionID = currentRegionObject[0].id;
 
         console.log(`BEGINNING SCRAPING IN REGION: ${AREA_NAMES[i]}`);
-        const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}${AREA_NAMES[i]}?page=PAGE_INDEX`;
+        const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}/jobsoegning/${AREA_NAMES[i]}`;
 
-        await page.goto(`https://jobindex.dk/jobsoegning/${AREA_NAMES[i]}`);
+        await page.goto(REGION_PAGE_SELECTOR);
         const NUM_PAGES = await getNumPages(page, ADVERTS_PER_PAGE);
 
         for (let index = 1; index <= NUM_PAGES; index++) {
             console.log('BEGINNING SCRAPING ON PAGE: ' + index);
 
-            const PAGE_SELECTOR = REGION_PAGE_SELECTOR.replace('PAGE_INDEX', index);
+            //const PAGE_SELECTOR = REGION_PAGE_SELECTOR.replace('PAGE_INDEX', index);
+            const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`?page=${index}`);
 
             let pageURLsAndTitles = await getCurrentPageURLTitles(page, PAGE_SELECTOR);
             await scrapePageList(page, pageURLsAndTitles);
         }
     }
-},
-    testMethod : async function (msg) {
-        console.log("Hej " + msg);
-}};
-
-// Returnerer en liste med alle overskrifter:
+}
 
 async function getPageTitlesAndUrls(page, titleClass, titleAttributes, urlClass, urlAttributes) {
     let xpathTitleData = await page.$x(`//div[@class="${titleClass}"]${titleAttributes}`);
@@ -189,7 +184,8 @@ async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
     let callResult = await ORM.FindChecksum(sha1Checksum);
 
     if (callResult.length === 0) {
-        let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum);
+        let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
+        , annonceURL);
         await ORM.InsertAnnonce(newAnnonceModel);
         successCounter++;
     }
@@ -201,7 +197,7 @@ async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
 
 }
 
-async function createAnnonceModel(title, body, regionId = null, checksum) {
+async function createAnnonceModel(title, body, regionId = null, checksum, url) {
     // Format Timestamp:
     let newDate = new Date();
     let timestampFormat = newDate.getFullYear() + '-' + (newDate.getMonth() < 9 ? '0' : '') + (newDate.getMonth() + 1)
@@ -209,7 +205,7 @@ async function createAnnonceModel(title, body, regionId = null, checksum) {
         newDate.getMinutes() + ':' + newDate.getSeconds();
 
     // model data into Annonce class:
-    return new annonceModel(title, body, regionId, timestampFormat, checksum.toString());
+    return new annonceModel(title, body, regionId, timestampFormat, checksum.toString(), url);
 }
 
 async function initializeDatabase() {
