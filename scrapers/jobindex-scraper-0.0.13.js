@@ -1,7 +1,7 @@
 
 // Imports:
 const puppeteer = require('puppeteer');
-const ORM = require('../data/general-orm-0.0.6');
+const ORM = require('../data/general-orm-0.0.7');
 const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
 const regionModel = require('../model/region');

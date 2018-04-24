@@ -22,7 +22,7 @@ class ORM {
     //<editor-fold desc="Annonce Methods">
 
     static CreateAnnonceTable() {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             const query = 'CREATE TABLE IF NOT EXISTS ANNONCE (' +
                 'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
                 'TITLE TEXT, ' +
@@ -33,34 +33,23 @@ class ORM {
                 'URL TEXT, ' +
                 'FOREIGN KEY(REGION_ID) REFERENCES REGION(ID))';
 
-            CONNECTION.on('error', function (err) {
-                console.log(err);
-                return;
-            });
-
             CONNECTION.query(query, function (error, result) {
-                if (error) throw error;
-
+                if (error) reject(error);
                 console.log('SUCCESS!');
-                //  console.log(result.serverStatus);
-                for (let propName in result.OkPacket) {
-                    let propValue = result.OkPacket[propName];
-                    console.log(propName, ': ', propValue);
-                }
                 resolve(result);
             });
         })
     }
 
     static CreateRegionTable() {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             const query = 'CREATE TABLE IF NOT EXISTS REGION (' +
                 'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
                 'NAME VARCHAR(255) UNIQUE' +
                 ');';
 
-            CONNECTION.query(query, function (err, result) {
-                if (err) throw err;
+            CONNECTION.query(query, function (error, result) {
+                if (error) reject(error);
                 console.log('SUCCESS!');
                 resolve(result);
             });
@@ -69,7 +58,7 @@ class ORM {
 
     // SHA-1 selection:
     static FindChecksum(incomingChecksum) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject)=> {
             const query =
                 'SELECT * ' +
                 `FROM ${ANNONCE_TABLE_NAME} ` +
@@ -77,14 +66,14 @@ class ORM {
                 'LIMIT 1';
 
             CONNECTION.query(query, [incomingChecksum], function (error, result) {
-                if (error) throw error;
+                if (error) reject(error);
                 resolve(result);
             });
         })
     }
 
     static FindRegionID(incomingRegionName) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             const query =
                 'SELECT id ' +
                 `FROM ${REGION_TABLE_NAME} ` +
@@ -92,7 +81,7 @@ class ORM {
                 'LIMIT 1';
 
             CONNECTION.query(query, [incomingRegionName], function (error, result) {
-                if (error) throw error;
+                if (error) reject(error);
                 resolve(result);
             });
         })
@@ -105,14 +94,14 @@ class ORM {
      * @constructor
      */
     static InsertAnnonce(newRecord) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             let query = `INSERT INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL) ` +
                 'VALUES (?, ?, ?, ?, ?, ?)';
 
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
                     newRecord.checksum, newRecord.url],
                 function (error, result) {
-                    if (error) throw error;
+                    if (error) reject(error);
                     console.log('1 record inserted!');
                     resolve(result);
                 })
@@ -120,13 +109,13 @@ class ORM {
     }
 
     static InsertRegion(newRegion) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             let query = `INSERT IGNORE INTO ${REGION_TABLE_NAME} (NAME) ` +
                 'VALUES (?)';
 
             CONNECTION.query(query, [newRegion.name],
                 function (error, result) {
-                    if (error) throw error;
+                    if (error) reject(error);
                     console.log('1 record inserted!');
                     resolve(result);
                 })
