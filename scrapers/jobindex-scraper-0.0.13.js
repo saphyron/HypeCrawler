@@ -52,7 +52,7 @@ async function scrapeRegions(page) {
     // goto next page:
     for (let i = 0; i < AREA_NAMES.length; i++) {
         currentRegionObject = await ORM.FindRegionID(AREA_NAMES[i]);
-        currentRegionID = currentRegionObject[0].id;
+        currentRegionID = currentRegionObject[0].region_id;
 
         console.log(`BEGINNING SCRAPING IN REGION: ${AREA_NAMES[i]}`);
         const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}/jobsoegning/${AREA_NAMES[i]}`;
@@ -112,6 +112,7 @@ async function getCurrentPageURLTitles(page, PAGE_SELECTOR) {
 }
 
 async function scrapePageList(page, PageTitlesAndURLObject) {
+    // Make new page for each of the 20 calls, so they wont use the same tab.
     let cur = PageTitlesAndURLObject;
     for (let index = 0; index < cur.PAGE_TITLES.length; index++) {
         try {
@@ -127,7 +128,7 @@ async function scrapePageList(page, PageTitlesAndURLObject) {
                 // timeout: 1000  -- For later reference
             });
 
-            const LINKED_SITE_BODY = await page.$x('/html/body');
+            const LINKED_SITE_BODY = await page.$x('/html/body/*[not(self::script)]');
             let rawBodyText = await page.evaluate(element => element.textContent, LINKED_SITE_BODY[0]);
             //console.log(rawBodyText);
 
