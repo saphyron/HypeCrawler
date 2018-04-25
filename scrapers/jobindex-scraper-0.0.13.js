@@ -1,4 +1,3 @@
-
 // Imports:
 const puppeteer = require('puppeteer');
 const ORM = require('../data/general-orm-0.0.7');
@@ -26,7 +25,6 @@ const PATH_VARIATIONS = [
 
 // Counters:
 let successCounter = 0, existingCounter = 0, errorCounter = 0;
-
 
 
 async function main() {
@@ -120,6 +118,7 @@ async function scrapePageList(page, PageTitlesAndURLObject) {
             console.log('Run ' + (index + 1) + ': begun');
             console.time('runTime');
 
+
             let annonceTitle = cur.PAGE_TITLES[index];
             let itemUrl = cur.PAGE_URLS[index];
 
@@ -129,8 +128,9 @@ async function scrapePageList(page, PageTitlesAndURLObject) {
             });
 
             const LINKED_SITE_BODY = await page.$x('/html/body');
-            let rawBodyText = await page.evaluate(div => div.textContent, LINKED_SITE_BODY[0]);
+            let rawBodyText = await page.evaluate(element => element.textContent, LINKED_SITE_BODY[0]);
             //console.log(rawBodyText);
+
 
             // Insert or update annonce to database:
             await insertAnnonce(annonceTitle, rawBodyText, itemUrl);
@@ -185,7 +185,7 @@ async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
 
     if (callResult.length === 0) {
         let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
-        , annonceURL);
+            , annonceURL);
         await ORM.InsertAnnonce(newAnnonceModel);
         successCounter++;
     }
@@ -217,6 +217,7 @@ async function initializeDatabase() {
         await ORM.InsertRegion(new regionModel(element));
     }
 }
+
 //</editor-fold>
 
 

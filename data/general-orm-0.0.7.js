@@ -75,7 +75,7 @@ class ORM {
     static FindRegionID(incomingRegionName) {
         return new Promise((resolve, reject) => {
             const query =
-                'SELECT id ' +
+                'SELECT region_id ' +
                 `FROM ${REGION_TABLE_NAME} ` +
                 'WHERE name = ? ' +
                 'LIMIT 1';
