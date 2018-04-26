@@ -33,6 +33,10 @@ async function main() {
         headless: true
     });
     const page = await browser.newPage();
+    await page.setExtraHTTPHeaders({ // Håndtering af korrekt aflæsning af dansk alfabet
+        'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
+    });
+
     // let startTime = Date.now();
     await initializeDatabase();
 
