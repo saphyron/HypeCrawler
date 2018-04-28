@@ -25,36 +25,6 @@ const PATH_VARIATIONS = [
 
 // Counters:
 let successCounter = 0, existingCounter = 0, errorCounter = 0;
-
-
-async function main() {
-    // Initialization:
-    const browser = await puppeteer.launch({
-        headless: true
-    });
-    const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({ // Håndtering af korrekt aflæsning af dansk alfabet
-        'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
-    });
-
-    // let startTime = Date.now();
-    await initializeDatabase()
-        .catch((value) => {
-            console.log("Error at main → initializeDatabase(): " + value);
-        });
-
-    await scrapeRegions(page, browser)
-        .catch((value) => {
-            console.log("Error at main → scrapeRegions(): " + value);
-        });
-
-    printDatabaseResult();
-
-    // Clean up:
-    browser.close();
-
-}
-
 let currentRegionObject = 0;
 let currentRegionID;
 
@@ -95,6 +65,11 @@ async function scrapeRegions(page, browser) {
                     console.log("Error at scrapeRegions → scrapePageList: " + value);
                 });
         }
+    }
+    return {
+        successCounter: successCounter,
+        existingCounter: existingCounter,
+        errorCounter: errorCounter
     }
 }
 
@@ -271,4 +246,7 @@ async function initializeDatabase() {
 //</editor-fold>
 
 
-main();
+module.exports = {
+    scrapeRegions: scrapeRegions,
+    initializeDatabase: initializeDatabase
+};
