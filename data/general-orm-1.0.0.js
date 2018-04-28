@@ -1,15 +1,14 @@
 //<editor-fold desc="Modules">
 // Load npm modules:
 const MYSQL = require('mysql');
-const DBCREDS = require('../credentials/database-credentials').dbcreds;
 //</editor-fold>
 
 //<editor-fold desc="MySQL-connection">
 const CONNECTION = MYSQL.createConnection({
-    host: DBCREDS.host,
-    user: DBCREDS.user,
-    password: DBCREDS.password,
-    database: DBCREDS.database
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE
 });
 //</editor-fold>
 

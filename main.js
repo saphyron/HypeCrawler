@@ -1,4 +1,4 @@
-const ORM = require('./data/general-orm-0.0.7');
+const ORM = require('./data/general-orm-1.0.0');
 const Annonce = require('./model/annonce');
 
 
