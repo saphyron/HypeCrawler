@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-let async = require('./scrapers/async-jobindex-scraper-1.0.0');
+let puppeteer = require('puppeteer');
+let scraper = require('./scrapers/async-jobindex-scraper-1.0.0');
 
 async function main() {
     // Initialization:
@@ -12,17 +12,15 @@ async function main() {
     });
 
     // let startTime = Date.now();
-    await async.initializeDatabase()
+    await scraper.initializeDatabase()
         .catch((value) => {
             console.log("Error at main → initializeDatabase(): " + value);
         });
 
-    let results = await async.scrapeRegions(page, browser)
+    printDatabaseResult(await scraper.scrapeRegions(page, browser)
         .catch((value) => {
             console.log("Error at main → scrapeRegions(): " + value);
-        });
-
-    printDatabaseResult(results);
+        }));
 
     // Clean up:
     browser.close();
