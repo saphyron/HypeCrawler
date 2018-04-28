@@ -28,6 +28,13 @@ let successCounter = 0, existingCounter = 0, errorCounter = 0;
 let currentRegionObject = 0;
 let currentRegionID;
 
+async function beginScraping() {
+    await scrapeRegions()
+        .catch((value) => {
+            console.log("Error at beginScraping → scrapeRegions: " + value);
+        });
+}
+
 async function scrapeRegions(page, browser) {
     // goto next page:
     for (let i = 0; i < AREA_NAMES.length; i++) {
@@ -247,6 +254,6 @@ async function initializeDatabase() {
 
 
 module.exports = {
-    scrapeRegions: scrapeRegions,
+    beginScraping: beginScraping,
     initializeDatabase: initializeDatabase
 };
