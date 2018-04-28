@@ -1,5 +1,5 @@
 let puppeteer = require('puppeteer');
-let scraper = require('./scrapers/async-jobindex-scraper-1.0.0');
+let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.0');
 
 async function main() {
     // Initialization:
@@ -19,7 +19,7 @@ async function main() {
 
     printDatabaseResult(await scraper.beginScraping(page, browser)
         .catch((value) => {
-            console.log("Error at main → scrapeRegions(): " + value);
+            console.log("Error at main → beginScraping(): " + value);
         }));
 
     // Clean up:
@@ -41,7 +41,7 @@ function printDatabaseResult(results) {
     let totalEntries = successCounter + existingCounter + errorCounter;
 
     console.log("\x1b[0m", '----------------------------------------------------------');
-    console.log('\t\t\tJOBINDEX.DK SCRAPER STATISTIK');
+    console.log('\t\t\t\t\tSCRAPER STATISTIK');
     console.log("\x1b[0m", '----------------------------------------------------------');
     console.log("\x1b[32m" + '\t\t\t' + successCounter + ' OUT OF ' + totalEntries
         + ` (${(successCounter / totalEntries) * 100} %) --- INSERTS`);
