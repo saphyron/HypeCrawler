@@ -17,7 +17,7 @@ async function main() {
             console.log("Error at main → initializeDatabase(): " + value);
         });
 
-    printDatabaseResult(await scraper.beginScraping(page, browser)
+    printDatabaseResult(await scraper.beginScraping(page, browser, 1)
         .catch((value) => {
             console.log("Error at main → beginScraping(): " + value);
         }));

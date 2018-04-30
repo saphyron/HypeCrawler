@@ -33,7 +33,7 @@ class ORM {
                 'FOREIGN KEY(REGION_ID) REFERENCES REGION(ID))';
 
             CONNECTION.query(query, function (error, result) {
-                if (error) reject(error);
+                if (error) reject("Error at ORM.CreateAnnonceTable() → " + error);
                 console.log('SUCCESS!');
                 resolve(result);
             });
@@ -48,7 +48,7 @@ class ORM {
                 ');';
 
             CONNECTION.query(query, function (error, result) {
-                if (error) reject(error);
+                if (error) reject("Error at ORM.CreateRegionTable() → " + error);
                 console.log('SUCCESS!');
                 resolve(result);
             });
@@ -65,7 +65,7 @@ class ORM {
                 'LIMIT 1';
 
             CONNECTION.query(query, [incomingChecksum], function (error, result) {
-                if (error) reject(error);
+                if (error) reject("Error at ORM.FindChecksum() → " + error);
                 resolve(result);
             });
         })
@@ -80,7 +80,7 @@ class ORM {
                 'LIMIT 1';
 
             CONNECTION.query(query, [incomingRegionName], function (error, result) {
-                if (error) reject(error);
+                if (error) reject("Error at ORM.FindRegionID() → " + error);
                 resolve(result);
             });
         })
@@ -100,7 +100,7 @@ class ORM {
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
                     newRecord.checksum, newRecord.url],
                 function (error, result) {
-                    if (error) reject(error);
+                    if (error) reject("Error at ORM.InsertAnnonce() → " + error);
                     console.log('1 record inserted!');
                     resolve(result);
                 })
@@ -114,7 +114,7 @@ class ORM {
 
             CONNECTION.query(query, [newRegion.name],
                 function (error, result) {
-                    if (error) reject(error);
+                    if (error) reject("Error at ORM.InsertRegion() → " + error);
                     console.log('1 record inserted!');
                     resolve(result);
                 })
