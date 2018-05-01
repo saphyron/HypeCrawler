@@ -5,13 +5,21 @@ const annonceModel = require('../model/annonce');
 const regionModel = require('../model/region');
 
 // XPath selectors:
-const TARGET_WEBSITE = 'https://www.jobindex.dk';
+const TARGET_WEBSITE = 'https://www.careerjet.dk';
 
 // Constants:
 let PAGE_LIMIT;
 const ADVERTS_PER_PAGE = 20;
-const AREA_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
-    'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
+
+const REGION_NAMES = new Map([
+    ['storkoebenhavn', '/wsog/jobs?l=Storkøbenhavn&lid=270167&b=1'],
+    ['region-sjaelland', '/wsog/jobs?l=Sjælland&lid=268728&b=1'],
+    ['region-nordjylland', '/wsog/jobs?l=Nordjylland&lid=268731&b=1'],
+    ['region-midtjylland', '/wsog/jobs?l=Midtjylland&lid=268730&b=1'],
+    ['sydjylland', '/wsog/jobs?l=Syddanmark&lid=268729&b=1'],
+    ['bornholm', '/wsog/jobs?l=Bornholm&lid=268760&b=1']
+]);
+
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
@@ -28,6 +36,7 @@ let successCounter = 0, existingCounter = 0, errorCounter = 0;
 let currentRegionObject = 0;
 let currentRegionID;
 
+
 /**
  * Entry-point method used by main-method for access to the scraper.
  * @param {Object} page - Represents a tab in Chromium browser.
@@ -38,17 +47,18 @@ let currentRegionID;
 async function beginScraping(page, browser, pageLimit) {
     PAGE_LIMIT = pageLimit;
     try {
-        for (let i = 0; i < AREA_NAMES.length; i++) {
-            currentRegionObject = await ORM.FindRegionID(AREA_NAMES[i]);
+        REGION_NAMES.forEach(async (value, key) => {
+            console.log(key.toString());
+            currentRegionObject = await ORM.FindRegionID(key.toString());
             currentRegionID = currentRegionObject[0].region_id;
 
-            console.log(`BEGINNING SCRAPING IN REGION: ${AREA_NAMES[i]}`);
-            const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}/jobsoegning/${AREA_NAMES[i]}`;
+            console.log(`BEGINNING SCRAPING IN REGION: ${key}`);
+            const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}${value}`;
 
 
             await page.goto(REGION_PAGE_SELECTOR)
-                .catch((value) => {
-                    throw new Error("Error at beginScraping → page.goto(): " + value);
+                .catch((error) => {
+                    throw new Error("Error at beginScraping → page.goto(): " + error);
                 });
 
             const NUM_PAGES = await getNumPages(page, ADVERTS_PER_PAGE);
@@ -56,7 +66,8 @@ async function beginScraping(page, browser, pageLimit) {
             for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += PAGE_LIMIT) {
                 await scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber + PAGE_LIMIT);
             }
-        }
+        })
+
     } catch (error) {
         console.log("Error at beginScraping → " + error);
     }
@@ -378,9 +389,9 @@ async function initializeDatabase() {
         await ORM.CreateAnnonceTable();
 
         // Insert the regions:
-        for (let element of AREA_NAMES) {
-            await ORM.InsertRegion(new regionModel(element));
-        }
+        REGION_NAMES.forEach(async(value, key) => {
+            await ORM.InsertRegion(new regionModel(key));
+        });
     } catch (error) {
         console.log("Error at initializeDatabase() → " + error);
     }

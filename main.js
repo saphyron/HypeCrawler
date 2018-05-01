@@ -1,5 +1,5 @@
 let puppeteer = require('puppeteer');
-let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.0');
+let scraper = require('./scrapers/careerjet-scraper-0.0.1');
 
 async function main() {
     // Initialization:
@@ -13,13 +13,13 @@ async function main() {
 
     // let startTime = Date.now();
     await scraper.initializeDatabase()
-        .catch((value) => {
-            console.log("Error at main → initializeDatabase(): " + value);
+        .catch((error) => {
+            console.log("Error at main → initializeDatabase(): " + error);
         });
 
     printDatabaseResult(await scraper.beginScraping(page, browser, 1)
-        .catch((value) => {
-            console.log("Error at main → beginScraping(): " + value);
+        .catch((error) => {
+            console.log("Error at main → beginScraping(): " + error);
         }));
 
     // Clean up:
@@ -29,8 +29,15 @@ async function main() {
 
 main()
     .catch(() => {
-    console.log("Something went wrong in main!")
-});
+        console.log("Something went wrong in main!")
+    });
+
+/**
+ *
+ */
+function areaMapper() {
+
+}
 
 
 function printDatabaseResult(results) {

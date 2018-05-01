@@ -90,7 +90,6 @@ class ORM {
      * Inserts a new Annonce record into the database
      * @param {Annonce} newRecord - Annonce to add.
      * @returns {Promise<void>}
-     * @constructor
      */
     static InsertAnnonce(newRecord) {
         return new Promise((resolve, reject) => {
