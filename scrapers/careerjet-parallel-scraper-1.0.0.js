@@ -12,17 +12,17 @@ let PAGE_LIMIT;
 const ADVERTS_PER_PAGE = 20;
 
 const REGION_NAMES = new Map([
-    ['storkoebenhavn', '/wsog/jobs?l=Storkøbenhavn&lid=270167&b=1'],
-    ['region-sjaelland', '/wsog/jobs?l=Sjælland&lid=268728&b=1'],
-    ['region-nordjylland', '/wsog/jobs?l=Nordjylland&lid=268731&b=1'],
-    ['region-midtjylland', '/wsog/jobs?l=Midtjylland&lid=268730&b=1'],
-    ['sydjylland', '/wsog/jobs?l=Syddanmark&lid=268729&b=1'],
-    ['bornholm', '/wsog/jobs?l=Bornholm&lid=268760&b=1']
+    ['storkoebenhavn', '/wsog/jobs?l=Storkøbenhavn&lid=270167&b='],
+    ['region-sjaelland', '/wsog/jobs?l=Sjælland&lid=268728&b='],
+    ['region-nordjylland', '/wsog/jobs?l=Nordjylland&lid=268731&b='],
+    ['region-midtjylland', '/wsog/jobs?l=Midtjylland&lid=268730&b='],
+    ['sydjylland', '/wsog/jobs?l=Syddanmark&lid=268729&b='],
+    ['bornholm', '/wsog/jobs?l=Bornholm&lid=268760&b=']
 ]);
 
 const PATH_VARIATIONS = [
     {
-        URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
+        URL_XPATH_CLASS: 'job', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'job',
         TITLE_XPATH_ATTRIBUTES: '/a/*[1]'
     },
     {
@@ -47,7 +47,7 @@ let currentRegionID;
 async function beginScraping(page, browser, pageLimit) {
     PAGE_LIMIT = pageLimit;
     try {
-        REGION_NAMES.forEach(async (value, key) => {
+        for(let [key, value] of REGION_NAMES) {
             console.log(key.toString());
             currentRegionObject = await ORM.FindRegionID(key.toString());
             currentRegionID = currentRegionObject[0].region_id;
@@ -66,8 +66,7 @@ async function beginScraping(page, browser, pageLimit) {
             for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += PAGE_LIMIT) {
                 await scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber + PAGE_LIMIT);
             }
-        })
-
+        }
     } catch (error) {
         console.log("Error at beginScraping → " + error);
     }
@@ -98,7 +97,8 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
 
         for (let index = fromPage; index < toPage; index++) {
             console.log('BEGINNING SCRAPING ON PAGE: ' + index);
-            const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`?page=${index}`);
+            let pageExtension = (index * 20) + 1;
+            const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${pageExtension}`);
 
             getCurrentPageURLTitles(page, PAGE_SELECTOR)
                 .then((pageURLsAndTitles) => {
@@ -165,11 +165,12 @@ async function tryPathVariationOnPage(page, titleClass, titleAttributes, urlClas
     let titleUrlMap = new Map();
     try {
         // Sets the XPath to the elements.
-        let xpathTitleData = await page.$x(`//div[@class="${titleClass}"]${titleAttributes}`)
+        let xpathTitleData = await page.$x('//div[@class="job"]/h2/a')
             .catch((error) => {
                 throw new Error("page.$x(): " + error);
             });
-        let xpathUrlData = await page.$x(`//div[@class="${urlClass}"]${urlAttributes}`)
+
+        let xpathUrlData = await page.$x('//div[@class="job"]/h2/a/@href')
             .catch((error) => {
                 throw new Error("page.$x(): " + error);
             });
@@ -201,7 +202,7 @@ async function tryPathVariationOnPage(page, titleClass, titleAttributes, urlClas
 
             // If one property is empty, the advertisement is invalid.
             if (titleText.length !== 0 && urlText !== 0) {
-                titleUrlMap.set(titleText, urlText);
+                titleUrlMap.set(titleText, (TARGET_WEBSITE + urlText));
                 titles.push(titleText);
                 urls.push(urlText);
             }
@@ -250,33 +251,34 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
 async function scrapePage(browser, title, url, index, pageNum) {
     try {
         console.time("runTime page number " + pageNum + " annonce " + index);
-
+        let formattedUrl = (TARGET_WEBSITE + url);
         // Create a new tab, and visit provided url.
         let newPage = await browser.newPage()
             .catch((error) => {
                 throw new Error("browser.newPage(): " + error)
             });
-        await newPage.goto(url, {
+        await newPage.goto(formattedUrl, {
             timeout: 600000
         })
             .catch((error) => {
                 throw new Error("page.goto(): " + error);
             });
 
-        // Extract visited site as an object.
-        const LINKED_SITE_BODY = await newPage.$x('/html/body/*[not(self::script)]')
+ /*       // Extract visited site as an object.
+        const LINKED_SITE_BODY = await newPage.$x('/html/body//descendant::*[not(self::script|self::style)]')
             .catch((error) => {
                 throw new Error("newpage.$x(): " + error)
-            });
+            });*/
 
-        // Filter the object and extract body as raw text.
-        let rawBodyText = await newPage.evaluate(element => element.textContent, LINKED_SITE_BODY[0])
+        // Extract the body from visited website.
+        let bodyHTML = await newPage.evaluate(() => document.body.innerHTML)
             .catch((error) => {
                 throw new Error("browser.newPage(): " + error)
             });
 
+
         // Insert or update annonce to database:
-        await insertAnnonce(title, rawBodyText, url);
+        await insertAnnonce(title, bodyHTML, formattedUrl);
 
         // Clean up the connection.
         await newPage.close()
@@ -320,8 +322,8 @@ function printDatabaseResult() {
  */
 async function getNumPages(page, listLength) {
     try {
-        const TEXT_FILTER_REGEX = /[^0-9]/g;
-        const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
+        const TEXT_FILTER_REGEX = /af (.*?) jobs/g;
+        const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr';
         const ADVERTS_PER_PAGE = listLength;
 
         let advertContent = await page.$x(TOTAL_ADVERTS_SELECTOR)                               // Collecting the part.
@@ -333,9 +335,11 @@ async function getNumPages(page, listLength) {
             .catch((error) => {
                 throw new Error("page.evaluate() → " + error);
             });
-        let filteredText = rawText.replace(TEXT_FILTER_REGEX, '');                      // Filtering number from text.
+        let match = TEXT_FILTER_REGEX.exec(rawText); // Extract the captured group (.*?).
+        //console.log(match[1]);
 
-        let numPages = Math.ceil(filteredText / ADVERTS_PER_PAGE);                      // Calculating page numbers.
+
+        let numPages = Math.ceil(match[1] / ADVERTS_PER_PAGE);                      // Calculating page numbers.
         return numPages;
     } catch (error) {
         console.log("Error at getNumPages() → " + error);
@@ -345,7 +349,7 @@ async function getNumPages(page, listLength) {
 async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
     try {
         if (annonceTitle === '') return;
-        let sha1Checksum = sha1(`${annonceTitle}${annonceURL}`);
+        let sha1Checksum = sha1(`${annonceURL}`);
         let callResult = await ORM.FindChecksum(sha1Checksum);
 
         if (callResult.length === 0) {

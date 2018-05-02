@@ -5,15 +5,19 @@ const MYSQL = require('mysql');
 
 //<editor-fold desc="MySQL-connection">
 const CONNECTION = MYSQL.createConnection({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE
+    host: process.env.MYSQL_HOST_TEST,
+    user: process.env.MYSQL_USER_TEST,
+    password: process.env.MYSQL_PASSWORD_TEST,
+    database: process.env.MYSQL_DATABASE_TEST
 });
 //</editor-fold>
 
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
+
+
+const ANNONCE_TABLE_NAME_TEST = 'annonce';
+const REGION_TABLE_NAME_TEST = 'region';
 
 //<editor-fold desc="data-implementation">
 class ORM {
@@ -74,7 +78,7 @@ class ORM {
     static FindRegionID(incomingRegionName) {
         return new Promise((resolve, reject) => {
             const query =
-                'SELECT region_id ' +
+                'SELECT ID ' +
                 `FROM ${REGION_TABLE_NAME} ` +
                 'WHERE name = ? ' +
                 'LIMIT 1';
