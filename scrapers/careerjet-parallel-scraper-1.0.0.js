@@ -176,7 +176,7 @@ async function tryPathVariationOnPage(page, titleClass, titleAttributes, urlClas
             });
 
 
-        // Runs through all advertisements with XPath on current page.
+        // Run through all advertisements with XPath on current page.
         for (let i = 0; i < xpathTitleData.length; i++) {
             // Retrieving elements from specific advertisement.
             let xpathTitleTextContent = await xpathTitleData[i].getProperty('textContent')
@@ -200,7 +200,7 @@ async function tryPathVariationOnPage(page, titleClass, titleAttributes, urlClas
                 });
 
 
-            // If one property is empty, the advertisement is invalid.
+            // If one property is empty, the advertisement is discarded.
             if (titleText.length !== 0 && urlText !== 0) {
                 titleUrlMap.set(titleText, (TARGET_WEBSITE + urlText));
                 titles.push(titleText);
@@ -252,6 +252,8 @@ async function scrapePage(browser, title, url, index, pageNum) {
     try {
         console.time("runTime page number " + pageNum + " annonce " + index);
         let formattedUrl = (TARGET_WEBSITE + url);
+
+
         // Create a new tab, and visit provided url.
         let newPage = await browser.newPage()
             .catch((error) => {
@@ -264,11 +266,6 @@ async function scrapePage(browser, title, url, index, pageNum) {
                 throw new Error("page.goto(): " + error);
             });
 
- /*       // Extract visited site as an object.
-        const LINKED_SITE_BODY = await newPage.$x('/html/body//descendant::*[not(self::script|self::style)]')
-            .catch((error) => {
-                throw new Error("newpage.$x(): " + error)
-            });*/
 
         // Extract the body from visited website.
         let bodyHTML = await newPage.evaluate(() => document.body.innerHTML)
@@ -279,6 +276,7 @@ async function scrapePage(browser, title, url, index, pageNum) {
 
         // Insert or update annonce to database:
         await insertAnnonce(title, bodyHTML, formattedUrl);
+
 
         // Clean up the connection.
         await newPage.close()
