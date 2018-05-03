@@ -9,6 +9,7 @@ const TARGET_WEBSITE = 'https://www.jobindex.dk';
 
 // Constants:
 let PAGE_LIMIT;
+const PAGE_TIMEOUT = 600000;
 const ADVERTS_PER_PAGE = 20;
 const REGION_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
     'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
@@ -46,7 +47,9 @@ async function beginScraping(page, browser, pageLimit) {
             const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}/jobsoegning/${REGION_NAMES[i]}`;
 
 
-            await page.goto(REGION_PAGE_SELECTOR)
+            await page.goto(REGION_PAGE_SELECTOR, {
+                timeout: PAGE_TIMEOUT
+            })
                 .catch((value) => {
                     throw new Error("Error at beginScraping → page.goto(): " + value);
                 });
@@ -117,7 +120,9 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
  */
 async function getCurrentPageURLTitles(page, PAGE_SELECTOR) {
     try {
-        await page.goto(PAGE_SELECTOR)
+        await page.goto(PAGE_SELECTOR, {
+            timeout: PAGE_TIMEOUT
+        })
             .catch((value) => {
                 throw new Error("page.goto() → " + value);
             });
@@ -246,7 +251,7 @@ async function scrapePage(browser, title, url, index, pageNum) {
                 throw new Error("browser.newPage(): " + error)
             });
         await newPage.goto(url, {
-            timeout: 600000
+            timeout: PAGE_TIMEOUT
         })
             .catch((error) => {
                 throw new Error("page.goto(): " + error);
