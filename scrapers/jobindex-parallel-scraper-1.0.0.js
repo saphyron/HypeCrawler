@@ -10,7 +10,7 @@ const TARGET_WEBSITE = 'https://www.jobindex.dk';
 // Constants:
 let PAGE_LIMIT;
 const ADVERTS_PER_PAGE = 20;
-const AREA_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
+const REGION_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
     'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
 const PATH_VARIATIONS = [
     {
@@ -38,12 +38,12 @@ let currentRegionID;
 async function beginScraping(page, browser, pageLimit) {
     PAGE_LIMIT = pageLimit;
     try {
-        for (let i = 0; i < AREA_NAMES.length; i++) {
-            currentRegionObject = await ORM.FindRegionID(AREA_NAMES[i]);
+        for (let i = 0; i < REGION_NAMES.length; i++) {
+            currentRegionObject = await ORM.FindRegionID(REGION_NAMES[i]);
             currentRegionID = currentRegionObject[0].region_id;
 
-            console.log(`BEGINNING SCRAPING IN REGION: ${AREA_NAMES[i]}`);
-            const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}/jobsoegning/${AREA_NAMES[i]}`;
+            console.log(`BEGINNING SCRAPING IN REGION: ${REGION_NAMES[i]}`);
+            const REGION_PAGE_SELECTOR = `${TARGET_WEBSITE}/jobsoegning/${REGION_NAMES[i]}`;
 
 
             await page.goto(REGION_PAGE_SELECTOR)
@@ -252,20 +252,14 @@ async function scrapePage(browser, title, url, index, pageNum) {
                 throw new Error("page.goto(): " + error);
             });
 
-        // Extract visited site as an object.
-        const LINKED_SITE_BODY = await newPage.$x('/html/body/*[not(self::script)]')
-            .catch((error) => {
-                throw new Error("newpage.$x(): " + error)
-            });
-
         // Filter the object and extract body as raw text.
-        let rawBodyText = await newPage.evaluate(element => element.textContent, LINKED_SITE_BODY[0])
+        let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
             .catch((error) => {
-                throw new Error("browser.newPage(): " + error)
+                throw new Error("newPage.evaluate(): " + error)
             });
 
         // Insert or update annonce to database:
-        await insertAnnonce(title, rawBodyText, url);
+        await insertAnnonce(title, bodyHTML, url);
 
         // Clean up the connection.
         await newPage.close()
@@ -378,7 +372,7 @@ async function initializeDatabase() {
         await ORM.CreateAnnonceTable();
 
         // Insert the regions:
-        for (let element of AREA_NAMES) {
+        for (let element of REGION_NAMES) {
             await ORM.InsertRegion(new regionModel(element));
         }
     } catch (error) {

@@ -8,7 +8,7 @@ const regionModel = require('../model/region');
 const TARGET_WEBSITE = 'https://www.careerjet.dk';
 
 // Constants:
-let PAGE_LIMIT;
+
 const ADVERTS_PER_PAGE = 20;
 
 const REGION_NAMES = new Map([
@@ -45,7 +45,6 @@ let currentRegionID;
  * @returns {Promise<void>}
  */
 async function beginScraping(page, browser, pageLimit) {
-    PAGE_LIMIT = pageLimit;
     try {
         for(let [key, value] of REGION_NAMES) {
             console.log(key.toString());
@@ -268,11 +267,11 @@ async function scrapePage(browser, title, url, index, pageNum) {
 
 
         // Extract the body from visited website.
-        let bodyHTML = await newPage.evaluate(() => document.body.innerHTML)
+        let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
             .catch((error) => {
                 throw new Error("browser.newPage(): " + error)
             });
-
+        // console.log(bodyHTML);
 
         // Insert or update annonce to database:
         await insertAnnonce(title, bodyHTML, formattedUrl);

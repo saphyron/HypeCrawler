@@ -1,5 +1,7 @@
 let puppeteer = require('puppeteer');
-let scraper = require('./scrapers/careerjet-parallel-scraper-1.0.0');
+let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.0');
+
+
 
 async function main() {
     // Initialization:
@@ -20,6 +22,7 @@ async function main() {
     printDatabaseResult(await scraper.beginScraping(page, browser, 1)
         .catch((error) => {
             console.log("Error at main → beginScraping(): " + error);
+
         }));
 
     // Clean up:

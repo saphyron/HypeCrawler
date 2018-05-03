@@ -15,10 +15,6 @@ const CONNECTION = MYSQL.createConnection({
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
 
-
-const ANNONCE_TABLE_NAME_TEST = 'annonce';
-const REGION_TABLE_NAME_TEST = 'region';
-
 //<editor-fold desc="data-implementation">
 class ORM {
 
@@ -26,7 +22,7 @@ class ORM {
 
     static CreateAnnonceTable() {
         return new Promise((resolve, reject) => {
-            const query = 'CREATE TABLE IF NOT EXISTS ANNONCE (' +
+            const query = `CREATE TABLE IF NOT EXISTS ${ANNONCE_TABLE_NAME} (` +
                 'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
                 'TITLE TEXT, ' +
                 'BODY MEDIUMBLOB, ' +
@@ -46,7 +42,7 @@ class ORM {
 
     static CreateRegionTable() {
         return new Promise((resolve, reject) => {
-            const query = 'CREATE TABLE IF NOT EXISTS REGION (' +
+            const query = `CREATE TABLE IF NOT EXISTS ${REGION_TABLE_NAME} (` +
                 'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
                 'NAME VARCHAR(255) UNIQUE' +
                 ');';
