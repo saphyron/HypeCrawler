@@ -328,7 +328,7 @@ async function getNumPages(page, listLength) {
 async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
     try {
         if (annonceTitle === '') return;
-        let sha1Checksum = sha1(`${annonceTitle}${annonceURL}`);
+        let sha1Checksum = sha1(`${annonceURL}`);
         let callResult = await ORM.FindChecksum(sha1Checksum);
 
         if (callResult.length === 0) {
