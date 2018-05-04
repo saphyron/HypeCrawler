@@ -59,14 +59,14 @@ class ORM {
     static FindChecksum(incomingChecksum) {
         return new Promise((resolve, reject)=> {
             const query =
-                'SELECT * ' +
+                'SELECT count(*) as count ' +
                 `FROM ${ANNONCE_TABLE_NAME} ` +
                 'WHERE checksum = ? ' +
                 'LIMIT 1';
 
             CONNECTION.query(query, [incomingChecksum], function (error, result) {
                 if (error) reject("Error at ORM.FindChecksum() → " + error);
-                resolve(result);
+                resolve(result[0].count);
             });
         })
     }
