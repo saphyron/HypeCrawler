@@ -248,7 +248,7 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
  */
 async function scrapePage(browser, title, url, index, pageNum) {
     try {
-        console.time("runTime page number " + pageNum + " annonce " + index);
+        console.time("Begin page number " + pageNum + " annonce " + index);
 
         // Create a new tab, and visit provided url.
         let newPage = await browser.newPage()
@@ -277,7 +277,7 @@ async function scrapePage(browser, title, url, index, pageNum) {
                 throw new Error("newPage.close(): " + error)
             });
 
-        console.timeEnd("runTime page number " + pageNum + " annonce " + index);
+        console.timeEnd("Done page number " + pageNum + " annonce " + index);
     } catch (e) {
         errorCounter++;
         console.log("Error at scrapePage() → " + e);
