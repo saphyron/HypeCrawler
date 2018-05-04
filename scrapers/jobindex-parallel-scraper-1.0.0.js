@@ -11,8 +11,8 @@ const TARGET_WEBSITE = 'https://www.jobindex.dk';
 let PAGE_LIMIT;
 const PAGE_TIMEOUT = 30000;
 const ADVERTS_PER_PAGE = 20;
-const REGION_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
-    'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
+const REGION_NAMES = ['region-midtjylland', 'storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
+    'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
