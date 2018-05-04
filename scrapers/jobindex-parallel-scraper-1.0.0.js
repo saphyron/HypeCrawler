@@ -237,6 +237,13 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
     }
 }
 
+async function closePage(page) {
+    return await page.close()
+        .catch((error) => {
+            console.log("Error closePage(): " + error)
+        });
+}
+
 /**
  * Scrapes the provided page and invokes database call.
  * @param {Object} browser          - Browser for access to creating a new page.
@@ -248,7 +255,7 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
  */
 async function scrapePage(browser, title, url, index, pageNum) {
     try {
-        console.time("Begin page number " + pageNum + " annonce " + index);
+        console.time("runTime page number " + pageNum + " annonce " + index);
 
         // Create a new tab, and visit provided url.
         let newPage = await browser.newPage()
@@ -259,25 +266,24 @@ async function scrapePage(browser, title, url, index, pageNum) {
             timeout: PAGE_TIMEOUT
         })
             .catch((error) => {
-                throw new Error("page.goto(): " + error);
+                closePage(newPage);
+                throw new Error("page.goto("+url+"): " + error);
             });
 
         // Filter the object and extract body as raw text.
         let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
             .catch((error) => {
+                closePage(newPage);
                 throw new Error("newPage.evaluate(): " + error)
             });
 
         // Insert or update annonce to database:
-        await insertAnnonce(title, bodyHTML, url);
+        await insertAnnonce(title, bodyHTML, url).catch(() => {});
 
         // Clean up the connection.
-        await newPage.close()
-            .catch((error) => {
-                throw new Error("newPage.close(): " + error)
-            });
+        await closePage(newPage);
 
-        console.timeEnd("Done page number " + pageNum + " annonce " + index);
+        console.timeEnd("runTime page number " + pageNum + " annonce " + index);
     } catch (e) {
         errorCounter++;
         console.log("Error at scrapePage() → " + e);
