@@ -85,7 +85,7 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
                 if (rejectCounter > 0)
                     reject(result);
                 else
-                    resolve(result);
+                    resolve();
         };
 
         for (let index = fromPage; index < toPage; index++) {
@@ -98,15 +98,15 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
                         .then(() => {
                             resolveCounter++;
                             returnIfNeeded();
-                        })
-                        .catch((value) => {
+                        }, (error) => {
                             rejectCounter++;
+                            result += "Error at scrapeRegion → scrapePageList: " + error + '\n';
                             returnIfNeeded();
-                            result += "Error at scrapeRegion → scrapePageList: " + value + '\n';
                         });
-                })
-                .catch((value) => {
-                    result += "Error at scrapeRegion → getCurrentPageURLTitles: " + value + '\n';
+                }, (error) => {
+                    rejectCounter++;
+                    result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
+                    returnIfNeeded();
                 })
         }
     });
@@ -213,28 +213,51 @@ async function tryPathVariationOnPage(page, titleClass, titleAttributes, urlClas
  * @param {int} pageNum - Current page number which we are searching.
  * @returns {Promise<void>}
  */
-async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
-    let titleUrlList = PageTitlesAndURLObject;
-    try {
-        for (let index = 0; index < titleUrlList.PAGE_TITLES.length; index++) {
-            console.log('Run ' + (index + 1) + ': begun');
+function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
+    return new Promise((resolve, reject) => {
+        let titleUrlList = PageTitlesAndURLObject;
+        let length = titleUrlList.PAGE_TITLES.length;
+        let resolveCounter = 0, rejectCounter = 0;
 
-            // Do not scrape if already in database
-            let sha1Checksum = sha1(`${titleUrlList.PAGE_URLS[index]}`);
-            let callResult = await ORM.FindChecksum(sha1Checksum);
-            if (callResult !== 0)
-                continue;
+        // Helpermethod: To limit the amount of simultaneous running pages.
+        let returnIfNeeded = () => {
+            if (resolveCounter + rejectCounter == length)
+                if (rejectCounter > 0)
+                    reject(); //new Error(result));
+                else
+                    resolve();
+        };
 
-            // Goto linked site and scrape it:
-            scrapePage(browser, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
-                .catch((error) => {
-                    throw new Error(error);
+        for (let index = 0; index < length; index++) {
+                console.log('Run ' + (index + 1) + ': begun');
+
+                // Do not scrape if already in database
+                let sha1Checksum = sha1(`${titleUrlList.PAGE_URLS[index]}`);
+
+
+                ORM.FindChecksum(sha1Checksum).then((callResult) => {
+                    if (callResult !== 0) {
+                        resolveCounter++;
+                        returnIfNeeded();
+                    } else {
+                        // Goto linked site and scrape it:
+                        scrapePage(browser, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
+                            .then(() => {
+                                resolveCounter++;
+                                returnIfNeeded();
+                            }, (error) => {
+                                console.log("Error at scrapePageList() → " + error)
+                                rejectCounter++;
+                                returnIfNeeded();
+                            })
+                    }
+                }, (error) => {
+                    console.log("Error at ORM.FindChecksum() → " + error)
+                    rejectCounter++;
+                    returnIfNeeded();
                 });
         }
-    } catch (e) {
-        console.log("Error at scrapePageList() → " + e)
-
-    }
+    });
 }
 
 /**
@@ -247,53 +270,53 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
  * @returns {Promise<void>}
  */
 async function scrapePage(browser, title, url, index, pageNum) {
-    let newPage = undefined;
-    let errorResult = undefined;
-    console.time("runTime page number " + pageNum + " annonce " + index);
+        let newPage = undefined;
+        let errorResult = undefined;
+        console.time("runTime page number " + pageNum + " annonce " + index);
 
-    try {
-        // Create a new tab, and visit provided url.
-        let newPage = await browser.newPage()
-            .catch((error) => {
-                throw new Error("browser.newPage(): " + error)
+        try {
+            // Create a new tab, and visit provided url.
+            let newPage = await browser.newPage()
+                .catch((error) => {
+                    throw new Error("browser.newPage(): " + error)
+                });
+
+            await newPage.goto(url, {
+                timeout: PAGE_TIMEOUT
+            })
+                .catch((error) => {
+                    throw new Error("page.goto(): " + error);
+                });
+
+            // Filter the object and extract body as raw text.
+            let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
+                .catch((error) => {
+                    throw new Error("newPage.evaluate(): " + error)
+                });
+
+            // Insert or update annonce to database:
+            await insertAnnonce(title, bodyHTML, url).catch((error) => {
+                throw new Error("insertAnnonce("+url+"): " + error)
             });
 
-        await newPage.goto(url, {
-            timeout: PAGE_TIMEOUT
-        })
-            .catch((error) => {
-                throw new Error("page.goto(): " + error);
-            });
+        } catch(e) {
+            errorResult = e;
+        }
 
-        // Filter the object and extract body as raw text.
-        let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
-            .catch((error) => {
-                throw new Error("newPage.evaluate(): " + error)
-            });
-
-        // Insert or update annonce to database:
-        await insertAnnonce(title, bodyHTML, url).catch((error) => {
-            throw new Error("insertAnnonce("+url+"): " + error)
-        });
-
-    } catch(e) {
-        errorResult = e;
-    }
-
-    // Clean up the connection.
-    if (newPage)
-        await newPage.close()
+        // Clean up the connection.
+        if (newPage)
+            await newPage.close()
             .catch((error) => {
                 if (!errorResult)
                     errorResult = console.log("Error closePage(): " + error)
             });
 
-    if (errorResult) {
-        errorCounter++;
-        console.log("Error at scrapePage("+url+") → " + e);
-    }
+        if (errorResult) {
+            errorCounter++;
+            console.log("Error at scrapePage("+url+") → " + errorResult);
+        }
 
-    console.timeEnd("runTime page number " + pageNum + " annonce " + index);
+        console.timeEnd("runTime page number " + pageNum + " annonce " + index);
 }
 
 //<editor-fold desc="HelperMethods">
