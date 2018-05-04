@@ -219,6 +219,11 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
         for (let index = 0; index < titleUrlList.PAGE_TITLES.length; index++) {
             console.log('Run ' + (index + 1) + ': begun');
 
+            // Do not scrape if already in database
+            let sha1Checksum = sha1(`${titleUrlList.PAGE_URLS[index]}`);
+            let callResult = await ORM.FindChecksum(sha1Checksum);
+            if (callResult !== 0)
+                continue;
 
             // Goto linked site and scrape it:
             scrapePage(browser, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
