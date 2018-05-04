@@ -9,7 +9,7 @@ const TARGET_WEBSITE = 'https://www.jobindex.dk';
 
 // Constants:
 let PAGE_LIMIT;
-const PAGE_TIMEOUT = 100000;
+const PAGE_TIMEOUT = 30000;
 const ADVERTS_PER_PAGE = 20;
 const REGION_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
     'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
