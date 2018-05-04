@@ -231,9 +231,17 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
 
         for (let index = 0; index < length; index++) {
                 console.log('Run ' + (index + 1) + ': begun');
+                let url = titleUrlList.PAGE_URLS[index];
+
+                // Ignore pdf annoncer
+                if (url && url.endsWith(".pdf")) {
+                    resolveCounter++;
+                    returnIfNeeded();
+                    continue;
+                }
 
                 // Do not scrape if already in database
-                let sha1Checksum = sha1(`${titleUrlList.PAGE_URLS[index]}`);
+                let sha1Checksum = sha1(`${url}`);
 
 
                 ORM.FindChecksum(sha1Checksum).then((findCount) => {
