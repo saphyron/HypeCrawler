@@ -237,13 +237,6 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
     }
 }
 
-async function closePage(page) {
-    return await page.close()
-        .catch((error) => {
-            console.log("Error closePage(): " + error)
-        });
-}
-
 /**
  * Scrapes the provided page and invokes database call.
  * @param {Object} browser          - Browser for access to creating a new page.
@@ -254,40 +247,50 @@ async function closePage(page) {
  * @returns {Promise<void>}
  */
 async function scrapePage(browser, title, url, index, pageNum) {
-    try {
-        console.time("runTime page number " + pageNum + " annonce " + index);
+    let errorResult = undefined;
+    console.time("runTime page number " + pageNum + " annonce " + index);
 
-        // Create a new tab, and visit provided url.
-        let newPage = await browser.newPage()
-            .catch((error) => {
-                throw new Error("browser.newPage(): " + error)
-            });
+    // Create a new tab, and visit provided url.
+    let newPage = await browser.newPage()
+        .catch((error) => {
+            errorResult = new Error("browser.newPage(): " + error)
+        });
+
+    if (!errorResult)
         await newPage.goto(url, {
             timeout: PAGE_TIMEOUT
         })
             .catch((error) => {
-                closePage(newPage);
-                throw new Error("page.goto("+url+"): " + error);
+                errorResult = new Error("page.goto("+url+"): " + error);
             });
 
-        // Filter the object and extract body as raw text.
-        let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
+    // Filter the object and extract body as raw text.
+    let bodyHTML = undefined;
+    if (!errorResult)
+        bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
             .catch((error) => {
-                closePage(newPage);
-                throw new Error("newPage.evaluate(): " + error)
+                errorResult = new Error("newPage.evaluate(): " + error)
             });
 
-        // Insert or update annonce to database:
-        await insertAnnonce(title, bodyHTML, url).catch(() => {});
+    // Insert or update annonce to database:
+    if (!errorResult)
+        await insertAnnonce(title, bodyHTML, url).catch((error) => {
+            errorResult = new Error("insertAnnonce("+url+"): " + error)
+        });
 
-        // Clean up the connection.
-        await closePage(newPage);
+    // Clean up the connection.
+    if (newPage)
+        await newPage.close()
+            .catch((error) => {
+                errorResult = console.log("Error closePage(): " + error)
+            });
 
-        console.timeEnd("runTime page number " + pageNum + " annonce " + index);
-    } catch (e) {
+    if (errorResult) {
         errorCounter++;
         console.log("Error at scrapePage() → " + e);
     }
+
+    console.timeEnd("runTime page number " + pageNum + " annonce " + index);
 }
 
 //<editor-fold desc="HelperMethods">
