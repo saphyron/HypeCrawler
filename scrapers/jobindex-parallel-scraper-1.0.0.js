@@ -255,30 +255,26 @@ async function scrapePage(browser, title, url, index, pageNum) {
         // Create a new tab, and visit provided url.
         let newPage = await browser.newPage()
             .catch((error) => {
-                errorResult = new Error("browser.newPage(): " + error)
+                throw new Error("browser.newPage(): " + error)
             });
 
-        if (!errorResult)
-            await newPage.goto(url, {
-                timeout: PAGE_TIMEOUT
-            })
-                .catch((error) => {
-                    errorResult = new Error("page.goto(): " + error);
-                });
+        await newPage.goto(url, {
+            timeout: PAGE_TIMEOUT
+        })
+            .catch((error) => {
+                throw new Error("page.goto(): " + error);
+            });
 
         // Filter the object and extract body as raw text.
-        let bodyHTML = undefined;
-        if (!errorResult)
-            bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
-                .catch((error) => {
-                    errorResult = new Error("newPage.evaluate(): " + error)
-                });
+        let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
+            .catch((error) => {
+                throw new Error("newPage.evaluate(): " + error)
+            });
 
         // Insert or update annonce to database:
-        if (!errorResult)
-            await insertAnnonce(title, bodyHTML, url).catch((error) => {
-                errorResult = new Error("insertAnnonce("+url+"): " + error)
-            });
+        await insertAnnonce(title, bodyHTML, url).catch((error) => {
+            throw new Error("insertAnnonce("+url+"): " + error)
+        });
 
     } catch(e) {
         errorResult = e;
