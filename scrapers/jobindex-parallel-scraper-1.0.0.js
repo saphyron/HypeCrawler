@@ -9,7 +9,7 @@ const TARGET_WEBSITE = 'https://www.jobindex.dk';
 
 // Constants:
 let PAGE_LIMIT;
-const PAGE_TIMEOUT = 600000;
+const PAGE_TIMEOUT = 100000;
 const ADVERTS_PER_PAGE = 20;
 const REGION_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
     'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
@@ -218,12 +218,13 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
         let titleUrlList = PageTitlesAndURLObject;
         let length = titleUrlList.PAGE_TITLES.length;
         let resolveCounter = 0, rejectCounter = 0;
+        let result = "";
 
-        // Helpermethod: To limit the amount of simultaneous running pages.
+            // Helpermethod: To limit the amount of simultaneous running pages.
         let returnIfNeeded = () => {
             if (resolveCounter + rejectCounter == length)
                 if (rejectCounter > 0)
-                    reject(); //new Error(result));
+                    reject(new Error(result));
                 else
                     resolve();
         };
@@ -235,8 +236,8 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                 let sha1Checksum = sha1(`${titleUrlList.PAGE_URLS[index]}`);
 
 
-                ORM.FindChecksum(sha1Checksum).then((callResult) => {
-                    if (callResult !== 0) {
+                ORM.FindChecksum(sha1Checksum).then((findCount) => {
+                    if (findCount > 0) {
                         resolveCounter++;
                         returnIfNeeded();
                     } else {
@@ -246,13 +247,13 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                                 resolveCounter++;
                                 returnIfNeeded();
                             }, (error) => {
-                                console.log("Error at scrapePageList() → " + error)
+                                result += "Error at scrapePageList() → " + error;
                                 rejectCounter++;
                                 returnIfNeeded();
                             })
                     }
                 }, (error) => {
-                    console.log("Error at ORM.FindChecksum() → " + error)
+                    result += "Error at ORM.FindChecksum() → " + error;
                     rejectCounter++;
                     returnIfNeeded();
                 });
