@@ -8,11 +8,14 @@ const regionModel = require('../model/region');
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
 
 // Constants:
+const MAX_REQUESTS = 3;
+let current_requests = 0;
+
 let PAGE_LIMIT;
 const PAGE_TIMEOUT = 100000;
 const ADVERTS_PER_PAGE = 20;
-const REGION_NAMES = ['region-midtjylland', 'storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
-    'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
+const REGION_NAMES = ['faeroeerne', 'region-midtjylland', 'storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
+    'sydjylland', 'bornholm', 'skaane', 'groenland', 'udlandet'];
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
@@ -80,7 +83,7 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
         let result = '';
 
         // Helpermethod: To limit the amount of simultaneous running pages.
-        let returnIfNeeded = () => {
+        let settlePromise = () => {
             if (resolveCounter + rejectCounter === (toPage - fromPage))
                 if (rejectCounter > 0)
                     reject(result);
@@ -97,16 +100,16 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
                     scrapePageList(browser, pageURLsAndTitles, index)
                         .then(() => {
                             resolveCounter++;
-                            returnIfNeeded();
+                            settlePromise();
                         }, (error) => {
                             rejectCounter++;
                             result += "Error at scrapeRegion → scrapePageList: " + error + '\n';
-                            returnIfNeeded();
+                            settlePromise();
                         });
                 }, (error) => {
                     rejectCounter++;
                     result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
-                    returnIfNeeded();
+                    settlePromise();
                 })
         }
     });
@@ -221,7 +224,7 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
         let result = "";
 
             // Helpermethod: To limit the amount of simultaneous running pages.
-        let returnIfNeeded = () => {
+        let settlePromise = () => {
             if (resolveCounter + rejectCounter == length)
                 if (rejectCounter > 0)
                     reject(new Error(result));
@@ -229,42 +232,58 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                     resolve();
         };
 
-        for (let index = 0; index < length; index++) {
-                console.log('Run ' + (index + 1) + ': begun');
-                let url = titleUrlList.PAGE_URLS[index];
 
-                // Ignore pdf annoncer
-                if (url && url.endsWith(".pdf")) {
-                    resolveCounter++;
-                    returnIfNeeded();
-                    continue;
-                }
-
-                // Do not scrape if already in database
-                let sha1Checksum = sha1(`${url}`);
-
-
-                ORM.FindChecksum(sha1Checksum).then((findCount) => {
-                    if (findCount > 0) {
+        let scrapeWhenReady = function(index) {
+            let scrapeUrl = function(index) {
+                // Goto linked site and scrape it:
+                scrapePage(browser, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
+                    .then(() => {
                         resolveCounter++;
-                        returnIfNeeded();
-                    } else {
-                        // Goto linked site and scrape it:
-                        scrapePage(browser, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
-                            .then(() => {
-                                resolveCounter++;
-                                returnIfNeeded();
-                            }, (error) => {
-                                result += "Error at scrapePageList() → " + error;
-                                rejectCounter++;
-                                returnIfNeeded();
-                            })
-                    }
-                }, (error) => {
-                    result += "Error at ORM.FindChecksum() → " + error;
-                    rejectCounter++;
-                    returnIfNeeded();
-                });
+                        current_requests--;
+                        settlePromise();
+                    }, (error) => {
+                        result += "Error at scrapePageList() → " + error;
+                        rejectCounter++;
+                        current_requests--;
+                        settlePromise();
+                    })
+            };
+            if (current_requests-(resolveCounter + rejectCounter)<MAX_REQUESTS) {
+                current_requests++;
+                scrapeUrl(index);
+            } else {
+                setTimeout(() => scrapeWhenReady(index), 1000);
+            }
+        };
+
+        for (let index = 0; index < length; index++) {
+            console.log('Run ' + (index + 1) + ': begun');
+            let url = titleUrlList.PAGE_URLS[index]
+
+            // Ignore pdf annoncer
+            if (url && url.endsWith(".pdf")) {
+                resolveCounter++;
+                settlePromise();
+                continue;
+            }
+
+            // Do not scrape if already in database
+            let sha1Checksum = sha1(`${url}`);
+
+
+            ORM.FindChecksum(sha1Checksum).then((findCount) => {
+                if (findCount > 0) {
+                    resolveCounter++;
+                    settlePromise();
+                } else {
+                    scrapeWhenReady(index);
+                }
+            }, (error) => {
+                result += "Error at ORM.FindChecksum() → " + error;
+                rejectCounter++;
+                settlePromise();
+            })
+            scrapeWhenReady(index);
         }
     });
 }
