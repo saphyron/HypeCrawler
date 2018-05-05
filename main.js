@@ -24,7 +24,7 @@ async function main() {
         });
 
     //Print result
-    printDatabaseResult();
+    scraper.printDatabaseResult();
 
     // Clean up:
     browser.close();
