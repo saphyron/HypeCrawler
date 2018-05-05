@@ -248,7 +248,7 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                         settlePromise();
                     })
             };
-            if (current_requests-(resolveCounter + rejectCounter)<MAX_REQUESTS) {
+            if (current_requests<MAX_REQUESTS) {
                 current_requests++;
                 scrapeUrl(index);
             } else {
