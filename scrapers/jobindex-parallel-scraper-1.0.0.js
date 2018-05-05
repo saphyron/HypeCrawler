@@ -7,6 +7,9 @@ const regionModel = require('../model/region');
 // XPath selectors:
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
 
+//Puppeteer
+let pages = [];
+
 // Constants:
 const MAX_REQUESTS = 3;
 let current_requests = 0;
@@ -234,9 +237,9 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
 
 
         let scrapeWhenReady = function(index) {
-            let scrapeUrl = function(index) {
+            let scrapeIt = function() {
                 // Goto linked site and scrape it:
-                scrapePage(browser, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
+                scrapePage(pages[index], titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
                     .then(() => {
                         resolveCounter++;
                         current_requests--;
@@ -247,6 +250,19 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                         current_requests--;
                         settlePromise();
                     })
+            }
+            let scrapeUrl = function(index) {
+                // Create page if needed
+                if (!pages[index]) {
+                    browser.newPage().then((result) => {
+                        pages[index] = result;
+                        scrapeIt();
+                    }, (error) => {
+                        throw new Error("browser.newPage(): " + error)
+                    })
+                } else {
+                    scrapeIt();
+                }
             };
             if (current_requests<MAX_REQUESTS) {
                 current_requests++;
@@ -296,17 +312,17 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
  * @param {int} pageNum             - Indicator of advertisement list page number in region.
  * @returns {Promise<void>}
  */
-async function scrapePage(browser, title, url, index, pageNum) {
-        let newPage = undefined;
+async function scrapePage(newPage, title, url, index, pageNum) {
+        //let newPage = undefined;
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
 
         try {
             // Create a new tab, and visit provided url.
-            let newPage = await browser.newPage()
+            /*let newPage = await browser.newPage()
                 .catch((error) => {
                     throw new Error("browser.newPage(): " + error)
-                });
+                });*/
 
             await newPage.goto(url, {
                 timeout: PAGE_TIMEOUT
@@ -331,12 +347,12 @@ async function scrapePage(browser, title, url, index, pageNum) {
         }
 
         // Clean up the connection.
-        if (newPage)
+        /*if (newPage)
             await newPage.close()
             .catch((error) => {
                 if (!errorResult)
                     errorResult = console.log("Error closePage(): " + error)
-            });
+            });*/
 
         if (errorResult) {
             errorCounter++;
