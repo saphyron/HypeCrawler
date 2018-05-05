@@ -6,7 +6,7 @@ let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.0');
 async function main() {
     // Initialization:
     const browser = await puppeteer.launch({
-        headless: false
+        headless: true
     });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({ // Håndtering af korrekt aflæsning af dansk alfabet
