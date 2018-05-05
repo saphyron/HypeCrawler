@@ -283,7 +283,6 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                 rejectCounter++;
                 settlePromise();
             })
-            scrapeWhenReady(index);
         }
     });
 }
@@ -398,27 +397,31 @@ async function getNumPages(page, listLength) {
     }
 }
 
-async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
-    try {
-        if (annonceTitle === '') return;
+function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
+    return new Promise((resolve, reject) => {
         let sha1Checksum = sha1(`${annonceURL}`);
-        let callResult = await ORM.FindChecksum(sha1Checksum);
-
-        if (callResult === 0) {
-            let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
-                , annonceURL);
-            await ORM.InsertAnnonce(newAnnonceModel);
-            successCounter++;
-        }
-        else {
-            //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
-            existingCounter++;
-        }
-    } catch (error) {
-        console.log("Error at insertAnnonce() → " + error);
-    }
-
-
+        ORM.FindChecksum(sha1Checksum).then(function(result) {
+            if (result === 0) {
+                let newAnnonceModel = createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
+                    , annonceURL).then(function(newAnnonceModel) {
+                    ORM.InsertAnnonce(newAnnonceModel).then(function(result) {
+                        successCounter++;
+                        resolve(result);
+                    }, function(error) {
+                        //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
+                        existingCounter++;
+                        reject(new Error("Error at insertAnnonce() → " + error));
+                    });
+                }, function(error) {
+                    reject(new Error("Error at createAnnonceModel() → " + error));
+                })
+            } else {
+                resolve(result);
+            }
+        }, function(error) {
+            reject(new Error("Error at ORM.FindChecksum() → " + error));
+        });
+    });
 }
 
 async function createAnnonceModel(title, body, regionId = null, checksum, url) {
