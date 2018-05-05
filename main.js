@@ -6,7 +6,7 @@ let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.0');
 async function main() {
     // Initialization:
     const browser = await puppeteer.launch({
-        headless: true
+        headless: false
     });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({ // Håndtering af korrekt aflæsning af dansk alfabet
@@ -30,10 +30,11 @@ async function main() {
 
 }
 
-main()
-    .catch(() => {
-        console.log("Something went wrong in main!")
-    });
+main().then((result) => {
+    console.log("Succesful termination: "+result);
+}, (error) => {
+    console.log("Failed termination: "+error);
+});
 
 /**
  *
