@@ -31,7 +31,7 @@ const PATH_VARIATIONS = [
 ];
 
 // Counters:
-let successCounter = 0, existingCounter = 0, errorCounter = 0;
+let successTotalCounter = 0, existingTotalCounter = 0, errorTotalCounter = 0;
 let currentRegionObject = 0;
 let currentRegionID;
 
@@ -289,6 +289,7 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
 
             ORM.FindChecksum(sha1Checksum).then((findCount) => {
                 if (findCount > 0) {
+                    existingTotalCounter++;
                     resolveCounter++;
                     settlePromise();
                 } else {
@@ -296,6 +297,7 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                 }
             }, (error) => {
                 result += "Error at ORM.FindChecksum() → " + error;
+                errorTotalCounter++;
                 rejectCounter++;
                 settlePromise();
             })
@@ -355,7 +357,7 @@ async function scrapePage(newPage, title, url, index, pageNum) {
             });*/
 
         if (errorResult) {
-            errorCounter++;
+            errorTotalCounter++;
             console.log("Error at scrapePage("+url+") → " + errorResult);
         }
 
@@ -365,20 +367,20 @@ async function scrapePage(newPage, title, url, index, pageNum) {
 //<editor-fold desc="HelperMethods">
 
 function printDatabaseResult() {
-    let totalEntries = successCounter + existingCounter + errorCounter;
+    let totalEntries = successTotalCounter + existingTotalCounter + errorTotalCounter;
 
     console.log("\x1b[0m", '----------------------------------------------------------');
     console.log('\t\t\tJOBINDEX.DK SCRAPER STATISTIK');
     console.log("\x1b[0m", '----------------------------------------------------------');
-    console.log("\x1b[32m" + '\t\t\t' + successCounter + ' OUT OF ' + totalEntries
-        + ` (${(successCounter / totalEntries) * 100} %) --- INSERTS`);
+    console.log("\x1b[32m" + '\t\t\t' + successTotalCounter + ' OUT OF ' + totalEntries
+        + ` (${(successTotalCounter / totalEntries) * 100} %) --- INSERTS`);
     console.log("\x1b[0m", '----------------------------------------------------------');
 
-    console.log("\x1b[33m" + '\t\t\t' + existingCounter + ' OUT OF ' + totalEntries
-        + ` (${(existingCounter / totalEntries) * 100} %) --- EXISTS`);
+    console.log("\x1b[33m" + '\t\t\t' + existingTotalCounter + ' OUT OF ' + totalEntries
+        + ` (${(existingTotalCounter / totalEntries) * 100} %) --- EXISTS`);
     console.log("\x1b[0m", '----------------------------------------------------------');
-    console.log("\x1b[31m" + '\t\t\t' + errorCounter + ' OUT OF ' + totalEntries
-        + ` (${(errorCounter / totalEntries) * 100} %) --- ERRORS`);
+    console.log("\x1b[31m" + '\t\t\t' + errorTotalCounter + ' OUT OF ' + totalEntries
+        + ` (${(errorTotalCounter / totalEntries) * 100} %) --- ERRORS`);
 
     console.log("\x1b[0m", '----------------------------------------------------------');
 }
@@ -421,20 +423,23 @@ function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
                 let newAnnonceModel = createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
                     , annonceURL).then(function(newAnnonceModel) {
                     ORM.InsertAnnonce(newAnnonceModel).then(function(result) {
-                        successCounter++;
+                        successTotalCounter++;
                         resolve(result);
                     }, function(error) {
                         //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
-                        existingCounter++;
+                        errorTotalCounter++;
                         reject(new Error("Error at insertAnnonce() → " + error));
                     });
                 }, function(error) {
+                    errorTotalCounter++;
                     reject(new Error("Error at createAnnonceModel() → " + error));
                 })
             } else {
+                existingTotalCounter++;
                 resolve(result);
             }
         }, function(error) {
+            errorTotalCounter++;
             reject(new Error("Error at ORM.FindChecksum() → " + error));
         });
     });
