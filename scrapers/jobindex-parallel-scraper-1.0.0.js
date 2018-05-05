@@ -3,7 +3,6 @@ const ORM = require('../data/general-orm-1.0.0');
 const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
 const regionModel = require('../model/region');
-let puppeteer = require('puppeteer');
 
 // XPath selectors:
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
@@ -12,8 +11,8 @@ const TARGET_WEBSITE = 'https://www.jobindex.dk';
 let PAGE_LIMIT;
 const PAGE_TIMEOUT = 100000;
 const ADVERTS_PER_PAGE = 20;
-const REGION_NAMES = ['skaane', 'region-midtjylland', 'storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
-    'sydjylland', 'bornholm', 'groenland', 'faeroeerne', 'udlandet'];
+const REGION_NAMES = ['region-midtjylland', 'storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
+    'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
@@ -279,13 +278,8 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
  * @param {int} pageNum             - Indicator of advertisement list page number in region.
  * @returns {Promise<void>}
  */
-async function scrapePage(browser_outer, title, url, index, pageNum) {
-    // Initialization:
-    const browser = await puppeteer.launch({
-        headless: true
-    });
-
-    let newPage = undefined;
+async function scrapePage(browser, title, url, index, pageNum) {
+        let newPage = undefined;
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
 
@@ -295,10 +289,6 @@ async function scrapePage(browser_outer, title, url, index, pageNum) {
                 .catch((error) => {
                     throw new Error("browser.newPage(): " + error)
                 });
-            await newPage.setExtraHTTPHeaders({ // Håndtering af korrekt aflæsning af dansk alfabet
-                'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
-            });
-
 
             await newPage.goto(url, {
                 timeout: PAGE_TIMEOUT
@@ -322,20 +312,12 @@ async function scrapePage(browser_outer, title, url, index, pageNum) {
             errorResult = e;
         }
 
-        // Clean up the page
+        // Clean up the connection.
         if (newPage)
             await newPage.close()
             .catch((error) => {
                 if (!errorResult)
                     errorResult = console.log("Error closePage(): " + error)
-            });
-
-    // Clean up browser
-    if (browser)
-        await browser.close()
-            .catch((error) => {
-                if (!errorResult)
-                    errorResult = console.log("Error closeBrowser(): " + error)
             });
 
         if (errorResult) {
