@@ -482,5 +482,6 @@ async function initializeDatabase() {
 
 module.exports = {
     beginScraping: beginScraping,
-    initializeDatabase: initializeDatabase
+    initializeDatabase: initializeDatabase,
+    printDatabaseResult: printDatabaseResult
 };
