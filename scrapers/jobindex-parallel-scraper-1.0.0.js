@@ -7,12 +7,18 @@ const regionModel = require('../model/region');
 // XPath selectors:
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
 
+//Puppeteer
+let pages = [];
+
 // Constants:
+const MAX_REQUESTS = 3;
+let current_requests = 0;
+
 let PAGE_LIMIT;
-const PAGE_TIMEOUT = 600000;
+const PAGE_TIMEOUT = 100000;
 const ADVERTS_PER_PAGE = 20;
-const REGION_NAMES = ['storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
-    'region-midtjylland', 'sydjylland', 'bornholm', 'skaane', 'groenland', 'faeroeerne', 'udlandet'];
+const REGION_NAMES = ['faeroeerne', 'region-midtjylland', 'storkoebenhavn', 'nordsjaelland', 'region-sjaelland', 'fyn', 'region-nordjylland',
+    'sydjylland', 'bornholm', 'skaane', 'groenland', 'udlandet'];
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
@@ -25,7 +31,7 @@ const PATH_VARIATIONS = [
 ];
 
 // Counters:
-let successCounter = 0, existingCounter = 0, errorCounter = 0;
+let successTotalCounter = 0, existingTotalCounter = 0, errorTotalCounter = 0;
 let currentRegionObject = 0;
 let currentRegionID;
 
@@ -80,12 +86,12 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
         let result = '';
 
         // Helpermethod: To limit the amount of simultaneous running pages.
-        let returnIfNeeded = () => {
+        let settlePromise = () => {
             if (resolveCounter + rejectCounter === (toPage - fromPage))
                 if (rejectCounter > 0)
                     reject(result);
                 else
-                    resolve(result);
+                    resolve();
         };
 
         for (let index = fromPage; index < toPage; index++) {
@@ -97,16 +103,16 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
                     scrapePageList(browser, pageURLsAndTitles, index)
                         .then(() => {
                             resolveCounter++;
-                            returnIfNeeded();
-                        })
-                        .catch((value) => {
+                            settlePromise();
+                        }, (error) => {
                             rejectCounter++;
-                            returnIfNeeded();
-                            result += "Error at scrapeRegion → scrapePageList: " + value + '\n';
+                            result += "Error at scrapeRegion → scrapePageList: " + error + '\n';
+                            settlePromise();
                         });
-                })
-                .catch((value) => {
-                    result += "Error at scrapeRegion → getCurrentPageURLTitles: " + value + '\n';
+                }, (error) => {
+                    rejectCounter++;
+                    result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
+                    settlePromise();
                 })
         }
     });
@@ -213,23 +219,90 @@ async function tryPathVariationOnPage(page, titleClass, titleAttributes, urlClas
  * @param {int} pageNum - Current page number which we are searching.
  * @returns {Promise<void>}
  */
-async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
-    let titleUrlList = PageTitlesAndURLObject;
-    try {
-        for (let index = 0; index < titleUrlList.PAGE_TITLES.length; index++) {
+function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
+    return new Promise((resolve, reject) => {
+        let titleUrlList = PageTitlesAndURLObject;
+        let length = titleUrlList.PAGE_TITLES.length;
+        let resolveCounter = 0, rejectCounter = 0;
+        let result = "";
+
+            // Helpermethod: To limit the amount of simultaneous running pages.
+        let settlePromise = () => {
+            if (resolveCounter + rejectCounter == length)
+                if (rejectCounter > 0)
+                    reject(new Error(result));
+                else
+                    resolve();
+        };
+
+
+        let scrapeWhenReady = function(index) {
+            let scrapeIt = function() {
+                // Goto linked site and scrape it:
+                scrapePage(pages[index], titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
+                    .then(() => {
+                        resolveCounter++;
+                        current_requests--;
+                        settlePromise();
+                    }, (error) => {
+                        result += "Error at scrapePageList() → " + error;
+                        rejectCounter++;
+                        current_requests--;
+                        settlePromise();
+                    })
+            }
+            let scrapeUrl = function(index) {
+                // Create page if needed
+                if (!pages[index]) {
+                    browser.newPage().then((result) => {
+                        pages[index] = result;
+                        scrapeIt();
+                    }, (error) => {
+                        throw new Error("browser.newPage(): " + error)
+                    })
+                } else {
+                    scrapeIt();
+                }
+            };
+            if (current_requests<MAX_REQUESTS) {
+                current_requests++;
+                scrapeUrl(index);
+            } else {
+                setTimeout(() => scrapeWhenReady(index), 1000);
+            }
+        };
+
+        for (let index = 0; index < length; index++) {
             console.log('Run ' + (index + 1) + ': begun');
+            let url = titleUrlList.PAGE_URLS[index]
+
+            // Ignore pdf annoncer
+            if (url && url.endsWith(".pdf")) {
+                resolveCounter++;
+                settlePromise();
+                continue;
+            }
+
+            // Do not scrape if already in database
+            let sha1Checksum = sha1(`${url}`);
 
 
-            // Goto linked site and scrape it:
-            scrapePage(browser, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
-                .catch((error) => {
-                    throw new Error(error);
-                });
+            ORM.FindChecksum(sha1Checksum).then((findCount) => {
+                if (findCount > 0) {
+                    existingTotalCounter++;
+                    resolveCounter++;
+                    settlePromise();
+                } else {
+                    scrapeWhenReady(index);
+                }
+            }, (error) => {
+                result += "Error at ORM.FindChecksum() → " + error;
+                errorTotalCounter++;
+                rejectCounter++;
+                settlePromise();
+            })
         }
-    } catch (e) {
-        console.log("Error at scrapePageList() → " + e)
-
-    }
+    });
 }
 
 /**
@@ -241,61 +314,73 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
  * @param {int} pageNum             - Indicator of advertisement list page number in region.
  * @returns {Promise<void>}
  */
-async function scrapePage(browser, title, url, index, pageNum) {
-    try {
+async function scrapePage(newPage, title, url, index, pageNum) {
+        //let newPage = undefined;
+        let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
 
-        // Create a new tab, and visit provided url.
-        let newPage = await browser.newPage()
-            .catch((error) => {
-                throw new Error("browser.newPage(): " + error)
-            });
-        await newPage.goto(url, {
-            timeout: PAGE_TIMEOUT
-        })
-            .catch((error) => {
-                throw new Error("page.goto(): " + error);
+        try {
+            // Create a new tab, and visit provided url.
+            /*let newPage = await browser.newPage()
+                .catch((error) => {
+                    throw new Error("browser.newPage(): " + error)
+                });*/
+
+            await newPage.goto(url, {
+                timeout: PAGE_TIMEOUT
+            })
+                .catch((error) => {
+                    throw new Error("page.goto(): " + error);
+                });
+
+            // Filter the object and extract body as raw text.
+            let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
+                .catch((error) => {
+                    throw new Error("newPage.evaluate(): " + error)
+                });
+
+            // Insert or update annonce to database:
+            await insertAnnonce(title, bodyHTML, url).catch((error) => {
+                throw new Error("insertAnnonce("+url+"): " + error)
             });
 
-        // Filter the object and extract body as raw text.
-        let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
-            .catch((error) => {
-                throw new Error("newPage.evaluate(): " + error)
-            });
-
-        // Insert or update annonce to database:
-        await insertAnnonce(title, bodyHTML, url);
+        } catch(e) {
+            errorResult = e;
+        }
 
         // Clean up the connection.
-        await newPage.close()
+        /*if (newPage)
+            await newPage.close()
             .catch((error) => {
-                throw new Error("newPage.close(): " + error)
-            });
+                if (!errorResult)
+                    errorResult = console.log("Error closePage(): " + error)
+            });*/
+
+        if (errorResult) {
+            errorTotalCounter++;
+            console.log("Error at scrapePage("+url+") → " + errorResult);
+        }
 
         console.timeEnd("runTime page number " + pageNum + " annonce " + index);
-    } catch (e) {
-        errorCounter++;
-        console.log("Error at scrapePage() → " + e);
-    }
 }
 
 //<editor-fold desc="HelperMethods">
 
 function printDatabaseResult() {
-    let totalEntries = successCounter + existingCounter + errorCounter;
+    let totalEntries = successTotalCounter + existingTotalCounter + errorTotalCounter;
 
     console.log("\x1b[0m", '----------------------------------------------------------');
     console.log('\t\t\tJOBINDEX.DK SCRAPER STATISTIK');
     console.log("\x1b[0m", '----------------------------------------------------------');
-    console.log("\x1b[32m" + '\t\t\t' + successCounter + ' OUT OF ' + totalEntries
-        + ` (${(successCounter / totalEntries) * 100} %) --- INSERTS`);
+    console.log("\x1b[32m" + '\t\t\t' + successTotalCounter + ' OUT OF ' + totalEntries
+        + ` (${(successTotalCounter / totalEntries) * 100} %) --- INSERTS`);
     console.log("\x1b[0m", '----------------------------------------------------------');
 
-    console.log("\x1b[33m" + '\t\t\t' + existingCounter + ' OUT OF ' + totalEntries
-        + ` (${(existingCounter / totalEntries) * 100} %) --- EXISTS`);
+    console.log("\x1b[33m" + '\t\t\t' + existingTotalCounter + ' OUT OF ' + totalEntries
+        + ` (${(existingTotalCounter / totalEntries) * 100} %) --- EXISTS`);
     console.log("\x1b[0m", '----------------------------------------------------------');
-    console.log("\x1b[31m" + '\t\t\t' + errorCounter + ' OUT OF ' + totalEntries
-        + ` (${(errorCounter / totalEntries) * 100} %) --- ERRORS`);
+    console.log("\x1b[31m" + '\t\t\t' + errorTotalCounter + ' OUT OF ' + totalEntries
+        + ` (${(errorTotalCounter / totalEntries) * 100} %) --- ERRORS`);
 
     console.log("\x1b[0m", '----------------------------------------------------------');
 }
@@ -330,27 +415,34 @@ async function getNumPages(page, listLength) {
     }
 }
 
-async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
-    try {
-        if (annonceTitle === '') return;
+function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
+    return new Promise((resolve, reject) => {
         let sha1Checksum = sha1(`${annonceURL}`);
-        let callResult = await ORM.FindChecksum(sha1Checksum);
-
-        if (callResult.length === 0) {
-            let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
-                , annonceURL);
-            await ORM.InsertAnnonce(newAnnonceModel);
-            successCounter++;
-        }
-        else {
-            //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
-            existingCounter++;
-        }
-    } catch (error) {
-        console.log("Error at insertAnnonce() → " + error);
-    }
-
-
+        ORM.FindChecksum(sha1Checksum).then(function(result) {
+            if (result === 0) {
+                let newAnnonceModel = createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
+                    , annonceURL).then(function(newAnnonceModel) {
+                    ORM.InsertAnnonce(newAnnonceModel).then(function(result) {
+                        successTotalCounter++;
+                        resolve(result);
+                    }, function(error) {
+                        //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
+                        errorTotalCounter++;
+                        reject(new Error("Error at insertAnnonce() → " + error));
+                    });
+                }, function(error) {
+                    errorTotalCounter++;
+                    reject(new Error("Error at createAnnonceModel() → " + error));
+                })
+            } else {
+                existingTotalCounter++;
+                resolve(result);
+            }
+        }, function(error) {
+            errorTotalCounter++;
+            reject(new Error("Error at ORM.FindChecksum() → " + error));
+        });
+    });
 }
 
 async function createAnnonceModel(title, body, regionId = null, checksum, url) {
@@ -390,5 +482,6 @@ async function initializeDatabase() {
 
 module.exports = {
     beginScraping: beginScraping,
-    initializeDatabase: initializeDatabase
+    initializeDatabase: initializeDatabase,
+    printDatabaseResult: printDatabaseResult
 };

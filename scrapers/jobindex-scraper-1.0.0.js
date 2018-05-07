@@ -188,7 +188,7 @@ async function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
     let sha1Checksum = sha1(`${annonceTitle}${annonceURL}`);
     let callResult = await ORM.FindChecksum(sha1Checksum);
 
-    if (callResult.length === 0) {
+    if (callResult === 0) {
         let newAnnonceModel = await createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
             , annonceURL);
         await ORM.InsertAnnonce(newAnnonceModel);
