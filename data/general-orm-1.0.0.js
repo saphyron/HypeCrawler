@@ -14,6 +14,7 @@ const CONNECTION = MYSQL.createConnection({
 
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
+const CHECKSUM_CACHE = {};
 
 //<editor-fold desc="data-implementation">
 class ORM {
@@ -55,19 +56,64 @@ class ORM {
         });
     }
 
-    // SHA-1 selection:
+    /**
+     * Searches for the checksum in local cache.
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @param   {String}              incomingChecksum              Checksum to be searched for.
+     *
+     * @returns {Promise<String>}                                   Returns a checksum or empty string.
+     */
     static FindChecksum(incomingChecksum) {
-        return new Promise((resolve, reject)=> {
-            const query =
-                'SELECT count(*) as count ' +
-                `FROM ${ANNONCE_TABLE_NAME} ` +
-                'WHERE checksum = ? ' +
-                'LIMIT 1';
+        // Utility function to check if cache exists.
+        function isObjectEmpty(object) {
+            for(let key in object) {
+                if(object.hasOwnProperty(key))
+                    return false;
+            }
+            return true;
+        }
 
-            CONNECTION.query(query, [incomingChecksum], function (error, result) {
-                if (error) reject("Error at ORM.FindChecksum() → " + error);
-                resolve(result[0].count);
-            });
+        // Utility function to fill local cache with all current checksums from database.
+        function fillCache(cursor) {
+            for(let record of cursor) {
+                CHECKSUM_CACHE[record.checksum] = record.checksum;
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            // Checks if local cache is empty
+            if(isObjectEmpty(CHECKSUM_CACHE)) {
+                const query =
+                    'SELECT checksum ' +
+                    `FROM ${ANNONCE_TABLE_NAME} `;
+
+                CONNECTION.query(query, [incomingChecksum], function (error, result) {
+                    if (error) reject("Error at ORM.FindChecksum() → " + error);
+                    fillCache(result);
+                });
+            }
+
+            // Checks local cache for checksum
+            if (CHECKSUM_CACHE[incomingChecksum]) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+ /*           else {
+                const query =
+                    'SELECT count(*) as count ' +
+                    `FROM ${ANNONCE_TABLE_NAME} ` +
+                    'WHERE checksum = ? ' +
+                    'LIMIT 1';
+
+                CONNECTION.query(query, [incomingChecksum], function (error, result) {
+                    if (error) reject("Error at ORM.FindChecksum() → " + error);
+                    resolve(result[0].count);
+                });
+            }*/
         })
     }
 
@@ -100,6 +146,9 @@ class ORM {
                     newRecord.checksum, newRecord.url],
                 function (error, result) {
                     if (error) reject("Error at ORM.InsertAnnonce() → " + error);
+
+                    // Update local cache with new entry:
+                    CHECKSUM_CACHE[newRecord.checksum] = newRecord.checksum;
                     console.log('1 record inserted!');
                     resolve(result);
                 })

@@ -226,9 +226,9 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
         let resolveCounter = 0, rejectCounter = 0;
         let result = "";
 
-            // Helpermethod: To limit the amount of simultaneous running pages.
+        // utility method to limit the amount of simultaneous running pages.
         let settlePromise = () => {
-            if (resolveCounter + rejectCounter == length)
+            if (resolveCounter + rejectCounter === length)
                 if (rejectCounter > 0)
                     reject(new Error(result));
                 else
@@ -236,10 +236,11 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
         };
 
 
-        let scrapeWhenReady = function(index) {
-            let scrapeIt = function() {
+        let scrapeWhenReady = function (index) {
+            let scrapeIt = function () {
                 // Goto linked site and scrape it:
-                scrapePage(pages[index], titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
+                scrapePage(pages[index], titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1),
+                    pageNum)
                     .then(() => {
                         resolveCounter++;
                         current_requests--;
@@ -250,21 +251,26 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
                         current_requests--;
                         settlePromise();
                     })
-            }
-            let scrapeUrl = function(index) {
-                // Create page if needed
+            };
+
+
+            let scrapeUrl = function (index) {
+                // Create and add page to pagepool if needed
                 if (!pages[index]) {
-                    browser.newPage().then((result) => {
-                        pages[index] = result;
-                        scrapeIt();
-                    }, (error) => {
-                        throw new Error("browser.newPage(): " + error)
-                    })
+                    browser.newPage()
+                        .then((result) => {
+                            pages[index] = result;
+                            scrapeIt();
+                        }, (error) => {
+                            throw new Error("browser.newPage(): " + error)
+                        })
                 } else {
                     scrapeIt();
                 }
             };
-            if (current_requests<MAX_REQUESTS) {
+
+
+            if (current_requests < MAX_REQUESTS) {
                 current_requests++;
                 scrapeUrl(index);
             } else {
@@ -274,7 +280,7 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
 
         for (let index = 0; index < length; index++) {
             console.log('Run ' + (index + 1) + ': begun');
-            let url = titleUrlList.PAGE_URLS[index]
+            let url = titleUrlList.PAGE_URLS[index];
 
             // Ignore pdf annoncer
             if (url && url.endsWith(".pdf")) {
@@ -287,27 +293,28 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
             let sha1Checksum = sha1(`${url}`);
 
 
-            ORM.FindChecksum(sha1Checksum).then((findCount) => {
-                if (findCount > 0) {
-                    existingTotalCounter++;
-                    resolveCounter++;
+            ORM.FindChecksum(sha1Checksum)
+                .then((findCount) => {
+                    if (findCount) {
+                        existingTotalCounter++;
+                        resolveCounter++;
+                        settlePromise();
+                    } else {
+                        scrapeWhenReady(index);
+                    }
+                }, (error) => {
+                    result += "Error at ORM.FindChecksum() → " + error;
+                    errorTotalCounter++;
+                    rejectCounter++;
                     settlePromise();
-                } else {
-                    scrapeWhenReady(index);
-                }
-            }, (error) => {
-                result += "Error at ORM.FindChecksum() → " + error;
-                errorTotalCounter++;
-                rejectCounter++;
-                settlePromise();
-            })
+                })
         }
     });
 }
 
 /**
  * Scrapes the provided page and invokes database call.
- * @param {Object} browser          - Browser for access to creating a new page.
+ * @param {Object} newPage          - Browser for access to creating a new page.
  * @param {String} title            - Title of the linked page.
  * @param {String} url              - Url of linked page.
  * @param {int} index               - Indicator of advertisement position uin the list.
@@ -315,53 +322,53 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
  * @returns {Promise<void>}
  */
 async function scrapePage(newPage, title, url, index, pageNum) {
-        //let newPage = undefined;
-        let errorResult = undefined;
-        console.time("runTime page number " + pageNum + " annonce " + index);
+    //let newPage = undefined;
+    let errorResult = undefined;
+    console.time("runTime page number " + pageNum + " annonce " + index);
 
-        try {
-            // Create a new tab, and visit provided url.
-            /*let newPage = await browser.newPage()
-                .catch((error) => {
-                    throw new Error("browser.newPage(): " + error)
-                });*/
-
-            await newPage.goto(url, {
-                timeout: PAGE_TIMEOUT
-            })
-                .catch((error) => {
-                    throw new Error("page.goto(): " + error);
-                });
-
-            // Filter the object and extract body as raw text.
-            let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
-                .catch((error) => {
-                    throw new Error("newPage.evaluate(): " + error)
-                });
-
-            // Insert or update annonce to database:
-            await insertAnnonce(title, bodyHTML, url).catch((error) => {
-                throw new Error("insertAnnonce("+url+"): " + error)
-            });
-
-        } catch(e) {
-            errorResult = e;
-        }
-
-        // Clean up the connection.
-        /*if (newPage)
-            await newPage.close()
+    try {
+        // Create a new tab, and visit provided url.
+        /*let newPage = await browser.newPage()
             .catch((error) => {
-                if (!errorResult)
-                    errorResult = console.log("Error closePage(): " + error)
+                throw new Error("browser.newPage(): " + error)
             });*/
 
-        if (errorResult) {
-            errorTotalCounter++;
-            console.log("Error at scrapePage("+url+") → " + errorResult);
-        }
+        await newPage.goto(url, {
+            timeout: PAGE_TIMEOUT
+        })
+            .catch((error) => {
+                throw new Error("page.goto(): " + error);
+            });
 
-        console.timeEnd("runTime page number " + pageNum + " annonce " + index);
+        // Filter the object and extract body as raw text.
+        let bodyHTML = await newPage.evaluate(() => document.body.outerHTML)
+            .catch((error) => {
+                throw new Error("newPage.evaluate(): " + error)
+            });
+
+        // Insert or update annonce to database:
+        await insertAnnonce(title, bodyHTML, url).catch((error) => {
+            throw new Error("insertAnnonce(" + url + "): " + error)
+        });
+
+    } catch (e) {
+        errorResult = e;
+    }
+
+    // Clean up the connection.
+    /*if (newPage)
+        await newPage.close()
+        .catch((error) => {
+            if (!errorResult)
+                errorResult = console.log("Error closePage(): " + error)
+        });*/
+
+    if (errorResult) {
+        errorTotalCounter++;
+        console.log("Error at scrapePage(" + url + ") → " + errorResult);
+    }
+
+    console.timeEnd("runTime page number " + pageNum + " annonce " + index);
 }
 
 //<editor-fold desc="HelperMethods">
@@ -418,30 +425,34 @@ async function getNumPages(page, listLength) {
 function insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
     return new Promise((resolve, reject) => {
         let sha1Checksum = sha1(`${annonceURL}`);
-        ORM.FindChecksum(sha1Checksum).then(function(result) {
-            if (result === 0) {
-                let newAnnonceModel = createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum
-                    , annonceURL).then(function(newAnnonceModel) {
-                    ORM.InsertAnnonce(newAnnonceModel).then(function(result) {
-                        successTotalCounter++;
-                        resolve(result);
-                    }, function(error) {
-                        //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
-                        errorTotalCounter++;
-                        reject(new Error("Error at insertAnnonce() → " + error));
-                    });
-                }, function(error) {
-                    errorTotalCounter++;
-                    reject(new Error("Error at createAnnonceModel() → " + error));
-                })
-            } else {
+
+        ORM.FindChecksum(sha1Checksum)
+            .then((result) => {
+                if (!result)
+                    return createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum, annonceURL)
+                        .catch((error) => {
+                            throw new Error("Already in database!" + error);
+                        });
                 existingTotalCounter++;
+                resolve();
+            })
+            .then((newAnnonceModel) => {
+                if (newAnnonceModel)
+                    return ORM.InsertAnnonce(newAnnonceModel)
+                        .catch((error) => {
+                            throw new Error("annonceModel failed" + error);
+                        });
+
+            })
+            .then((result) => {
+                successTotalCounter++;
                 resolve(result);
-            }
-        }, function(error) {
-            errorTotalCounter++;
-            reject(new Error("Error at ORM.FindChecksum() → " + error));
-        });
+            })
+            .catch((error) => {
+                //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
+                errorTotalCounter++;
+                reject(new Error("Error at insertAnnonce() → " + error));
+            });
     });
 }
 
