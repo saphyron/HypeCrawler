@@ -106,7 +106,7 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
                 .then((pageURLsAndTitles) => {
                     return scrapePageList(browser, pageURLsAndTitles, index)
                 })
-                .then((result) => {
+                .then(() => {
                     resolveCounter++;
                     settlePromise();
                 }, (error) => {
@@ -118,6 +118,9 @@ async function scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPag
                     rejectCounter++;
                     result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
                     settlePromise();
+                })
+                .finally(() => {
+
                 });
         }
     });
@@ -256,45 +259,40 @@ function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
             // Do not scrape if already in database
             let sha1Checksum = sha1(`${url}`);
 
-
             ORM.FindChecksum(sha1Checksum)
-                .then((findCount) => {
-                    if (findCount) {
+                .then((returnedChecksum) => {
+                    if (returnedChecksum) {
                         existingTotalCounter++;
                         resolveCounter++;
                         settlePromise(index);
-                    } else {
+                    }
+                    else {
                         PAGE_POOL.reservePage(titleUrlList.PAGE_URLS[index])
                             .then((page) => {
-                                // Goto linked site and scrape it:
-                                scrapePage(page, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index], (index + 1),
-                                    pageNum)
-                                    .then(() => {
-                                        // Free resources
-                                        resolveCounter++;
-                                        current_requests--;
-                                        settlePromise(index);
-                                    })
-                                    .catch((error) => {
-                                        // Cancel request and free resources
-                                        page += "Error at scrapePageList() → " + error;
-                                        rejectCounter++;
-                                        current_requests--;
-                                        settlePromise(index);
-                                    });
-
-                            }, (error) => {
-                                throw new Error("browser.newPage(): " + error)
+                                // Go to linked site and scrape it:
+                                return scrapePage(page, titleUrlList.PAGE_TITLES[index], titleUrlList.PAGE_URLS[index],
+                                    (index + 1), pageNum)
                             })
+                            .then(() => {
+                                // Update resolves
+                                resolveCounter++;
+                            })
+                            .catch((error) => {
+                                // Update rejects and throw error
+                                rejectCounter++;
+                                throw new Error("Error at scrapePageList() → " + error);
+                            })
+                            .finally(() => {
+                                // Free resources
+                                current_requests--;
+                                settlePromise(index);
+                            });
+
                     }
-                }, (error) => {
-                    result += "Error at ORM.FindChecksum() → " + error;
-                    errorTotalCounter++;
-                    rejectCounter++;
-                    settlePromise(index);
+
                 })
         }
-    });
+    })
 }
 
 /**

@@ -10,33 +10,34 @@ class Pagepool {
 
     reservePage(url) {
         return new Promise((resolve, reject) => {
-            if (this.PAGE_POOL.length < MAX_REQUESTS) {
-                this.browser.newPage().then((result) => {
-                    this.PAGE_POOL[this.PAGE_POOL.length] = {page: result, url: url};
-                    resolve(result);
-                })
+            if (this.PAGE_POOL.length < MAX_REQUESTS) { // Check if there is room for another page
+                this.browser.newPage()
+                    .then((newPageObject) => {
+                        this.PAGE_POOL[this.PAGE_POOL.length] = {page: newPageObject, url: url};
+                        resolve(newPageObject);
+                    })
             }
             else {
-                for (let page of this.PAGE_POOL) {
+                for (let page of this.PAGE_POOL) { // if pool is full, find empty page.
                     if (page.url === undefined) {
                         page.url = url;
                         resolve(page.page);
                         return;
                     }
                 }
-                REQUEST_QUEUE.push({url, resolve, reject})
+                REQUEST_QUEUE.push({url: url, resolve: resolve, reject: reject}) // no empty page found, add to queue.
             }
         })
     }
 
     releasePage(url) {
         for (let page of this.PAGE_POOL) {
-            if (page.url === url) {
+            if (page.url === url) { // Release the page object handling the given url
                 page.url = undefined;
-                if (REQUEST_QUEUE.length > 0) {
-                    let object = REQUEST_QUEUE.pop();
+                if (REQUEST_QUEUE.length > 0) { // Add a page from queue to pagepool
+                    let object = REQUEST_QUEUE.shift(); // FIFO
                     page.url = object.url;
-                    page.resolve(page.page);
+                    object.resolve(page.page);
                 }
             }
         }

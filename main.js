@@ -12,10 +12,10 @@ async function main() {
     });
 
     // let startTime = Date.now();
-/*    await scraper.initializeDatabase()
+    await scraper.initializeDatabase()
         .catch((error) => {
             console.log("Error at main → initializeDatabase(): " + error);
-        });*/
+        });
 
     await scraper.beginScraping(page, browser, 1)
         .catch((error) => {
