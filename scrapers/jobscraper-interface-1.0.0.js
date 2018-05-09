@@ -44,7 +44,7 @@ class JocscraperTemplate {
      * Entry-point method used by main-method for access to the scraper.
      *
      * @since       1.0.0
-     * @access      private
+     * @access      public
      *
      * @param {Object}              page                    Represents a tab in Chromium browser
      * @param {Object}              browser                 the Chromium browser
@@ -54,7 +54,7 @@ class JocscraperTemplate {
      */
     async beginScraping(page, browser, pageLimit) {
         this.PAGE_LIMIT = pageLimit;
-        this.PAGE_POOL = new Pagepool(browser);
+        this.PAGE_POOL = new Pagepool(browser, 3);
         try {
             for (let [key, value] of this.REGION_NAMES) {
                 console.log(key.toString());
@@ -104,7 +104,7 @@ class JocscraperTemplate {
             let resolveCounter = 0, rejectCounter = 0;
             let result = '';
 
-            // Helpermethod: To limit the amount of simultaneous running pages.
+            // Utility method to limit the amount of simultaneous running pages.
             let settlePromise = () => {
                 if (resolveCounter + rejectCounter === (toPage - fromPage))
                     if (rejectCounter > 0)
@@ -143,6 +143,10 @@ class JocscraperTemplate {
 
     /**
      * Gets a list of title/url pairs.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
      * @param {Object}              page                    current page to extract titles and urls from.
      * @param {String}              PAGE_SELECTOR           formatted url to the page conataining the advertisement list.
      *
@@ -321,6 +325,10 @@ class JocscraperTemplate {
 
     /**
      * Scrapes the provided page and invokes database call.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
      * @param {Object}              page                    browser tab from pagePool.
      * @param {String}              title                   Title of the linked page.
      * @param {String}              url                     Url of linked page.
@@ -368,7 +376,12 @@ class JocscraperTemplate {
 
 
 //<editor-fold desc="HelperMethods">
-
+    /**
+     * Prints the statistics of the scrapers run.
+     *
+     * @since       1.0.0
+     * @access      private
+     */
     printDatabaseResult() {
         let totalEntries = successTotalCounter + existingTotalCounter + errorTotalCounter;
 
@@ -390,6 +403,10 @@ class JocscraperTemplate {
 
     /**
      * Extracts the text containing the innerHTML which holds the number of pages in the region.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
      * @param page
      * @param listLength
      * @returns {Promise<number>}
@@ -418,14 +435,26 @@ class JocscraperTemplate {
         }
     }
 
-    insertAnnonce(annonceTitle, rawBodyText, annonceURL) {
+    /**
+     * Inserts the given data into the database as a Annonce model.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @param {String}              annonceTitle            title of the advertisement
+     * @param {String}              rawHTMLText             raw advertisement html
+     * @param {String}              annonceURL              url pointing to the advertisement
+     *
+     * @returns {Promise<any>}
+     */
+    insertAnnonce(annonceTitle, rawHTMLText, annonceURL) {
         return new Promise((resolve, reject) => {
             let sha1Checksum = sha1(`${annonceURL}`);
 
             ORM.FindChecksum(sha1Checksum)
                 .then((result) => {
                     if (!result)
-                        return this.createAnnonceModel(annonceTitle, rawBodyText, currentRegionID, sha1Checksum, annonceURL)
+                        return this.createAnnonceModel(annonceTitle, rawHTMLText, currentRegionID, sha1Checksum, annonceURL)
                             .catch((error) => {
                                 throw new Error("Already in database!" + error);
                             });
@@ -452,6 +481,20 @@ class JocscraperTemplate {
         });
     }
 
+    /**
+     * Converts data into Annonce model
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @param {String}              title                   title of advertisement
+     * @param {String}              body                    html body of advertisement
+     * @param {int}                 regionId                region of advertisement
+     * @param {String}              checksum                url converted to SHA-1 checksum
+     * @param {String}              url                     url of advertisement
+     *
+     * @returns {Promise<any>}
+     */
     async createAnnonceModel(title, body, regionId = null, checksum, url) {
         return new Promise((resolve, reject) => {
             try {
@@ -472,15 +515,12 @@ class JocscraperTemplate {
 
     async initializeDatabase() {
         try {
-            await
-                ORM.CreateRegionTable();
-            await
-                ORM.CreateAnnonceTable();
+            await ORM.CreateRegionTable();
+            await ORM.CreateAnnonceTable();
 
             // Insert the regions:
-            for (let element of REGION_NAMES) {
-                await
-                    ORM.InsertRegion(new regionModel(element));
+            for (let element of this.REGION_NAMES) {
+                await ORM.InsertRegion(new regionModel(element));
             }
         } catch (error) {
             console.log("Error at initializeDatabase() → " + error);
@@ -492,13 +532,16 @@ class JocscraperTemplate {
 
 
 //<editor-fold desc="Utility Classes">
+/**
+ * Class representing the pool of pages and associated handles available to the scraper.
+ */
 class Pagepool {
 
-    constructor(browser) {
+    constructor(browser, maxRequests) {
         this.browser = browser;
+        this.MAX_REQUESTS = maxRequests;
         this.PAGE_POOL = [];
         this.REQUEST_QUEUE = [];
-        this.MAX_REQUESTS = 3;
     }
 
     reservePage(url) {
