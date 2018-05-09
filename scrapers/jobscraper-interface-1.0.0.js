@@ -120,22 +120,20 @@ class JocscraperTemplate {
                 this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
                     .then((pageURLsAndTitles) => {
                         return this.scrapePageList(browser, pageURLsAndTitles, index)
+                            .catch((error) => {
+                                rejectCounter++;
+                                result += "Error at scrapeRegion → scrapePageList: " + error + '\n';
+                            })
                     })
                     .then(() => {
                         resolveCounter++;
-                        settlePromise();
-                    }, (error) => {
-                        rejectCounter++;
-                        result += "Error at scrapeRegion → scrapePageList: " + error + '\n';
-                        settlePromise();
                     })
                     .catch((error) => {
                         rejectCounter++;
                         result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
-                        settlePromise();
                     })
                     .finally(() => {
-
+                        settlePromise();
                     });
             }
         });
