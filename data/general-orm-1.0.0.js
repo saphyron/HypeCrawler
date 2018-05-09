@@ -5,10 +5,10 @@ const MYSQL = require('mysql');
 
 //<editor-fold desc="MySQL-connection">
 const CONNECTION = MYSQL.createConnection({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE
+    host: process.env.MYSQL_HOST_TEST,
+    user: process.env.MYSQL_USER_TEST,
+    password: process.env.MYSQL_PASSWORD_TEST,
+    database: process.env.MYSQL_DATABASE_TEST
 });
 //</editor-fold>
 
@@ -102,18 +102,6 @@ class ORM {
             } else {
                 resolve(false);
             }
- /*           else {
-                const query =
-                    'SELECT count(*) as count ' +
-                    `FROM ${ANNONCE_TABLE_NAME} ` +
-                    'WHERE checksum = ? ' +
-                    'LIMIT 1';
-
-                CONNECTION.query(query, [incomingChecksum], function (error, result) {
-                    if (error) reject("Error at ORM.FindChecksum() → " + error);
-                    resolve(result[0].count);
-                });
-            }*/
         })
     }
 
