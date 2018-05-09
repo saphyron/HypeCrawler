@@ -1,5 +1,5 @@
 let puppeteer = require('puppeteer');
-let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.1');
+let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.2');
 
 async function main() {
     // Initialization:
@@ -12,10 +12,10 @@ async function main() {
     });
 
     // let startTime = Date.now();
-/*    await scraper.initializeDatabase()
+    await scraper.initializeDatabase()
         .catch((error) => {
             console.log("Error at main → initializeDatabase(): " + error);
-        });*/
+        });
 
     await scraper.beginScraping(page, browser, 1)
         .catch((error) => {

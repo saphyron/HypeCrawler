@@ -27,11 +27,11 @@ class ORM {
                 'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
                 'TITLE TEXT, ' +
                 'BODY MEDIUMBLOB, ' +
-                'REGION_ID INTEGER, ' +
+                'region_id INTEGER, ' +
                 'TIMESTAMP DATETIME,' +
                 'CHECKSUM TEXT, ' +
                 'URL TEXT, ' +
-                'FOREIGN KEY(REGION_ID) REFERENCES REGION(ID))';
+                'FOREIGN KEY(region_id) REFERENCES region(region_id))';
 
             CONNECTION.query(query, function (error, result) {
                 if (error) reject("Error at ORM.CreateAnnonceTable() → " + error);
@@ -44,7 +44,7 @@ class ORM {
     static CreateRegionTable() {
         return new Promise((resolve, reject) => {
             const query = `CREATE TABLE IF NOT EXISTS ${REGION_TABLE_NAME} (` +
-                'ID INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
+                'region_id INTEGER AUTO_INCREMENT PRIMARY KEY, ' +
                 'NAME VARCHAR(255) UNIQUE' +
                 ');';
 
