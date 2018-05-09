@@ -1,5 +1,5 @@
 let puppeteer = require('puppeteer');
-let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.1');
+let scraper = require('./scrapers/jobindex-parallel-scraper-1.0.2');
 
 async function main() {
     // Initialization:
