@@ -8,7 +8,7 @@ const regionModel = require('../model/region');
 const ADVERTS_PER_PAGE = 20;
 
 // Counters:
-let successTotalCounter = 0, existingTotalCounter = 0, errorTotalCounter = 0;
+
 let currentRegionObject = 0;
 let currentRegionID;
 let current_requests = 0;
@@ -18,17 +18,24 @@ let current_requests = 0;
  */
 class JocscraperTemplate {
 
+    successTotalCounter = 0;
+    existingTotalCounter = 0;
+    errorTotalCounter = 0;
+
+    PAGE_POOL = undefined;
+    PAGE_LIMIT = undefined;
+
     /**
      * Constructor for JobscraperTemplate.
      * @class JobscraperTemplate
      *
-     * @param {String}              targetWebsite           website to be scraped (ex. https://www.xyz.ab)
-     * @param {Map<key, value>}     regionNames             map object to conform to database standard
-     * @param {String}              regionNames.key         name of database entry
-     * @param {String}              regionNames.value       string containing path to corresponding region
-     * @param {Object}              xPathVariations         object containing HTML classes and paths to advertisements
-     * @param {String}              numberRegex             regex to filter the text containing the number of pages
-     * @param {int}                 pageTimeout             integer setting timeout-time for page visits
+     * @param {String}              targetWebsite           Website to be scraped. (format: https://www.xyz.ab)
+     * @param {Map<key, value>}     regionNames             Map object to conform to database standard.
+     * @param {String}              regionNames.key         Name of database entry.
+     * @param {String}              regionNames.value       String containing path to corresponding region.
+     * @param {Object}              xPathVariations         Object containing HTML classes and paths to advertisements.
+     * @param {String}              numberRegex             Regex to filter the text containing the number of pages.
+     * @param {int}                 pageTimeout             Integer setting timeout-time for page visits.
      */
     constructor(targetWebsite, regionNames, xPathVariations, numberRegex, pageTimeout) {
         this.TARGET_WEBSITE = targetWebsite;
@@ -36,25 +43,27 @@ class JocscraperTemplate {
         this.PATH_VARIATIONS = xPathVariations;
         this.PAGE_NUMBER_TEXT_REGEX = numberRegex;
         this.PAGE_TIMEOUT = pageTimeout;
-        this.PAGE_POOL = undefined;
-        this.PAGE_LIMIT = undefined;
+
+
+        //this.errorTotalCounter = 0;
     }
 
     /**
-     * Entry-point method used by main-method for access to the scraper.
+     * Entry-point method used by main-module for access to the scraper.
      *
      * @since       1.0.0
      * @access      public
      *
-     * @param {Object}              page                    Represents a tab in Chromium browser
-     * @param {Object}              browser                 the Chromium browser
-     * @param {int}                 pageLimit               limit on how many pages is queued
+     * @param {Object}              page                    Represents a tab in Chromium browser.
+     * @param {Object}              browser                 The Chromium browser object.
+     * @param {int}                 pageLimit               Limit on how many pages is queued at a time.
+     * @param {int}                 poolLimit               Size of pool for simultaneous running pages.
      *
      * @returns {Promise<void>}
      */
-    async beginScraping(page, browser, pageLimit) {
+    async beginScraping(page, browser, pageLimit, poolLimit) {
         this.PAGE_LIMIT = pageLimit;
-        this.PAGE_POOL = new Pagepool(browser, 3);
+        this.PAGE_POOL = new Pagepool(browser, poolLimit);
         try {
             for (let [key, value] of this.REGION_NAMES) {
                 console.log(key.toString());
@@ -90,12 +99,12 @@ class JocscraperTemplate {
      * @since       1.0.0
      * @access      private
      *
-     * @param {Object}              page                    page tab created in browser.
-     * @param {Object}              browser                 browser created in main.
-     * @param {String}              REGION_PAGE_SELECTOR    generic XPath to website handle that contains all
-     *                                                      advertisement lists.
-     * @param {int}                 fromPage                current page number.
-     * @param {int}                 toPage                  upper limit for parallel scraper.
+     * @param {Object}              page                    Page tab created in browser.
+     * @param {Object}              browser                 Browser created in main.
+     * @param {String}              REGION_PAGE_SELECTOR    Generic XPath to website handle that contains all.
+     *                                                      Advertisement lists.
+     * @param {int}                 fromPage                Current page number.
+     * @param {int}                 toPage                  Upper limit for parallel scraper.
      *
      * @returns {Promise<String>}                           a string to indicate if any errors have been thrown.
      */
@@ -145,8 +154,8 @@ class JocscraperTemplate {
      * @since       1.0.0
      * @access      private
      *
-     * @param {Object}              page                    current page to extract titles and urls from.
-     * @param {String}              PAGE_SELECTOR           formatted url to the page conataining the advertisement list.
+     * @param {Object}              page                    Current page to extract titles and urls from.
+     * @param {String}              PAGE_SELECTOR           Formatted url to the page conataining the advertisement list.
      *
      * @returns {Promise<{PAGE_TITLES: Array, PAGE_URLS: Array}>} - Lists with titles and urls.
      */
@@ -169,6 +178,10 @@ class JocscraperTemplate {
                 titles = candidateObj.titleList;
                 urls = candidateObj.urlList;
                 counter++;
+            }
+
+            if(titles.length === 0) {
+                throw new Error("No valid path found!");
             }
 
             return {PAGE_TITLES: titles, PAGE_URLS: urls}; // TODO Håndter object i scrapePageListV3
@@ -289,7 +302,7 @@ class JocscraperTemplate {
 
                 ORM.FindChecksum(sha1Checksum)
                     .then((returnedChecksum) => {
-                        if (returnedChecksum) {
+                        if (returnedChecksum) { // advertisement exists
                             existingTotalCounter++;
                             resolveCounter++;
                             settlePromise(index);
@@ -327,7 +340,7 @@ class JocscraperTemplate {
      * @since       1.0.0
      * @access      private
      *
-     * @param {Object}              page                    browser tab from pagePool.
+     * @param {Object}              page                    Browser tab from pagePool.
      * @param {String}              title                   Title of the linked page.
      * @param {String}              url                     Url of linked page.
      * @param {int}                 index                   Indicator of advertisement position in the list.
@@ -381,20 +394,20 @@ class JocscraperTemplate {
      * @access      private
      */
     printDatabaseResult() {
-        let totalEntries = successTotalCounter + existingTotalCounter + errorTotalCounter;
+        let totalEntries = this.successTotalCounter + this.existingTotalCounter + this.errorTotalCounter;
 
         console.log("\x1b[0m", '----------------------------------------------------------');
         console.log(`\t\t\t${this.TARGET_WEBSITE} SCRAPER STATISTIK`);
         console.log("\x1b[0m", '----------------------------------------------------------');
-        console.log("\x1b[32m" + '\t\t\t' + successTotalCounter + ' OUT OF ' + totalEntries
-            + ` (${Math.round(successTotalCounter / totalEntries) * 100} %) --- INSERTS`);
+        console.log("\x1b[32m" + '\t\t\t' + this.successTotalCounter + ' OUT OF ' + totalEntries
+            + ` (${Math.round(this.successTotalCounter / totalEntries) * 100} %) --- INSERTS`);
         console.log("\x1b[0m", '----------------------------------------------------------');
 
-        console.log("\x1b[33m" + '\t\t\t' + existingTotalCounter + ' OUT OF ' + totalEntries
-            + ` (${Math.round(existingTotalCounter / totalEntries) * 100} %) --- EXISTS`);
+        console.log("\x1b[33m" + '\t\t\t' + this.existingTotalCounter + ' OUT OF ' + totalEntries
+            + ` (${Math.round(this.existingTotalCounter / totalEntries) * 100} %) --- EXISTS`);
         console.log("\x1b[0m", '----------------------------------------------------------');
-        console.log("\x1b[31m" + '\t\t\t' + errorTotalCounter + ' OUT OF ' + totalEntries
-            + ` (${Math.round(errorTotalCounter / totalEntries) * 100} %) --- ERRORS`);
+        console.log("\x1b[31m" + '\t\t\t' + this.errorTotalCounter + ' OUT OF ' + totalEntries
+            + ` (${Math.round(this.errorTotalCounter / totalEntries) * 100} %) --- ERRORS`);
 
         console.log("\x1b[0m", '----------------------------------------------------------');
     }
@@ -412,7 +425,6 @@ class JocscraperTemplate {
     async getNumPages(page, listLength) {
         try {
             const TEXT_FILTER_REGEX = /[^0-9]/g;
-            const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
             const ADVERTS_PER_PAGE = listLength;
 
             let advertContent = await page.$x(this.PAGE_NUMBER_TEXT_REGEX)                         // Collecting the part.
@@ -456,7 +468,7 @@ class JocscraperTemplate {
                             .catch((error) => {
                                 throw new Error("Already in database!" + error);
                             });
-                    existingTotalCounter++;
+                    this.existingTotalCounter++;
                     resolve();
                 })
                 .then((newAnnonceModel) => {
@@ -468,19 +480,19 @@ class JocscraperTemplate {
 
                 })
                 .then((result) => {
-                    successTotalCounter++;
+                    this.successTotalCounter++;
                     resolve(result);
                 })
                 .catch((error) => {
                     //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
-                    errorTotalCounter++;
+                    this.errorTotalCounter++;
                     reject(new Error("Error at insertAnnonce() → " + error));
                 });
         });
     }
 
     /**
-     * Converts data into Annonce model
+     * Converts raw data into Annonce model
      *
      * @since       1.0.0
      * @access      private
@@ -564,6 +576,14 @@ class Pagepool {
         })
     }
 
+    /**
+     * Releases a page from the page pool.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @param {String}              url                     url to be released
+     */
     releasePage(url) {
         for (let page of this.PAGE_POOL) {
             if (page.url === url) { // Release the page object handling the given url

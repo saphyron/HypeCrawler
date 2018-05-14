@@ -130,6 +130,10 @@ class ORM {
             let query = `INSERT INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL) ` +
                 'VALUES (?, ?, ?, ?, ?, ?)';
 
+ /*           if(CONNECTION.state === 'disconnected'){
+                return CONNECTION.respond(null, { status: 'fail', message: 'server down'});
+            }*/
+
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
                     newRecord.checksum, newRecord.url],
                 function (error, result) {

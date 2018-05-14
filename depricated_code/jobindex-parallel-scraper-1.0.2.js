@@ -3,7 +3,7 @@ const ORM = require('../data/general-orm-1.0.0');
 const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
 const regionModel = require('../model/region');
-const pagePool = require('../model/pagepool');
+const pagePool = require('./pagepool');
 
 
 // XPath selectors:

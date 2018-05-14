@@ -62,8 +62,8 @@ async function beginScraping(page, browser, pageLimit) {
 
             const NUM_PAGES = await getNumPages(page, ADVERTS_PER_PAGE);
 
-            for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += PAGE_LIMIT) {
-                await scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber + PAGE_LIMIT);
+            for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += pageLimit) {
+                await scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber + pageLimit);
             }
         }
     } catch (error) {
@@ -234,7 +234,6 @@ async function scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
         }
     } catch (e) {
         console.log("Error at scrapePageList() → " + e)
-
     }
 }
 
