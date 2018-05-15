@@ -133,12 +133,11 @@ class JocscraperTemplate {
                     })
                     .then(() => {
                         resolveCounter++;
+                        settlePromise();
                     })
                     .catch((error) => {
                         rejectCounter++;
                         result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
-                    })
-                    .finally(() => {
                         settlePromise();
                     });
             }
@@ -313,17 +312,16 @@ class JocscraperTemplate {
                                 })
                                 .then(() => {
                                     // Update resolves
+                                    current_requests--;
                                     resolveCounter++;
+                                    settlePromise(index);
                                 })
                                 .catch((error) => {
                                     // Update rejects and throw error
-                                    rejectCounter++;
-                                    throw new Error("Error at scrapePageList() → " + error);
-                                })
-                                .finally(() => {
-                                    // Free resources
                                     current_requests--;
+                                    rejectCounter++;
                                     settlePromise(index);
+                                    throw new Error("Error at scrapePageList() → " + error);
                                 });
                         }
                     })
