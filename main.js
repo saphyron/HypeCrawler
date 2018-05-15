@@ -1,7 +1,5 @@
 let puppeteer = require('puppeteer');
-let scraper = require('./scrapers/careerjet-parallel-scraper-1.0.0');
-let scraperInterface = require('./scrapers/jobscraper-interface-1.0.0');
-let scraperClass = require('./scrapers/careerjet-scraper');
+let scraperClass = require('./scrapers/jobindex-scraper-1.0.0');
 
 async function main() {
     // Initialization:
@@ -13,7 +11,7 @@ async function main() {
         'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
     });
 
-    let jobindexScraper = new scraperClass();
+    let scraper = new scraperClass();
     // let startTime = Date.now();
 /*    await jobindexScraper.initializeDatabase()
         .catch((error) => {
@@ -21,7 +19,7 @@ async function main() {
         });*/
 
     //<editor-fold desc="TestArea for interface">
-    await jobindexScraper.beginScraping(page, browser, 1, 3)
+    await scraper.beginScraping(page, browser, 1, 3)
         .catch((error) => {
             console.log("Error at main → beginScraping(): " + error);
 
@@ -34,7 +32,7 @@ async function main() {
             });*/
 
     //Print result
-    jobindexScraper.printDatabaseResult();
+    scraper.printDatabaseResult();
 
     // Clean up:
     browser.close();

@@ -29,6 +29,14 @@ class CareerjetScraper extends ScraperInterface {
         super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, PAGE_TIMEOUT);
     }
 
+    /**
+     * @param page
+     * @param browser
+     * @param REGION_PAGE_SELECTOR
+     * @param fromPage
+     * @param toPage
+     * @returns {Promise<any>}
+     */
     async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
         return new Promise((resolve, reject) => {
             let resolveCounter = 0, rejectCounter = 0;
@@ -100,7 +108,7 @@ class CareerjetScraper extends ScraperInterface {
         }
 
         if (errorResult) {
-            super.errorTotalCounter++;
+            this.errorTotalCounter++;
             console.log("Error at scrapePage(" + formattedUrl + ") → " + errorResult);
         }
 

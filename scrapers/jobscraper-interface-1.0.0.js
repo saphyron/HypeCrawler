@@ -13,17 +13,12 @@ let currentRegionObject = 0;
 let currentRegionID;
 let current_requests = 0;
 
+
 /**
  * Class representing a generic jobscraper algorithm.
  */
 class JocscraperTemplate {
 
-    successTotalCounter = 0;
-    existingTotalCounter = 0;
-    errorTotalCounter = 0;
-
-    PAGE_POOL = undefined;
-    PAGE_LIMIT = undefined;
 
     /**
      * Constructor for JobscraperTemplate.
@@ -43,9 +38,11 @@ class JocscraperTemplate {
         this.PATH_VARIATIONS = xPathVariations;
         this.PAGE_NUMBER_TEXT_REGEX = numberRegex;
         this.PAGE_TIMEOUT = pageTimeout;
-
-
-        //this.errorTotalCounter = 0;
+        this.PAGE_POOL = undefined;
+        this.PAGE_LIMIT = undefined;
+        this.successTotalCounter = 0;
+        this.existingTotalCounter = 0;
+        this.errorTotalCounter = 0;
     }
 
     /**
@@ -198,7 +195,7 @@ class JocscraperTemplate {
      *
      * @param {Object}              page                    The current page the scraper has reached.
      * @param {String}              titleClass              XPath to the general element in which we are searching.
-     * @param {String}              titleAttributes         XPath to the specific children og titleClass XPath.
+     * @param {String}              titleAttributes         XPath to the specific children of titleClass XPath.
      * @param {String}              urlClass                XPath to the element where the text representation of url is kept.
      * @param {String}              urlAttributes           XPath to the specific child which keeps the text
      *
@@ -303,7 +300,7 @@ class JocscraperTemplate {
                 ORM.FindChecksum(sha1Checksum)
                     .then((returnedChecksum) => {
                         if (returnedChecksum) { // advertisement exists
-                            existingTotalCounter++;
+                            this.existingTotalCounter++;
                             resolveCounter++;
                             settlePromise(index);
                         }
@@ -378,7 +375,7 @@ class JocscraperTemplate {
         }
 
         if (errorResult) {
-            errorTotalCounter++;
+            this.errorTotalCounter++;
             console.log("Error at scrapePage(" + url + ") → " + errorResult);
         }
 
@@ -484,7 +481,6 @@ class JocscraperTemplate {
                     resolve(result);
                 })
                 .catch((error) => {
-                    //console.log('ALREADY IN DATABASE!')// Do nothing - TODO create update method.
                     this.errorTotalCounter++;
                     reject(new Error("Error at insertAnnonce() → " + error));
                 });
@@ -536,7 +532,6 @@ class JocscraperTemplate {
             console.log("Error at initializeDatabase() → " + error);
         }
     }
-
 //</editor-fold>
 }
 
@@ -557,9 +552,11 @@ class Pagepool {
     reservePage(url) {
         return new Promise((resolve, reject) => {
             if (this.PAGE_POOL.length < this.MAX_REQUESTS) { // Check if there is room for another page
+                let position = this.PAGE_POOL.length;
+                this.PAGE_POOL[position] = {page: null, url: url}; // Reserve pool slot synchronously.
                 this.browser.newPage()
                     .then((newPageObject) => {
-                        this.PAGE_POOL[this.PAGE_POOL.length] = {page: newPageObject, url: url};
+                        this.PAGE_POOL[position] = {page: newPageObject, url: url};
                         resolve(newPageObject);
                     })
             }
