@@ -146,7 +146,7 @@ class ORM {
 
     static InsertRegion(newRegion) {
         return new Promise((resolve, reject) => {
-            let query = `INSERT IGNORE INTO ${REGION_TABLE_NAME} (name) ` +
+            let query = `INSERT IGNORE INTO ${REGION_TABLE_NAME} (NAME) ` +
                 'VALUES (?)';
 
             CONNECTION.query(query, [newRegion.name],

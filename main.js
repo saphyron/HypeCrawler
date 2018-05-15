@@ -3,25 +3,46 @@ let jobindexClass = require('./scrapers/jobindex-scraper-1.0.0');
 let careerjetClass = require('./scrapers/careerjet-scraper-1.0.0');
 
 async function main() {
-    // Initialization:
+
     const browser = await puppeteer.launch({
-        headless: false
+        headless: true
     });
     const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({ // Håndtering af korrekt aflæsning af dansk alfabet
+    await page.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
         'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
     });
 
+    if (process.env.SCRAPER === "all" || process.env.SCRAPER === "jobindex") {
+
+        let scraper = new jobindexClass();
+        await run(scraper, browser, page);
+        //Print result
+        scraper.printDatabaseResult();
+    }
+    if (process.env.SCRAPER === "all" || process.env.SCRAPER === "careerjet") {
+
+        let scraper = new careerjetClass();
+        await run(scraper, browser, page);
+        //Print result
+        scraper.printDatabaseResult();
+    }
+
+    // Clean up:
+    browser.close();
+}
+
+async function run(scraper, browser, page) {
+
+
+
 
     //<editor-fold desc="Scrapers">
-    let scraper = new jobindexClass();
-    //let scraper = new careerjetClass();
     //</editor-fold>
 
-/*    await scraper.initializeDatabase()
+       await scraper.initializeDatabase()
         .catch((error) => {
             console.log("Error at main → initializeDatabase(): " + error);
-        });*/
+        });
 
     //<editor-fold desc="TestArea for interface">
     await scraper.beginScraping(page, browser, 1, 3)
@@ -29,16 +50,12 @@ async function main() {
             console.log("Error at main → beginScraping(): " + error);
 
         });
-    //Print result
-    scraper.printDatabaseResult();
 
-    // Clean up:
-    browser.close();
 
 }
 
 main().then((result) => {
-    console.log("Succesful termination: " + result);
+    console.log("Successful termination: " + result);
 }, (error) => {
     console.log("Failed termination: " + error);
 });

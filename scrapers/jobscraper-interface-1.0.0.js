@@ -120,7 +120,7 @@ class JocscraperTemplate {
             };
 
             for (let index = fromPage; index < toPage; index++) {
-                console.log('BEGINNING SCRAPING ON PAGE: ' + index);
+                console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
                 const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`?page=${index}`);
 
                 this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
@@ -525,8 +525,8 @@ class JocscraperTemplate {
             await ORM.CreateAnnonceTable();
 
             // Insert the regions:
-            for (let element of this.REGION_NAMES) {
-                await ORM.InsertRegion(new regionModel(element));
+            for (let [key, value] of this.REGION_NAMES) {
+                await ORM.InsertRegion(new regionModel(key));
             }
         } catch (error) {
             console.log("Error at initializeDatabase() → " + error);
