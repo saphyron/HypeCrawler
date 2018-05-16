@@ -27,7 +27,7 @@ const PATH_VARIATIONS = [
     }
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
-const TOTAL_ADVERTS_REGEX = /(\d\.?\d*)/g;
+const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
 const PAGE_TIMEOUT = 30000;
 
 class JobindexScraper extends ScraperInterface {
