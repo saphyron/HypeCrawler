@@ -18,8 +18,6 @@ let current_requests = 0;
  * Class representing a generic jobscraper algorithm.
  */
 class JocscraperTemplate {
-
-
     /**
      * Constructor for JobscraperTemplate.
      * @class JobscraperTemplate
@@ -27,15 +25,17 @@ class JocscraperTemplate {
      * @param {String}              targetWebsite           Website to be scraped. (format: https://www.xyz.ab)
      * @param {Map<key, value>}     regionNames             Map object to conform to database standard.
      * @param {String}              regionNames.key         Name of database entry.
-     * @param {String}              regionNames.value       String containing path to corresponding region.
+     * @param {String}              regionNames.value       String containing site specific path to corresponding region.
      * @param {Object}              xPathVariations         Object containing HTML classes and paths to advertisements.
-     * @param {String}              numberRegex             Regex to filter the text containing the number of pages.
+     * @param {String}              xPathTotalAdverts       XPath to node containing total adverts for region.
+     * @param {RegExp}              numberRegex             Regex to filter the text containing the number of pages.
      * @param {int}                 pageTimeout             Integer setting timeout-time for page visits.
      */
-    constructor(targetWebsite, regionNames, xPathVariations, numberRegex, pageTimeout) {
+    constructor(targetWebsite, regionNames, xPathVariations, xPathTotalAdverts, numberRegex, pageTimeout) {
         this.TARGET_WEBSITE = targetWebsite;
         this.REGION_NAMES = regionNames;
         this.PATH_VARIATIONS = xPathVariations;
+        this.PAGE_NUMBER_XPATH = xPathTotalAdverts;
         this.PAGE_NUMBER_TEXT_REGEX = numberRegex;
         this.PAGE_TIMEOUT = pageTimeout;
         this.PAGE_POOL = undefined;
@@ -419,10 +419,9 @@ class JocscraperTemplate {
      */
     async getNumPages(page, listLength) {
         try {
-            const TEXT_FILTER_REGEX = /[^0-9]/g;
             const ADVERTS_PER_PAGE = listLength;
 
-            let advertContent = await page.$x(this.PAGE_NUMBER_TEXT_REGEX)                         // Collecting the part.
+            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)                         // Collecting the part.
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
@@ -431,9 +430,11 @@ class JocscraperTemplate {
                 .catch((error) => {
                     throw new Error("page.evaluate() → " + error);
                 });
-            let filteredText = rawText.replace(TEXT_FILTER_REGEX, '');                      // Filtering number from text.
+            // let filteredText = rawText.replace(this.PAGE_NUMBER_TEXT_REGEX, '');          // Filtering number from text.
+            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group (.*?).
+            let capturedNumberGroup = match[1].replace(".", "");
 
-            let numPages = Math.ceil(filteredText / ADVERTS_PER_PAGE);                      // Calculating page numbers.
+            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);                      // Calculating page numbers.
             return numPages;
         } catch (error) {
             console.log("Error at getNumPages() → " + error);

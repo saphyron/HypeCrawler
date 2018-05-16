@@ -32,14 +32,7 @@ async function main() {
 }
 
 async function run(scraper, browser, page) {
-
-
-
-
-    //<editor-fold desc="Scrapers">
-    //</editor-fold>
-
-       await scraper.initializeDatabase()
+    await scraper.initializeDatabase()
         .catch((error) => {
             console.log("Error at main → initializeDatabase(): " + error);
         });
@@ -50,8 +43,6 @@ async function run(scraper, browser, page) {
             console.log("Error at main → beginScraping(): " + error);
 
         });
-
-
 }
 
 main().then((result) => {

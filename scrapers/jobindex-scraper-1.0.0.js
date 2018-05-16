@@ -27,6 +27,7 @@ const PATH_VARIATIONS = [
     }
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
+const TOTAL_ADVERTS_REGEX = /(\d\.?\d*)/g;
 const PAGE_TIMEOUT = 30000;
 
 class JobindexScraper extends ScraperInterface {
@@ -38,7 +39,7 @@ class JobindexScraper extends ScraperInterface {
      * pageTimeout             integer setting timeout-time for page visits
      */
     constructor() {
-        super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, PAGE_TIMEOUT);
+        super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, TOTAL_ADVERTS_REGEX, PAGE_TIMEOUT);
     }
 
 }
