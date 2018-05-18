@@ -23,7 +23,7 @@ class JocscraperTemplate {
      * @class JobscraperTemplate
      *
      * @param {String}              targetWebsite           Website to be scraped. (format: https://www.xyz.ab)
-     * @param {Map<key, value>}     regionNames             Map object to conform to database standard.
+     * @param {Map<key, value>}     regionNames             Map object to conform paths to database standard.
      * @param {String}              regionNames.key         Name of database entry.
      * @param {String}              regionNames.value       String containing site specific path to corresponding region.
      * @param {Object}              xPathVariations         Object containing HTML classes and paths to advertisements.
@@ -44,6 +44,7 @@ class JocscraperTemplate {
         this.existingTotalCounter = 0;
         this.errorTotalCounter = 0;
     }
+
 
     /**
      * Entry-point method used by main-module for access to the scraper.
@@ -176,11 +177,11 @@ class JocscraperTemplate {
                 counter++;
             }
 
-            if(titles.length === 0) {
+            if (titles.length === 0) {
                 throw new Error("No valid path found!");
             }
 
-            return {PAGE_TITLES: titles, PAGE_URLS: urls}; // TODO Håndter object i scrapePageListV3
+            return {PAGE_TITLES: titles, PAGE_URLS: urls};
         } catch (error) {
             console.log("Error at getCurrentPageURLTitles() → " + error)
         }
@@ -202,7 +203,6 @@ class JocscraperTemplate {
      */
     async tryPathVariationOnPage(page, titleClass, titleAttributes, urlClass, urlAttributes) {
         let titles = [], urls = [];
-        let titleUrlMap = new Map();
         try {
             // Sets the XPath to the elements.
             let xpathTitleData = await page.$x(`//div[@class="${titleClass}"]${titleAttributes}`)
@@ -228,7 +228,7 @@ class JocscraperTemplate {
                     });
 
 
-                // Extracting the text values out from gathered elements.
+                // Extracting the text values from gathered elements.
                 let titleText = await xpathTitleTextContent.jsonValue()
                     .catch((error) => {
                         throw new Error("xpathTitleTextContent.getProperty(): " + error);
@@ -241,7 +241,6 @@ class JocscraperTemplate {
 
                 // If one property is empty, the advertisement is invalid.
                 if (titleText.length !== 0 && urlText !== 0) {
-                    titleUrlMap.set(titleText, urlText);
                     titles.push(titleText);
                     urls.push(urlText);
                 }
@@ -421,20 +420,27 @@ class JocscraperTemplate {
         try {
             const ADVERTS_PER_PAGE = listLength;
 
-            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)                         // Collecting the part.
+            // Collecting value string:
+            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
 
-            let rawText = await page.evaluate(element => element.textContent, advertContent[0])    // Extracting info.
+
+            // Extracting info.
+            let rawText = await page.evaluate(element => element.textContent, advertContent[0])
                 .catch((error) => {
                     throw new Error("page.evaluate() → " + error);
                 });
-            // let filteredText = rawText.replace(this.PAGE_NUMBER_TEXT_REGEX, '');          // Filtering number from text.
-            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group (.*?).
+
+
+            // Filtering number from text.
+            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
             let capturedNumberGroup = match[1].replace(".", "");
 
-            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);                      // Calculating page numbers.
+
+            // Calculating page numbers.
+            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
             return numPages;
         } catch (error) {
             console.log("Error at getNumPages() → " + error);
@@ -500,7 +506,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<any>}
      */
-    async createAnnonceModel(title, body, regionId = null, checksum, url) {
+    async createAnnonceModel(title, body, regionId = undefined, checksum, url) {
         return new Promise((resolve, reject) => {
             try {
                 // Format Timestamp:
@@ -523,7 +529,7 @@ class JocscraperTemplate {
             await ORM.CreateRegionTable();
             await ORM.CreateAnnonceTable();
 
-            // Insert the regions:
+            // Insert regions:
             for (let [key, value] of this.REGION_NAMES) {
                 await ORM.InsertRegion(new regionModel(key));
             }
@@ -531,13 +537,14 @@ class JocscraperTemplate {
             console.log("Error at initializeDatabase() → " + error);
         }
     }
+
 //</editor-fold>
 }
 
 
 //<editor-fold desc="Utility Classes">
 /**
- * Class representing the pool of pages and associated handles available to the scraper.
+ * Class representing a pool of pages and associated handles available to the scraper.
  */
 class Pagepool {
 
@@ -550,9 +557,9 @@ class Pagepool {
 
     reservePage(url) {
         return new Promise((resolve, reject) => {
-            if (this.PAGE_POOL.length < this.MAX_REQUESTS) { // Check if there is room for another page
+            if (this.PAGE_POOL.length < this.MAX_REQUESTS) {        // Check if there is room for another page
                 let position = this.PAGE_POOL.length;
-                this.PAGE_POOL[position] = {page: null, url: url}; // Reserve pool slot synchronously.
+                this.PAGE_POOL[position] = {page: null, url: url};  // Reserve pool slot synchronously.
                 this.browser.newPage()
                     .then((newPageObject) => {
                         this.PAGE_POOL[position] = {page: newPageObject, url: url};
@@ -560,14 +567,15 @@ class Pagepool {
                     })
             }
             else {
-                for (let page of this.PAGE_POOL) { // if pool is full, find empty page.
+                for (let page of this.PAGE_POOL) {                  // If pool is full, find empty page.
                     if (page.url === undefined) {
                         page.url = url;
                         resolve(page.page);
                         return;
                     }
                 }
-                this.REQUEST_QUEUE.push({url: url, resolve: resolve, reject: reject}) // no empty page found, add to queue.
+                // No empty page found, add to queue.
+                this.REQUEST_QUEUE.push({url: url, resolve: resolve, reject: reject})
             }
         })
     }
@@ -582,10 +590,10 @@ class Pagepool {
      */
     releasePage(url) {
         for (let page of this.PAGE_POOL) {
-            if (page.url === url) { // Release the page object handling the given url
+            if (page.url === url) {                                 // Release the page object handling the given url
                 page.url = undefined;
-                if (this.REQUEST_QUEUE.length > 0) { // Add a page from queue to pagepool
-                    let object = this.REQUEST_QUEUE.shift(); // FIFO
+                if (this.REQUEST_QUEUE.length > 0) {                // Add a page from queue to pagepool
+                    let object = this.REQUEST_QUEUE.shift();        // FIFO
                     page.url = object.url;
                     object.resolve(page.page);
                 }

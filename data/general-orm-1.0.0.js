@@ -16,10 +16,8 @@ const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
 const CHECKSUM_CACHE = {};
 
-//<editor-fold desc="data-implementation">
 class ORM {
 
-    //<editor-fold desc="Annonce Methods">
 
     static CreateAnnonceTable() {
         return new Promise((resolve, reject) => {
@@ -69,8 +67,8 @@ class ORM {
     static FindChecksum(incomingChecksum) {
         // Utility function to check if cache exists.
         function isObjectEmpty(object) {
-            for(let key in object) {
-                if(object.hasOwnProperty(key))
+            for (let key in object) {
+                if (object.hasOwnProperty(key))
                     return false;
             }
             return true;
@@ -78,14 +76,14 @@ class ORM {
 
         // Utility function to fill local cache with all current checksums from database.
         function fillCache(cursor) {
-            for(let record of cursor) {
+            for (let record of cursor) {
                 CHECKSUM_CACHE[record.checksum] = record.checksum;
             }
         }
 
         return new Promise((resolve, reject) => {
             // Checks if local cache is empty
-            if(isObjectEmpty(CHECKSUM_CACHE)) {
+            if (isObjectEmpty(CHECKSUM_CACHE)) {
                 const query =
                     'SELECT checksum ' +
                     `FROM ${ANNONCE_TABLE_NAME} `;
@@ -157,58 +155,12 @@ class ORM {
                 })
         });
     }
-
-
-    //</editor-fold>
-
-
-    // WIP
-    static async InsertRecord(tableName, newRecord) {
-        let query = 'INSERT INTO ?? (';
-        let recordColumnLength = Object.keys(newRecord).length;
-        let index = 0;
-
-        while (index < recordColumnLength - 1) {
-            query += newRecord[index] + ', ';
-            index++;
-        }
-
-        Object.keys(newRecord).forEach(function (key, index) {
-            console.log(key, ': ', index);
-        });
-
-
-        for (let propName in newRecord) {
-            query += propName + ', ';
-        }
-        query += ') VALUES(';
-        for (let propName in newRecord) {
-            if (newRecord[propName] === undefined) {
-                query += '\'null\', ';
-            }
-            else if (isNaN(newRecord[propName])) {
-                query += '\'' + newRecord[propName] + '\', ';
-            }
-            else {
-                query += newRecord[propName] + ', ';
-            }
-        }
-        query += ')';
-
-
-        console.log(query);
-        await CONNECTION.query(query, [tableName.toUpperCase()], function (err, result) {
-            if (err) throw err;
-            console.log('SUCCESS!');
-        });
-    }
-
 }
 
 module.exports = ORM;
 
 
-//</editor-fold>
+
 
 
 
