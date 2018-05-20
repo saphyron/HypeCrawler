@@ -563,8 +563,14 @@ class Pagepool {
                 this.browser.newPage()
                     .then((newPageObject) => {
                         this.PAGE_POOL[position] = {page: newPageObject, url: url};
-                        resolve(newPageObject);
-                    })
+                        newPageObject.setJavaScriptEnabled(true).then(() => {
+                            newPageObject.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
+                                'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
+                            }).then(() => {
+                                resolve(newPageObject);
+                            });
+                        });
+                    });
             }
             else {
                 for (let page of this.PAGE_POOL) {                  // If pool is full, find empty page.
