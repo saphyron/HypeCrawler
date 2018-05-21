@@ -70,6 +70,7 @@ class JocscraperTemplate {
 
                 console.log(`BEGINNING SCRAPING IN REGION: ${key}`);
                 const REGION_PAGE_SELECTOR = `${this.TARGET_WEBSITE}${value}`;
+                console.log("REGION_PAGE_SELECTOR: "+REGION_PAGE_SELECTOR);
 
 
                 await page.goto(REGION_PAGE_SELECTOR, {
@@ -123,6 +124,7 @@ class JocscraperTemplate {
             for (let index = fromPage; index < toPage; index++) {
                 console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
                 const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`?page=${index}`);
+                console.log("PAGE_SELECTOR: "+PAGE_SELECTOR);
 
                 this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
                     .then((pageURLsAndTitles) => {
@@ -418,30 +420,51 @@ class JocscraperTemplate {
      */
     async getNumPages(page, listLength) {
         try {
-            const ADVERTS_PER_PAGE = listLength;
-
-            // Collecting value string:
-            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
+            // Collecting num of pages element
+            let pageRefs = await page.$x("//*[@id=\"result_list_box\"]/div/div[3]/div[2]/a")
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
 
+            if (pageRefs.length > 0 ) {
+                // JobIndex
 
-            // Extracting info.
-            let rawText = await page.evaluate(element => element.textContent, advertContent[0])
-                .catch((error) => {
-                    throw new Error("page.evaluate() → " + error);
-                });
+                // Extracting num of pages string
+                let textNum = await page.evaluate(element => element.textContent, pageRefs[pageRefs.length-2])
+                    .catch((error) => {
+                        throw new Error("page.evaluate() → " + error);
+                    });
+
+                // Return number
+                return Number(textNum);
+            } else {
+                // CareesJet
+
+                const ADVERTS_PER_PAGE = listLength;
+
+                // Collecting value string:
+                let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
+                    .catch((error) => {
+                        throw new Error("page.$x() → " + error);
+                    });
 
 
-            // Filtering number from text.
-            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
-            let capturedNumberGroup = match[1].replace(".", "");
+                // Extracting info.
+                let rawText = await page.evaluate(element => element.textContent, advertContent[0])
+                    .catch((error) => {
+                        throw new Error("page.evaluate() → " + error);
+                    });
 
 
-            // Calculating page numbers.
-            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
-            return numPages;
+                // Filtering number from text.
+                let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
+                let capturedNumberGroup = match[1].replace(".", "");
+
+
+                // Calculating page numbers.
+                let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
+                return numPages;
+            }
         } catch (error) {
             console.log("Error at getNumPages() → " + error);
         }

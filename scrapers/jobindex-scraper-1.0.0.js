@@ -3,9 +3,6 @@ let ScraperInterface = require('./jobscraper-interface-1.0.0');
 
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
 const REGION_NAMES = new Map([
-    ['faeroeerne', '/jobsoegning/faeroeerne'],
-    ['region-midtjylland', '/jobsoegning/region-midtjylland'],
-    ['storkoebenhavn', '/jobsoegning/storkoebenhavn'],
     ['nordsjaelland', '/jobsoegning/nordsjaelland'],
     ['region-sjaelland', '/jobsoegning/region-sjaelland'],
     ['fyn', '/jobsoegning/fyn'],
@@ -14,7 +11,10 @@ const REGION_NAMES = new Map([
     ['bornholm', '/jobsoegning/bornholm'],
     ['skaane', '/jobsoegning/skaane'],
     ['groenland', '/jobsoegning/groenland'],
-    ['udlandet', '/jobsoegning/udlandet']
+    ['udlandet', '/jobsoegning/udlandet'],
+    ['faeroeerne', '/jobsoegning/faeroeerne'],
+    ['region-midtjylland', '/jobsoegning/region-midtjylland'],
+    ['storkoebenhavn', '/jobsoegning/storkoebenhavn'],
 ]);
 const PATH_VARIATIONS = [
     {
