@@ -81,6 +81,7 @@ class JocscraperTemplate {
                     });
 
                 const NUM_PAGES = await this.getNumPages(page, ADVERTS_PER_PAGE);
+                console.log(NUM_PAGES+" PAGES");
 
                 for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
                     await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber
@@ -419,55 +420,7 @@ class JocscraperTemplate {
      * @returns {Promise<number>}
      */
     async getNumPages(page, listLength) {
-        try {
-            // Collecting num of pages element
-            let pageRefs = await page.$x("//*[@id=\"result_list_box\"]/div/div[3]/div[2]/a")
-                .catch((error) => {
-                    throw new Error("page.$x() → " + error);
-                });
-
-            if (pageRefs.length > 0 ) {
-                // JobIndex
-
-                // Extracting num of pages string
-                let textNum = await page.evaluate(element => element.textContent, pageRefs[pageRefs.length-2])
-                    .catch((error) => {
-                        throw new Error("page.evaluate() → " + error);
-                    });
-
-                // Return number
-                return Number(textNum);
-            } else {
-                // CareesJet
-
-                const ADVERTS_PER_PAGE = listLength;
-
-                // Collecting value string:
-                let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
-                    .catch((error) => {
-                        throw new Error("page.$x() → " + error);
-                    });
-
-
-                // Extracting info.
-                let rawText = await page.evaluate(element => element.textContent, advertContent[0])
-                    .catch((error) => {
-                        throw new Error("page.evaluate() → " + error);
-                    });
-
-
-                // Filtering number from text.
-                let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
-                let capturedNumberGroup = match[1].replace(".", "");
-
-
-                // Calculating page numbers.
-                let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
-                return numPages;
-            }
-        } catch (error) {
-            console.log("Error at getNumPages() → " + error);
-        }
+        throw ("getNumPages must be implemented for class");
     }
 
     /**

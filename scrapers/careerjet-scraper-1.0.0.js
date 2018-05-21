@@ -114,6 +114,48 @@ class CareerjetScraper extends ScraperInterface {
 
         console.timeEnd("runTime page number " + pageNum + " annonce " + index);
     }
+
+    /**
+     * Extracts the text containing the innerHTML which holds the number of pages in the region.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @param page
+     * @param listLength
+     * @returns {Promise<number>}
+     */
+    async getNumPages(page, listLength) {
+        try {
+            const ADVERTS_PER_PAGE = listLength;
+
+            // Collecting value string:
+            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
+                .catch((error) => {
+                    throw new Error("page.$x() → " + error);
+                });
+
+
+            // Extracting info.
+            let rawText = await page.evaluate(element => element.textContent, advertContent[0])
+                .catch((error) => {
+                    throw new Error("page.evaluate() → " + error);
+                });
+
+
+            // Filtering number from text.
+            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
+            let capturedNumberGroup = match[1].replace(".", "");
+
+
+            // Calculating page numbers.
+            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
+            return numPages;
+        } catch (error) {
+            console.log("Error at getNumPages() → " + error);
+        }
+    }
+
 }
 
 module.exports = CareerjetScraper;

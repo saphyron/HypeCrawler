@@ -42,6 +42,39 @@ class JobindexScraper extends ScraperInterface {
         super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, TOTAL_ADVERTS_REGEX, PAGE_TIMEOUT);
     }
 
+    /**
+     * Extracts the text containing the innerHTML which holds the number of pages in the region.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @param page
+     * @param listLength
+     * @returns {Promise<number>}
+     */
+    async getNumPages(page, listLength) {
+        try {
+            // Collecting num of pages element
+            let pageRefs = await page.$x("//*[@id=\"result_list_box\"]/div/div[3]/div[2]/a")
+                .catch((error) => {
+                    throw new Error("page.$x() → " + error);
+                });
+
+            // JobIndex
+
+            // Extracting num of pages string
+            let textNum = await page.evaluate(element => element.textContent, pageRefs[pageRefs.length-2])
+                .catch((error) => {
+                    throw new Error("page.evaluate() → " + error);
+                });
+
+            // Return number
+            return Number(textNum);
+        } catch (error) {
+            console.log("Error at getNumPages() → " + error);
+        }
+    }
+
 }
 
 module.exports = JobindexScraper;
