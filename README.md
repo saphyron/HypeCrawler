@@ -16,9 +16,9 @@ Prerequisite:
 * Have Node.js installed for execution on own machine or Linux-server.
 
 For Linux-service:
-* Pull project to Linux-machine.
-* For first time execution, run npm install on project root to install dependencies.
-* Use following string to execute service with environment-variables: 
+1 Pull project to Linux-machine.
+2 For first time execution, run npm install on project root to install dependencies.
+3 Use following string to execute service with environment-variables: 
   MYSQL_HOST=hostname MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_                                                                                                                                                           DATABASE=databaseName SCRAPER=mode nohup node main.js &
 
     + MYSQL_HOST        - Name of the host with MySQL-service
@@ -27,9 +27,14 @@ For Linux-service:
     + MYSQL_DATABASE    - Name of database. 
     + SCRAPER           - Mode in which the program will run. (all, jobindex, careerjet)                                                                  
 
+For local-execution (Webstorm):
+1 Pull project to computer
+2 Run npm install
+3 Set up Configurations under "Edit Configurations" -> Node.js -> "Environment variables" 
+
 ## API Reference
 
-* Program executed on Node, https://nodejs.org/en/
+* Program executed in Node.js, https://nodejs.org/en/
 * Data is stored in a MySQL database, https://www.mongodb.com/
 * Access to database enabled by MySQL npm-package, https://www.npmjs.com/package/mysql
 * Google's "Puppeteer" for Crawling and extraction of data from web, https://www.npmjs.com/package/puppeteer
