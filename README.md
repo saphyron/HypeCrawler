@@ -10,12 +10,12 @@ The program was developed as a AP-graduation project to help Associate professor
 
 ## Installation
 
-*Prerequisites:*
+**Prerequisites:**
 * Have access to a MySQL-database on the Linux-service or to cloud. 
 * Have SSH-client "PuTTY" for Windows or SHH access on Linux and Mac machines.
 * Have Node.js installed for execution on own machine or Linux-server.
 
-*For Linux-service:*
+**For Linux-service:**
 1. Pull project to Linux-machine.
 2. For first time execution, run npm install on project root to install dependencies.
 3. Use following string to execute service with environment-variables: 
@@ -27,10 +27,10 @@ The program was developed as a AP-graduation project to help Associate professor
     + MYSQL_DATABASE    - Name of database. 
     + SCRAPER           - Mode in which the program will run. (all, jobindex, careerjet)                                                                  
 
-*For local-execution (Webstorm):*
-1. Pull project to computer
-2. Run npm install
-3. Set up Configurations under "Edit Configurations" -> Node.js -> "Environment variables" 
+**For local-execution (Webstorm):**
+1. Pull project to computer.
+2. Run npm install.
+3. Set up Configurations. "Edit Configurations" -> Node.js -> "Environment variables" 
 
 ## API Reference
 
