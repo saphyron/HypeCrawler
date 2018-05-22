@@ -11,9 +11,9 @@ The program was developed as a AP-graduation project to help Associate professor
 ## Installation
 
 **Prerequisites:**
-* Have access to a MySQL-database on the Linux-service or to cloud. 
-* Have SSH-client "PuTTY" for Windows or SHH Terminal access on Linux and Mac machines.
-* Have Node.js installed for execution on own machine or Linux-server.
+* Access to a MySQL-database on the Linux-service or to cloud. 
+* SSH-client "PuTTY" for Windows or SHH Terminal access on Linux and Mac machines.
+* Node.js installed for execution on own machine or Linux-server.
 
 **For Linux-service:**
 1. Pull project to Linux-machine.
