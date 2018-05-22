@@ -13,10 +13,11 @@ The program was developed as a AP-graduation project to help Associate professor
 Prerequisite:
 * Have access to a MySQL-database on the Linux-service or to cloud. 
 * Have SSH-client "PuTTY" for Windows or SHH access on Linux and Mac machines.
-* Have Node.js installed for execution on own machine and Linux-server.
+* Have Node.js installed for execution on own machine or Linux-server.
 
 For Linux-service:
 * Pull project to Linux-machine.
+* For first time execution, run npm install on project root to install dependencies.
 * Use following string to execute service with environment-variables: 
   MYSQL_HOST=hostname MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_                                                                                                                                                           DATABASE=databaseName SCRAPER=mode nohup node main.js &
 
@@ -24,7 +25,7 @@ For Linux-service:
     + MYSQL_USER        - Username to MySQL-database.
     + MYSQL_PASSWORD    - Password to MySQL-database.
     + MYSQL_DATABASE    - Name of database. 
-    + SCRAPER           - Mode in which the program will run (all, jobindex, careerjet)                                                                  
+    + SCRAPER           - Mode in which the program will run. (all, jobindex, careerjet)                                                                  
 
 ## API Reference
 
@@ -32,7 +33,6 @@ For Linux-service:
 * Data is stored in a MySQL database, https://www.mongodb.com/
 * Access to database enabled by MySQL npm-package, https://www.npmjs.com/package/mysql
 * Google's "Puppeteer" for Crawling and extraction of data from web, https://www.npmjs.com/package/puppeteer
-* Application interface is establised by the Meteor framework, https://www.meteor.com/
 
 ## Contributors
 
@@ -47,7 +47,7 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 
 For more info contact:
 * Morten Mathiasen, Associate professor @ Business Academy Aarhus
-* Patrick Wegener Meyer, AP-Graduate @tbt_paddik@hotmail.com
+* Patrick Wegener Meyer, AP-Graduate @ tbt_paddik@hotmail.com
 
 ## License
 
