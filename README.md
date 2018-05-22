@@ -16,9 +16,9 @@ Prerequisite:
 * Have Node.js installed for execution on own machine or Linux-server.
 
 For Linux-service:
-1 Pull project to Linux-machine.
-2 For first time execution, run npm install on project root to install dependencies.
-3 Use following string to execute service with environment-variables: 
+1. Pull project to Linux-machine.
+2. For first time execution, run npm install on project root to install dependencies.
+3. Use following string to execute service with environment-variables: 
   MYSQL_HOST=hostname MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_                                                                                                                                                           DATABASE=databaseName SCRAPER=mode nohup node main.js &
 
     + MYSQL_HOST        - Name of the host with MySQL-service
@@ -28,9 +28,9 @@ For Linux-service:
     + SCRAPER           - Mode in which the program will run. (all, jobindex, careerjet)                                                                  
 
 For local-execution (Webstorm):
-1 Pull project to computer
-2 Run npm install
-3 Set up Configurations under "Edit Configurations" -> Node.js -> "Environment variables" 
+1. Pull project to computer
+2. Run npm install
+3. Set up Configurations under "Edit Configurations" -> Node.js -> "Environment variables" 
 
 ## API Reference
 
