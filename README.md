@@ -35,7 +35,7 @@ The program was developed as a AP-graduation project to help Associate professor
 ## API Reference
 
 * Program executed in Node.js, https://nodejs.org/en/
-* Data is stored in a MySQL database, https://www.mongodb.com/
+* Data is stored in a MySQL database, https://www.mysql.com/
 * Access to database enabled by MySQL npm-package, https://www.npmjs.com/package/mysql
 * Google's "Puppeteer" for Crawling and extraction of data from web, https://www.npmjs.com/package/puppeteer
 
