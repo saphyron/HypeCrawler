@@ -12,7 +12,7 @@ The program was developed as a AP-graduation project to help Associate professor
 
 **Prerequisites:**
 * Have access to a MySQL-database on the Linux-service or to cloud. 
-* Have SSH-client "PuTTY" for Windows or SHH access on Linux and Mac machines.
+* Have SSH-client "PuTTY" for Windows or SHH Terminal access on Linux and Mac machines.
 * Have Node.js installed for execution on own machine or Linux-server.
 
 **For Linux-service:**
@@ -52,7 +52,7 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 
 For more info contact:
 * Morten Mathiasen, Associate professor @ Business Academy Aarhus
-* Patrick Wegener Meyer, AP-Graduate @ tbt_paddik@hotmail.com
+* Patrick Wegener Meyer, Business Academy Aarhus CS AP-Alumnus @ tbt_paddik@hotmail.com
 
 ## License
 
