@@ -26,6 +26,7 @@ const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
 const PAGE_TIMEOUT = 30000;
 
 /**
+ * Class representing the algorithm for careerjet.dk
  * @class
  * @implements {JocscraperTemplate}
  */
