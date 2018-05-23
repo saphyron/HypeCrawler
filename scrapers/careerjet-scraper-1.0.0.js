@@ -25,6 +25,10 @@ const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/t
 const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
 const PAGE_TIMEOUT = 30000;
 
+/**
+ * @class
+ * @implements {JocscraperTemplate}
+ */
 class CareerjetScraper extends ScraperInterface {
     constructor() {
         super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, TOTAL_ADVERTS_REGEX, PAGE_TIMEOUT);

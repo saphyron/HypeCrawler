@@ -23,7 +23,7 @@ class JocscraperTemplate {
      * Constructor for JobscraperTemplate.
      * @constructor JobscraperTemplate
      *
-     * @param {String}              targetWebsite           Website to be scraped. (format: https://www.xyz.ab)
+     * @param {String}              targetWebsite           Website to be scraped.(format: https://www.xyz.ab)
      * @param {Map<key, value>}     regionNames             Map object to conform paths to database standard.
      * @param {String}              regionNames.key         Name of database entry.
      * @param {String}              regionNames.value       String containing site specific path to corresponding region.

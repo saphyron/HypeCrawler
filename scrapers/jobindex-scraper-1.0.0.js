@@ -38,7 +38,7 @@ class JobindexScraper extends ScraperInterface {
 
     /**
      * Constructor for 
-     * @constructor JobscraperTemplate
+     * @constructor
      * 
      * pageTimeout             integer setting timeout-time for page visits
      */
