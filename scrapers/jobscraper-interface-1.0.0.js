@@ -16,6 +16,7 @@ let current_requests = 0;
 
 /**
  * Class representing a generic jobscraper algorithm.
+ * @interface
  */
 class JocscraperTemplate {
     /**

@@ -30,11 +30,15 @@ const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]
 const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
 const PAGE_TIMEOUT = 30000;
 
+/**
+ * @class
+ * @implements {JocscraperTemplate}
+ */
 class JobindexScraper extends ScraperInterface {
 
     /**
      * Constructor for 
-     * @class JobscraperTemplate
+     * @constructor JobscraperTemplate
      * 
      * pageTimeout             integer setting timeout-time for page visits
      */
