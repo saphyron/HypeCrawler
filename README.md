@@ -48,6 +48,10 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 * **Morten Mathiasen** - *Supervisor & Project Leader* - [mortenmathiasen](https://github.com/mortenmathiasen)
 * **Patrick Wegener Meyer** - *Computer Science AP-graduate Student* - [Eqliphex](https://github.com/Eqliphex)
 
+## Documentation
+Documentation found on: (https://research-and-innovation-eaaa.github.io/HypeCrawler/)
+Refresh documentation by running following command in terminal: npm run docs
+
 ## Contact
 
 For more info contact:

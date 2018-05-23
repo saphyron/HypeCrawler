@@ -5,15 +5,17 @@
   "main": "main.js",
   "dependencies": {
     "mysql": "^2.15.0",
-    "npm": "^5.8.0",
+    "npm": "^5.10.0",
     "puppeteer": "^1.2.0",
     "sha1": "^1.1.1"
   },
   "devDependencies": {
+    "jsdoc": "^3.5.5",
     "jest": "^22.4.3"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "docs": "node node_modules/jsdoc/jsdoc.js -c conf.json"
   },
   "repository": {
     "type": "git",
