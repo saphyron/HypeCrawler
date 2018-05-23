@@ -10,21 +10,49 @@ The program was developed as a AP-graduation project to help Associate professor
 
 ## Installation
 
-Download and run the app inside the Meteor development framework.
+**Prerequisites:**
+* Access to a MySQL-database on the Linux-service or to cloud. 
+* SSH-client "PuTTY" for Windows or SHH Terminal access on Linux and Mac machines.
+* Node.js installed for execution on own machine or Linux-server.
+
+**For Linux-service:**
+1. Pull project to Linux-machine.
+2. For first time execution, run npm install on project root to install dependencies.
+3. Use following string to execute service with environment-variables: 
+  MYSQL_HOST=hostname MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_                                                                                                                                                           DATABASE=databaseName SCRAPER=mode nohup node main.js &
+
+    + MYSQL_HOST        - Name of the host with MySQL-service
+    + MYSQL_USER        - Username to MySQL-database.
+    + MYSQL_PASSWORD    - Password to MySQL-database.
+    + MYSQL_DATABASE    - Name of database. 
+    + SCRAPER           - Mode in which the program will run. (all, jobindex, careerjet)                                                                  
+
+**For local-execution (Webstorm):**
+1. Pull project to computer.
+2. Run npm install.
+3. Set up Configurations. "Edit Configurations" -> Node.js -> "Environment variables" 
 
 ## API Reference
 
-Data is stored in a Mongo database, https://www.mongodb.com/
-Application interface is establised by the Meteor framework, https://www.meteor.com/
+* Program executed in Node.js, https://nodejs.org/en/
+* Data is stored in a MySQL database, https://www.mysql.com/
+* Access to database enabled by MySQL npm-package, https://www.npmjs.com/package/mysql
+* Google's "Puppeteer" for Crawling and extraction of data from web, https://www.npmjs.com/package/puppeteer
 
 ## Contributors
 
 Contribution is welcome. You are free to use the existing code and/or improve it. Fork the repository and make pull request to release your changes to the repository.
 
-### Contact ###
+## Authors
+
+* **Morten Mathiasen** - *Supervisor & Project Leader* - [mortenmathiasen](https://github.com/mortenmathiasen)
+* **Patrick Wegener Meyer** - *Computer Science AP-graduate Student* - [Eqliphex](https://github.com/Eqliphex)
+
+## Contact
 
 For more info contact:
 * Morten Mathiasen, Associate professor @ Business Academy Aarhus
+* Patrick Wegener Meyer, Business Academy Aarhus CS AP-Alumnus @ tbt_paddik@hotmail.com
 
 ## License
 
