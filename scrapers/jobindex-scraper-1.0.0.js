@@ -39,8 +39,6 @@ class JobindexScraper extends ScraperInterface {
     /**
      * Constructor for 
      * @constructor
-     * 
-     * pageTimeout             integer setting timeout-time for page visits
      */
     constructor() {
         super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, TOTAL_ADVERTS_REGEX, PAGE_TIMEOUT);
