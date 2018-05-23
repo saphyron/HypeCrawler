@@ -21,7 +21,7 @@ let current_requests = 0;
 class JocscraperTemplate {
     /**
      * Constructor for JobscraperTemplate.
-     * @class JobscraperTemplate
+     * @constructor JobscraperTemplate
      *
      * @param {String}              targetWebsite           Website to be scraped. (format: https://www.xyz.ab)
      * @param {Map<key, value>}     regionNames             Map object to conform paths to database standard.
