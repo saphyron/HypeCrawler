@@ -1,3 +1,4 @@
+[![Semver](http://img.shields.io/SemVer/1.0.0.png)](http://semver.org/spec/v1.0.0.html)
 # HypeCrawler #
 
 ## Synopsis
@@ -19,7 +20,7 @@ The program was developed as a AP-graduation project to help Associate professor
 1. Pull project to Linux-machine.
 2. For first time execution, run npm install on project root to install dependencies.
 3. Use following string to execute service with environment-variables: 
-  MYSQL_HOST=hostname MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_                                                                                                                                                           DATABASE=databaseName SCRAPER=mode nohup node main.js &
+  MYSQL_HOST=hostname MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_DATABASE=databaseName SCRAPER=mode nohup node main.js &
 
     + MYSQL_HOST        - Name of the host with MySQL-service
     + MYSQL_USER        - Username to MySQL-database.
