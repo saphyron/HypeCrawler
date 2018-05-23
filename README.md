@@ -50,6 +50,7 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 * **Patrick Wegener Meyer** - *Computer Science AP-graduate Student* - [Eqliphex](https://github.com/Eqliphex)
 
 ## Documentation
+* *Documentation generated with JSDoc and formatted with Docdash*
 * Documentation found on: (https://research-and-innovation-eaaa.github.io/HypeCrawler/)
 * Refresh documentation by running following command in terminal: *npm run docs*
     * *Alternative* Automate the process by addding the command to "pre-commit" file under Hypecrawler/.git/hooks.
