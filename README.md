@@ -1,6 +1,6 @@
 <!--- Badges/Shields created with https://shields.io/ --->
 [![Semver](https://img.shields.io/badge/SemVer-1.0.0-brightgreen.svg)](http://semver.org/spec/v1.0.0.html)
-[![JSDoc](https://img.shields.io/badge/jsdoc-3.5.5-blue.svg)](http://usejsdoc.org/index.html)
+[![JSDoc](https://img.shields.io/badge/JSdoc-3.5.5-blue.svg)](http://usejsdoc.org/index.html)
 # HypeCrawler #
 
 ## Synopsis
