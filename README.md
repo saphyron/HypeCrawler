@@ -50,7 +50,7 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 
 ## Documentation
 * Documentation found on: (https://research-and-innovation-eaaa.github.io/HypeCrawler/)
-* Refresh documentation by running following command in terminal: npm run docs
+* Refresh documentation by running following command in terminal: *npm run docs*
 * Configuring the docs generation script is done in ./conf.json
 
 ## Contact
