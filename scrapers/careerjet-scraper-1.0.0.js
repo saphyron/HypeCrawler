@@ -36,12 +36,7 @@ class CareerjetScraper extends ScraperInterface {
     }
 
     /**
-     * @param page
-     * @param browser
-     * @param REGION_PAGE_SELECTOR
-     * @param fromPage
-     * @param toPage
-     * @returns {Promise<any>}
+     * @inheritDoc
      */
     async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
         return new Promise((resolve, reject) => {
