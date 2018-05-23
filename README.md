@@ -1,5 +1,5 @@
 [![Semver](http://img.shields.io/SemVer/1.0.0.png)](http://semver.org/spec/v1.0.0.html)
-![JSDoc](https://img.shields.io/badge/jsdoc-3.5.4-blue.svg)
+![JSDoc](https://img.shields.io/badge/jsdoc-3.5.5-blue.svg)
 # HypeCrawler #
 
 ## Synopsis
