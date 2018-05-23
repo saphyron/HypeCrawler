@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JobscraperTemplate - Documentation</title>
+    <title>CareerjetScraper - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -27,7 +27,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">JobscraperTemplate</h1>
+    <h1 class="page-title">CareerjetScraper</h1>
     
 
     
@@ -40,7 +40,7 @@
 <header>
     
         <h2>
-        JobscraperTemplate
+        CareerjetScraper
         </h2>
         
     
@@ -53,7 +53,7 @@
 
     
 
-    <h4 class="name" id="JobscraperTemplate"><span class="type-signature"></span>new JobscraperTemplate<span class="signature">(targetWebsite, regionNames, xPathVariations, xPathTotalAdverts, numberRegex, pageTimeout)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="CareerjetScraper"><span class="type-signature"></span>new CareerjetScraper<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -65,7 +65,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="scrapers_jobscraper-interface-1.0.0.js.html">scrapers/jobscraper-interface-1.0.0.js</a>, <a href="scrapers_jobscraper-interface-1.0.0.js.html#line22">line 22</a>
+        <a href="scrapers_careerjet-scraper-1.0.0.js.html">scrapers/careerjet-scraper-1.0.0.js</a>, <a href="scrapers_careerjet-scraper-1.0.0.js.html#line32">line 32</a>
     </li></ul></dd>
     
 
@@ -79,6 +79,121 @@
 
     
 
+    
+    <dt class="implements">Implements:</dt>
+    <dd class="implements"><ul>
+        
+            <li><a href="JocscraperTemplate.html">JocscraperTemplate</a></li>
+        
+    </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="scrapePage"><span class="type-signature">(async, private) </span>scrapePage<span class="signature">(page, title, url, index, pageNum)</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="scrapers_jobscraper-interface-1.0.0.js.html">scrapers/jobscraper-interface-1.0.0.js</a>, <a href="scrapers_jobscraper-interface-1.0.0.js.html#line346">line 346</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>1.0.0</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="implements">Implements:</dt>
+    <dd class="implements"><ul>
+        
+            <li><a href="JocscraperTemplate.html#scrapePage">JocscraperTemplate#scrapePage</a></li>
+        
+    </ul></dd>
     
 
     
@@ -105,7 +220,7 @@
 
 
 <div class="description">
-    Constructor for JobscraperTemplate.
+    Scrapes the provided page and invokes database call.
 </div>
 
 
@@ -143,7 +258,30 @@
 
         <tr>
             
-                <td class="name"><code>targetWebsite</code></td>
+                <td class="name"><code>page</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Browser tab from pagePool.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>title</code></td>
             
 
             <td class="type">
@@ -159,20 +297,20 @@
 
             
 
-            <td class="description last">Website to be scraped.(format: https://www.xyz.ab)</td>
+            <td class="description last">Title of the linked page.</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>regionNames</code></td>
+                <td class="name"><code>url</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Map.&lt;key, value></span>
+<span class="param-type">String</span>
 
 
             
@@ -182,9 +320,167 @@
 
             
 
-            <td class="description last">Map object to conform paths to database standard.
-                <h6>Properties</h6>
+            <td class="description last">Url of linked page.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
                 
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Indicator of advertisement position in the list.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pageNum</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Indicator of advertisement list page number in region.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="scrapeRegion"><span class="type-signature">(async) </span>scrapeRegion<span class="signature">(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage)</span><span class="type-signature"> &rarr; {Promise.&lt;any>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="scrapers_careerjet-scraper-1.0.0.js.html">scrapers/careerjet-scraper-1.0.0.js</a>, <a href="scrapers_careerjet-scraper-1.0.0.js.html#line45">line 45</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="implements">Implements:</dt>
+    <dd class="implements"><ul>
+        
+            <li><a href="JocscraperTemplate.html#scrapeRegion">JocscraperTemplate#scrapeRegion</a></li>
+        
+    </ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
 
 <table class="params">
     <thead>
@@ -208,15 +504,10 @@
 
         <tr>
             
-                <td class="name"><code>key</code></td>
+                <td class="name"><code>page</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
             
             </td>
 
@@ -224,52 +515,35 @@
 
             
 
-            <td class="description last">Name of database entry.</td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>value</code></td>
+                <td class="name"><code>browser</code></td>
             
 
             <td class="type">
             
-                
-<span class="param-type">String</span>
-
-
-            
             </td>
 
             
 
             
 
-            <td class="description last">String containing site specific path to corresponding region.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>xPathVariations</code></td>
+                <td class="name"><code>REGION_PAGE_SELECTOR</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
             
             </td>
 
@@ -277,22 +551,17 @@
 
             
 
-            <td class="description last">Object containing HTML classes and paths to advertisements.</td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>xPathTotalAdverts</code></td>
+                <td class="name"><code>fromPage</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
             
             </td>
 
@@ -300,22 +569,17 @@
 
             
 
-            <td class="description last">XPath to node containing total adverts for region.</td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>numberRegex</code></td>
+                <td class="name"><code>toPage</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type">RegExp</span>
-
-
             
             </td>
 
@@ -323,30 +587,7 @@
 
             
 
-            <td class="description last">Regex to filter the text containing the number of pages.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>pageTimeout</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">int</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Integer setting timeout-time for page visits.</td>
+            <td class="description last"></td>
         </tr>
 
     
@@ -366,23 +607,27 @@
 
 
 
+<h5>Returns:</h5>
 
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;any></span>
+
+
+    </dd>
+</dl>
 
     
-    </div>
 
-    
 
-    
-
-    
-
-     
-
-    
-
-    
-
+        
     
 
     

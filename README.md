@@ -51,6 +51,7 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 ## Documentation
 * Documentation found on: (https://research-and-innovation-eaaa.github.io/HypeCrawler/)
 * Refresh documentation by running following command in terminal: *npm run docs*
+    * Alternatively automate process by addding the command to "pre-commit" file under Hypecrawler/.git/hooks.
 * Configuring the docs generation script is done in ./conf.json
 
 ## Contact
