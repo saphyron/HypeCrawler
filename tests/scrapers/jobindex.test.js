@@ -1,5 +1,5 @@
 /**
- * @description Test suite for ORM-module
+ * @description Test suite for jobindex-scraper.
  */
 describe('Dummy test:', () => {
     it('should return true if true is true', () => {

@@ -58,6 +58,17 @@ Contribution is welcome. You are free to use the existing code and/or improve it
     * **Alternatively:** Automate the process by adding previous command to "pre-commit" file under Hypecrawler/.git/hooks.
 * Configuring the docs-generation script is done in ./conf.json
 
+## Test
+A Jest test environment has been enabled in the project and is added is script in *package.json*.
+
+**Test contruction guide-lines**
+1. The "test"-folder must contain a mirroring structure as the rest of the project.
+2. One test-module for one logic-module.
+3. Follow the standard laid out in already implemented tests.
+
+**Execution of tests**
+* run the test in terminal with: *npm run tests*
+
 ## Contact
 
 For more info contact:
