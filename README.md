@@ -1,6 +1,7 @@
 <!--- Badges/Shields created with https://shields.io/ --->
 [![Semver](https://img.shields.io/badge/SemVer-1.0.0-brightgreen.svg)](http://semver.org/spec/v1.0.0.html)
 [![JSDoc](https://img.shields.io/badge/JSdoc-3.5.5-blue.svg)](http://usejsdoc.org/index.html)
+[![Jest](https://img.shields.io/badge/Jest-22.4.3-red.svg)](https://facebook.github.io/jest/docs/en/getting-started.html)
 # HypeCrawler #
 
 ## Synopsis
@@ -52,22 +53,24 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 * **Patrick Wegener Meyer** - *Computer Science AP-graduate Student* - [Eqliphex](https://github.com/Eqliphex)
 
 ## Documentation
-*Documentation generated with JSDoc and formatted with Docdash*
+
+* Documentation generated with JSDoc and formatted with Docdash*
 * Documentation found on: (https://research-and-innovation-eaaa.github.io/HypeCrawler/)
 * Refresh documentation by running following command in terminal: *npm run docs*
     * **Alternatively:** Automate the process by adding previous command to "pre-commit" file under Hypecrawler/.git/hooks.
 * Configuring the docs-generation script is done in ./conf.json
 
 ## Test
-A Jest test environment has been enabled in the project and is added is script in *package.json*.
+
+A Jest test environment has been enabled in the project and is added in *package.json -> scripts*.
 
 **Test contruction guide-lines**
-1. The "test"-folder must contain a mirroring structure as the rest of the project.
+1. The "test"-folder must mirror the structure of the rest of the project.
 2. One test-module for one logic-module.
 3. Follow the standard laid out in already implemented tests.
 
 **Execution of tests**
-* run the test in terminal with: *npm run tests*
+* Run the tests in terminal with: *npm run tests*
 
 ## Contact
 
