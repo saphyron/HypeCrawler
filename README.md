@@ -62,7 +62,7 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 
 ## Test
 
-A Jest testenvironment has been enabled in the project and is added as script under *package.json -> scripts*.
+A Jest test environment has been enabled in the project and is added as a script under *package.json -> scripts*.
 
 **Test contribution guide-lines**
 1. The "test"-folder must mirror the folder-structure of the project.
