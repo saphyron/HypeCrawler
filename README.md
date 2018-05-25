@@ -62,15 +62,15 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 
 ## Test
 
-A Jest test environment has been enabled in the project and is added in *package.json -> scripts*.
+A Jest testenvironment has been enabled in the project and is added as script under *package.json -> scripts*.
 
-**Test contruction guide-lines**
-1. The "test"-folder must mirror the structure of the rest of the project.
+**Test contribution guide-lines**
+1. The "test"-folder must mirror the folder-structure of the project.
 2. One test-module for one logic-module.
-3. Follow the standard laid out in already implemented tests.
+3. Follow the description standard set in already implemented tests.
 
 **Execution of tests**
-* Run the tests in terminal with: *npm run tests*
+* Run the tests in terminal from project root with: *npm run tests*
 
 ## Contact
 
