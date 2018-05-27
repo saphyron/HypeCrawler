@@ -19,8 +19,13 @@ let current_requests = 0;
  * @interface
  */
 class JocscraperTemplate {
+
+
     /**
      * Constructor for JobscraperTemplate.
+     *
+     * @since       1.0.0
+     * @access      public
      * @constructor JobscraperTemplate
      *
      * @param {String}              targetWebsite           Website to be scraped.(format: https://www.xyz.ab)
