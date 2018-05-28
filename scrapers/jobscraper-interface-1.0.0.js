@@ -590,14 +590,14 @@ class Pagepool {
                     })
             }
             else {
-                for (let page of this.PAGE_POOL) {                  // If pool slot is free, put url in slot.
+                for (let page of this.PAGE_POOL) {                  // If a page is idle, put url in page.
                     if (page.url === undefined) {
                         page.url = url;
                         resolve(page.page);
                         return;
                     }
                 }
-                // No empty page found, add to queue.
+                // No idle page found, add to queue.
                 this.REQUEST_QUEUE.push({url: url, resolve: resolve, reject: reject})
             }
         })
