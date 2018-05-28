@@ -531,7 +531,7 @@ class JocscraperTemplate {
     }
 
     /**
-     * Utility method to create and initialize relevant databasetables.
+     * Utility method to create and initialize relevant database tables.
      *
      * @since       1.0.0
      * @access      private
@@ -569,6 +569,7 @@ class Pagepool {
         this.PAGE_POOL = [];
         this.REQUEST_QUEUE = [];
     }
+
     /**
      * Reserves a pagepool slot or queues a page for future handling.
      *
@@ -589,7 +590,7 @@ class Pagepool {
                     })
             }
             else {
-                for (let page of this.PAGE_POOL) {                  // If pool slot is free, find empty page.
+                for (let page of this.PAGE_POOL) {                  // If pool slot is free, put url in slot.
                     if (page.url === undefined) {
                         page.url = url;
                         resolve(page.page);
