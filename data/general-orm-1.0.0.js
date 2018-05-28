@@ -16,9 +16,23 @@ const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
 const CHECKSUM_CACHE = {};
 
+/**
+ * @class
+ * Class implementing ORM-techniques to paradigm match OO-models and database schema.
+ *
+ * @since       1.0.0
+ * @access      public
+ */
 class ORM {
 
-
+    /**
+     * Creates the annonce database table if none exists
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @returns {Promise<any>}
+     */
     static CreateAnnonceTable() {
         return new Promise((resolve, reject) => {
             const query = `CREATE TABLE IF NOT EXISTS ${ANNONCE_TABLE_NAME} (` +

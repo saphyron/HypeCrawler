@@ -530,6 +530,14 @@ class JocscraperTemplate {
         });
     }
 
+    /**
+     * Utility method to create and initialize relevant databasetables.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @returns {Promise<any>}
+     */
     async initializeDatabase() {
         try {
             await ORM.CreateRegionTable();
@@ -551,6 +559,7 @@ class JocscraperTemplate {
 //<editor-fold desc="Utility Classes">
 /**
  * Class representing a pool of pages and associated handles available to the scraper.
+ * @class
  */
 class Pagepool {
 
@@ -560,7 +569,14 @@ class Pagepool {
         this.PAGE_POOL = [];
         this.REQUEST_QUEUE = [];
     }
-
+    /**
+     * Reserves a pagepool slot or queues a page for future handling.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @param {String}              url                     url to be released
+     */
     reservePage(url) {
         return new Promise((resolve, reject) => {
             if (this.PAGE_POOL.length < this.MAX_REQUESTS) {        // Check if there is room for another page
@@ -587,7 +603,7 @@ class Pagepool {
     }
 
     /**
-     * Releases a page from the page pool.
+     * Releases a page from the page pool and queues a new one if page queue is not empty.
      *
      * @since       1.0.0
      * @access      private
