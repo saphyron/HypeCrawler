@@ -579,7 +579,7 @@ class Pagepool {
      */
     reservePage(url) {
         return new Promise((resolve, reject) => {
-            if (this.PAGE_POOL.length < this.MAX_REQUESTS) {        // Check if there is room for another page
+            if (this.PAGE_POOL.length < this.MAX_REQUESTS) {        // Check if there is room for creating a new page.
                 let position = this.PAGE_POOL.length;
                 this.PAGE_POOL[position] = {page: null, url: url};  // Reserve pool slot synchronously.
                 this.browser.newPage()
@@ -589,7 +589,7 @@ class Pagepool {
                     })
             }
             else {
-                for (let page of this.PAGE_POOL) {                  // If pool is full, find empty page.
+                for (let page of this.PAGE_POOL) {                  // If pool slot is free, find empty page.
                     if (page.url === undefined) {
                         page.url = url;
                         resolve(page.page);

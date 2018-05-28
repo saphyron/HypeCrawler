@@ -54,7 +54,7 @@ Contribution is welcome. You are free to use the existing code and/or improve it
 
 ## Documentation
 
-* Documentation generated with JSDoc and formatted with Docdash*
+* Documentation generated with JSDoc and formatted with Docdash
 * Documentation found on: (https://research-and-innovation-eaaa.github.io/HypeCrawler/)
 * Refresh documentation by running following command in terminal: *npm run docs*
     * **Alternatively:** Automate the process by adding previous command to "pre-commit" file under Hypecrawler/.git/hooks.
