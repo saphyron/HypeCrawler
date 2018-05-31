@@ -76,6 +76,7 @@ class JocscraperTemplate {
 
                 console.log(`BEGINNING SCRAPING IN REGION: ${key}`);
                 const REGION_PAGE_SELECTOR = `${this.TARGET_WEBSITE}${value}`;
+                console.log("REGION_PAGE_SELECTOR: "+REGION_PAGE_SELECTOR);
 
 
                 await page.goto(REGION_PAGE_SELECTOR, {
@@ -86,6 +87,7 @@ class JocscraperTemplate {
                     });
 
                 const NUM_PAGES = await this.getNumPages(page, ADVERTS_PER_PAGE);
+                console.log(NUM_PAGES+" PAGES");
 
                 for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
                     await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber
@@ -129,6 +131,7 @@ class JocscraperTemplate {
             for (let index = fromPage; index < toPage; index++) {
                 console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
                 const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`?page=${index}`);
+                console.log("PAGE_SELECTOR: "+PAGE_SELECTOR);
 
                 this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
                     .then((pageURLsAndTitles) => {
@@ -423,34 +426,7 @@ class JocscraperTemplate {
      * @returns {Promise<number>}
      */
     async getNumPages(page, listLength) {
-        try {
-            const ADVERTS_PER_PAGE = listLength;
-
-            // Collecting value string:
-            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
-                .catch((error) => {
-                    throw new Error("page.$x() → " + error);
-                });
-
-
-            // Extracting info.
-            let rawText = await page.evaluate(element => element.textContent, advertContent[0])
-                .catch((error) => {
-                    throw new Error("page.evaluate() → " + error);
-                });
-
-
-            // Filtering number from text.
-            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
-            let capturedNumberGroup = match[1].replace(".", "");
-
-
-            // Calculating page numbers.
-            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
-            return numPages;
-        } catch (error) {
-            console.log("Error at getNumPages() → " + error);
-        }
+        throw ("getNumPages must be implemented for class");
     }
 
     /**
@@ -586,8 +562,14 @@ class Pagepool {
                 this.browser.newPage()
                     .then((newPageObject) => {
                         this.PAGE_POOL[position] = {page: newPageObject, url: url};
-                        resolve(newPageObject);
-                    })
+                        newPageObject.setJavaScriptEnabled(true).then(() => {
+                            newPageObject.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
+                                'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
+                            }).then(() => {
+                                resolve(newPageObject);
+                            });
+                        });
+                    });
             }
             else {
                 for (let page of this.PAGE_POOL) {                  // If a page is idle, put url in page.
