@@ -16,13 +16,19 @@ let current_requests = 0;
 
 /**
  * Class representing a generic jobscraper algorithm.
+ * @interface
  */
 class JocscraperTemplate {
+
+
     /**
      * Constructor for JobscraperTemplate.
-     * @class JobscraperTemplate
      *
-     * @param {String}              targetWebsite           Website to be scraped. (format: https://www.xyz.ab)
+     * @since       1.0.0
+     * @access      public
+     * @constructor JobscraperTemplate
+     *
+     * @param {String}              targetWebsite           Website to be scraped.(format: https://www.xyz.ab)
      * @param {Map<key, value>}     regionNames             Map object to conform paths to database standard.
      * @param {String}              regionNames.key         Name of database entry.
      * @param {String}              regionNames.value       String containing site specific path to corresponding region.
@@ -500,6 +506,14 @@ class JocscraperTemplate {
         });
     }
 
+    /**
+     * Utility method to create and initialize relevant database tables.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @returns {Promise<any>}
+     */
     async initializeDatabase() {
         try {
             await ORM.CreateRegionTable();
@@ -521,6 +535,7 @@ class JocscraperTemplate {
 //<editor-fold desc="Utility Classes">
 /**
  * Class representing a pool of pages and associated handles available to the scraper.
+ * @class
  */
 class Pagepool {
 
@@ -531,9 +546,17 @@ class Pagepool {
         this.REQUEST_QUEUE = [];
     }
 
+    /**
+     * Reserves a pagepool slot or queues a page for future handling.
+     *
+     * @since       1.0.0
+     * @access      private
+     *
+     * @param {String}              url                     url to be released
+     */
     reservePage(url) {
         return new Promise((resolve, reject) => {
-            if (this.PAGE_POOL.length < this.MAX_REQUESTS) {        // Check if there is room for another page
+            if (this.PAGE_POOL.length < this.MAX_REQUESTS) {        // Check if there is room for creating a new page.
                 let position = this.PAGE_POOL.length;
                 this.PAGE_POOL[position] = {page: null, url: url};  // Reserve pool slot synchronously.
                 this.browser.newPage()
@@ -549,21 +572,21 @@ class Pagepool {
                     });
             }
             else {
-                for (let page of this.PAGE_POOL) {                  // If pool is full, find empty page.
+                for (let page of this.PAGE_POOL) {                  // If a page is idle, put url in page.
                     if (page.url === undefined) {
                         page.url = url;
                         resolve(page.page);
                         return;
                     }
                 }
-                // No empty page found, add to queue.
+                // No idle page found, add to queue.
                 this.REQUEST_QUEUE.push({url: url, resolve: resolve, reject: reject})
             }
         })
     }
 
     /**
-     * Releases a page from the page pool.
+     * Releases a page from the page pool and queues a new one if page queue is not empty.
      *
      * @since       1.0.0
      * @access      private
