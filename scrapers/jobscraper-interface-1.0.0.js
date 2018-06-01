@@ -563,7 +563,7 @@ class Pagepool {
                     .then((newPageObject) => {
                         this.PAGE_POOL[position] = {page: newPageObject, url: url};
                         newPageObject.setJavaScriptEnabled(true).then(() => {
-                            newPageObject.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
+                            newPageObject.setExtraHTTPHeaders({     // Handling of correct reading of danish alphabet
                                 'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
                             }).then(() => {
                                 resolve(newPageObject);

@@ -45,14 +45,7 @@ class JobindexScraper extends ScraperInterface {
     }
 
     /**
-     * Extracts the text containing the innerHTML which holds the number of pages in the region.
-     *
-     * @since       1.0.0
-     * @access      private
-     *
-     * @param page
-     * @param listLength
-     * @returns {Promise<number>}
+     * @inheritDoc
      */
     async getNumPages(page, listLength) {
         try {

@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CareerjetScraper.html">CareerjetScraper</a><ul class='methods'><li data-type='method'><a href="CareerjetScraper.html#scrapePage">scrapePage</a></li><li data-type='method'><a href="CareerjetScraper.html#scrapeRegion">scrapeRegion</a></li></ul></li><li><a href="JobindexScraper.html">JobindexScraper</a></li><li><a href="JobscraperTemplate.html">JobscraperTemplate</a></li><li><a href="ORM.html">ORM</a><ul class='methods'><li data-type='method'><a href="ORM.html#.CreateAnnonceTable">CreateAnnonceTable</a></li><li data-type='method'><a href="ORM.html#.CreateRegionTable">CreateRegionTable</a></li><li data-type='method'><a href="ORM.html#.FindChecksum">FindChecksum</a></li><li data-type='method'><a href="ORM.html#.FindRegionID">FindRegionID</a></li><li data-type='method'><a href="ORM.html#.InsertAnnonce">InsertAnnonce</a></li><li data-type='method'><a href="ORM.html#.InsertRegion">InsertRegion</a></li></ul></li><li><a href="Pagepool.html">Pagepool</a><ul class='methods'><li data-type='method'><a href="Pagepool.html#releasePage">releasePage</a></li><li data-type='method'><a href="Pagepool.html#reservePage">reservePage</a></li></ul></li></ul><h3>Interfaces</h3><ul><li><a href="JocscraperTemplate.html">JocscraperTemplate</a><ul class='methods'><li data-type='method'><a href="JocscraperTemplate.html#beginScraping">beginScraping</a></li><li data-type='method'><a href="JocscraperTemplate.html#createAnnonceModel">createAnnonceModel</a></li><li data-type='method'><a href="JocscraperTemplate.html#getCurrentPageURLTitles">getCurrentPageURLTitles</a></li><li data-type='method'><a href="JocscraperTemplate.html#getNumPages">getNumPages</a></li><li data-type='method'><a href="JocscraperTemplate.html#initializeDatabase">initializeDatabase</a></li><li data-type='method'><a href="JocscraperTemplate.html#insertAnnonce">insertAnnonce</a></li><li data-type='method'><a href="JocscraperTemplate.html#printDatabaseResult">printDatabaseResult</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapePage">scrapePage</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapePageList">scrapePageList</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapeRegion">scrapeRegion</a></li><li data-type='method'><a href="JocscraperTemplate.html#tryPathVariationOnPage">tryPathVariationOnPage</a></li></ul></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CareerjetScraper.html">CareerjetScraper</a><ul class='methods'><li data-type='method'><a href="CareerjetScraper.html#getNumPages">getNumPages</a></li><li data-type='method'><a href="CareerjetScraper.html#scrapePage">scrapePage</a></li><li data-type='method'><a href="CareerjetScraper.html#scrapeRegion">scrapeRegion</a></li></ul></li><li><a href="JobindexScraper.html">JobindexScraper</a><ul class='methods'><li data-type='method'><a href="JobindexScraper.html#getNumPages">getNumPages</a></li></ul></li><li><a href="JobscraperTemplate.html">JobscraperTemplate</a></li><li><a href="ORM.html">ORM</a><ul class='methods'><li data-type='method'><a href="ORM.html#.CreateAnnonceTable">CreateAnnonceTable</a></li><li data-type='method'><a href="ORM.html#.CreateRegionTable">CreateRegionTable</a></li><li data-type='method'><a href="ORM.html#.FindChecksum">FindChecksum</a></li><li data-type='method'><a href="ORM.html#.FindRegionID">FindRegionID</a></li><li data-type='method'><a href="ORM.html#.InsertAnnonce">InsertAnnonce</a></li><li data-type='method'><a href="ORM.html#.InsertRegion">InsertRegion</a></li></ul></li><li><a href="Pagepool.html">Pagepool</a><ul class='methods'><li data-type='method'><a href="Pagepool.html#releasePage">releasePage</a></li><li data-type='method'><a href="Pagepool.html#reservePage">reservePage</a></li></ul></li></ul><h3>Interfaces</h3><ul><li><a href="JocscraperTemplate.html">JocscraperTemplate</a><ul class='methods'><li data-type='method'><a href="JocscraperTemplate.html#beginScraping">beginScraping</a></li><li data-type='method'><a href="JocscraperTemplate.html#createAnnonceModel">createAnnonceModel</a></li><li data-type='method'><a href="JocscraperTemplate.html#getCurrentPageURLTitles">getCurrentPageURLTitles</a></li><li data-type='method'><a href="JocscraperTemplate.html#getNumPages">getNumPages</a></li><li data-type='method'><a href="JocscraperTemplate.html#initializeDatabase">initializeDatabase</a></li><li data-type='method'><a href="JocscraperTemplate.html#insertAnnonce">insertAnnonce</a></li><li data-type='method'><a href="JocscraperTemplate.html#printDatabaseResult">printDatabaseResult</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapePage">scrapePage</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapePageList">scrapePageList</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapeRegion">scrapeRegion</a></li><li data-type='method'><a href="JocscraperTemplate.html#tryPathVariationOnPage">tryPathVariationOnPage</a></li></ul></li></ul>
 </nav>
 
 <div id="main">
@@ -115,6 +115,7 @@ class JocscraperTemplate {
 
                 console.log(`BEGINNING SCRAPING IN REGION: ${key}`);
                 const REGION_PAGE_SELECTOR = `${this.TARGET_WEBSITE}${value}`;
+                console.log("REGION_PAGE_SELECTOR: "+REGION_PAGE_SELECTOR);
 
 
                 await page.goto(REGION_PAGE_SELECTOR, {
@@ -125,6 +126,7 @@ class JocscraperTemplate {
                     });
 
                 const NUM_PAGES = await this.getNumPages(page, ADVERTS_PER_PAGE);
+                console.log(NUM_PAGES+" PAGES");
 
                 for (let pageNumber = 0; pageNumber &lt; NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
                     await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber
@@ -168,6 +170,7 @@ class JocscraperTemplate {
             for (let index = fromPage; index &lt; toPage; index++) {
                 console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
                 const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`?page=${index}`);
+                console.log("PAGE_SELECTOR: "+PAGE_SELECTOR);
 
                 this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
                     .then((pageURLsAndTitles) => {
@@ -462,34 +465,7 @@ class JocscraperTemplate {
      * @returns {Promise&lt;number>}
      */
     async getNumPages(page, listLength) {
-        try {
-            const ADVERTS_PER_PAGE = listLength;
-
-            // Collecting value string:
-            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
-                .catch((error) => {
-                    throw new Error("page.$x() → " + error);
-                });
-
-
-            // Extracting info.
-            let rawText = await page.evaluate(element => element.textContent, advertContent[0])
-                .catch((error) => {
-                    throw new Error("page.evaluate() → " + error);
-                });
-
-
-            // Filtering number from text.
-            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
-            let capturedNumberGroup = match[1].replace(".", "");
-
-
-            // Calculating page numbers.
-            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
-            return numPages;
-        } catch (error) {
-            console.log("Error at getNumPages() → " + error);
-        }
+        throw ("getNumPages must be implemented for class");
     }
 
     /**
@@ -625,8 +601,14 @@ class Pagepool {
                 this.browser.newPage()
                     .then((newPageObject) => {
                         this.PAGE_POOL[position] = {page: newPageObject, url: url};
-                        resolve(newPageObject);
-                    })
+                        newPageObject.setJavaScriptEnabled(true).then(() => {
+                            newPageObject.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
+                                'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
+                            }).then(() => {
+                                resolve(newPageObject);
+                            });
+                        });
+                    });
             }
             else {
                 for (let page of this.PAGE_POOL) {                  // If a page is idle, put url in page.
@@ -680,7 +662,7 @@ module.exports = JocscraperTemplate;</code></pre>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon May 28 2018 08:46:14 GMT+0200 (Romance Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Jun 01 2018 08:41:53 GMT+0200 (Romance Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
