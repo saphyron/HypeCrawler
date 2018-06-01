@@ -162,7 +162,7 @@ class ORM {
      */
     static InsertAnnonce(newRecord) {
         return new Promise((resolve, reject) => {
-            let query = `INSERT INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL) ` +
+            let query = `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL) ` +
                 'VALUES (?, ?, ?, ?, ?, ?)';
 
 
@@ -205,9 +205,3 @@ class ORM {
 }
 
 module.exports = ORM;
-
-
-
-
-
-
