@@ -15,6 +15,7 @@ const CONNECTION = MYSQL.createConnection({
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
 const CHECKSUM_CACHE = {};
+const BODY_CHECKSUM_CACHE = {};
 
 class ORM {
 
@@ -52,6 +53,55 @@ class ORM {
                 resolve(result);
             });
         });
+    }
+
+    /**
+     * Searches for the body checksum in local cache.
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @param   {String}              incomingChecksum              Checksum to be searched for.
+     *
+     * @returns {Promise<String>}                                   Returns a checksum or empty string.
+     */
+    static FindBodyChecksum(incomingChecksum) {
+        // Utility function to check if cache exists.
+        function isObjectEmpty(object) {
+            for (let key in object) {
+                if (object.hasOwnProperty(key))
+                    return false;
+            }
+            return true;
+        }
+
+        // Utility function to fill local cache with all current checksums from database.
+        function fillCache(cursor) {
+            for (let record of cursor) {
+                BODY_CHECKSUM_CACHE[record.checksum] = record.checksum;
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            // Checks if local cache is empty
+            if (isObjectEmpty(BODY_CHECKSUM_CACHE)) {
+                const query =
+                    'SELECT bodychecksum ' +
+                    `FROM ${ANNONCE_TABLE_NAME} `;
+
+                CONNECTION.query(query, [incomingChecksum], function (error, result) {
+                    if (error) reject("Error at ORM.FindBodyChecksum() → " + error);
+                    fillCache(result);
+                });
+            }
+
+            // Checks local cache for checksum
+            if (BODY_CHECKSUM_CACHE[incomingChecksum]) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        })
     }
 
     /**

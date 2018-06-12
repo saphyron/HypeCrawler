@@ -437,9 +437,9 @@ class JocscraperTemplate {
      */
     insertAnnonce(annonceTitle, rawHTMLText, annonceURL) {
         return new Promise((resolve, reject) => {
-            let sha1Checksum = sha1(`${annonceURL}`);
+            let sha1Checksum = sha1(`${rawHTMLText}`);
 
-            ORM.FindChecksum(sha1Checksum)
+            ORM.FindBodyChecksum(sha1Checksum)
                 .then((result) => {
                     if (!result)
                         return this.createAnnonceModel(annonceTitle, rawHTMLText, currentRegionID, sha1Checksum, annonceURL)
