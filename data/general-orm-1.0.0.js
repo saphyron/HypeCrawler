@@ -17,9 +17,23 @@ const REGION_TABLE_NAME = 'region';
 const CHECKSUM_CACHE = {};
 const BODY_CHECKSUM_CACHE = {};
 
+/**
+ * @class
+ * Class implementing ORM-techniques to paradigm match OO-models and database schema.
+ *
+ * @since       1.0.0
+ * @access      public
+ */
 class ORM {
 
-
+    /**
+     * Creates the annonce database table if none exists
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @returns {Promise<any>}
+     */
     static CreateAnnonceTable() {
         return new Promise((resolve, reject) => {
             const query = `CREATE TABLE IF NOT EXISTS ${ANNONCE_TABLE_NAME} (` +
@@ -40,6 +54,14 @@ class ORM {
         })
     }
 
+     /**
+     * Creates the regions database table if none exists
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @returns {Promise<any>}
+     */
     static CreateRegionTable() {
         return new Promise((resolve, reject) => {
             const query = `CREATE TABLE IF NOT EXISTS ${REGION_TABLE_NAME} (` +
@@ -110,9 +132,9 @@ class ORM {
      * @since       1.0.0
      * @access      public
      *
-     * @param   {String}              incomingChecksum              Checksum to be searched for.
+     * @param {String}              incomingChecksum        Checksum to be searched for.
      *
-     * @returns {Promise<String>}                                   Returns a checksum or empty string.
+     * @returns {Promise<String>}                           Returns a checksum or empty string.
      */
     static FindChecksum(incomingChecksum) {
         // Utility function to check if cache exists.
@@ -153,6 +175,16 @@ class ORM {
         })
     }
 
+    /**
+     * Searches the database for specified region.
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @param {String}              incomingRegionName      Checksum to be searched for.
+     *
+     * @returns {Promise<String>}                           Returns the id of the specified region.
+     */
     static FindRegionID(incomingRegionName) {
         return new Promise((resolve, reject) => {
             const query =
@@ -170,7 +202,12 @@ class ORM {
 
     /**
      * Inserts a new Annonce record into the database
-     * @param {Annonce} newRecord - Annonce to add.
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @param {Annonce}             newRecord               Annonce model to add to database.
+     *
      * @returns {Promise<void>}
      */
     static InsertAnnonce(newRecord) {
@@ -192,6 +229,16 @@ class ORM {
         });
     }
 
+    /**
+     * Inserts a new region with specified unique name into database
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     * @param {String}              newRegion               Region to add to database
+     *
+     * @returns {Promise<void>}
+     */
     static InsertRegion(newRegion) {
         return new Promise((resolve, reject) => {
             let query = `INSERT IGNORE INTO ${REGION_TABLE_NAME} (NAME) ` +
@@ -208,9 +255,3 @@ class ORM {
 }
 
 module.exports = ORM;
-
-
-
-
-
-

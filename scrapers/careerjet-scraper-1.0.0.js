@@ -25,18 +25,18 @@ const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/t
 const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
 const PAGE_TIMEOUT = 30000;
 
+/**
+ * Class representing the algorithm for careerjet.dk
+ * @class
+ * @implements {JocscraperTemplate}
+ */
 class CareerjetScraper extends ScraperInterface {
     constructor() {
         super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, TOTAL_ADVERTS_REGEX, PAGE_TIMEOUT);
     }
 
     /**
-     * @param page
-     * @param browser
-     * @param REGION_PAGE_SELECTOR
-     * @param fromPage
-     * @param toPage
-     * @returns {Promise<any>}
+     * @inheritDoc
      */
     async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
         return new Promise((resolve, reject) => {
