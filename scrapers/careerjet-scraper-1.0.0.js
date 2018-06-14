@@ -127,32 +127,25 @@ class CareerjetScraper extends ScraperInterface {
      */
     async getNumPages(page, listLength) {
         try {
-            const ADVERTS_PER_PAGE = listLength;
-
-            // Collecting value string:
-            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
+            // Collecting num of pages element
+	    
+            let pageRefs = await page.$x("//*[@id=\"rightcol\"]/div[1]/nobr/table/tbody/tr/td/span/nobr")
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
 
+            // Extracting num of pages string
+	    var pageRegEx = /([0-9]+)( til )([0-9]+)( af )([0-9]+) jobs/;
+	    var pageSubstrings = pageRefs.match(pageRegEx);
+	    var firstJobNo = Number(pageSubstrings[0]);
+	    var lastJobNo = Number(pageSubstrings[2]);
+	    var totalJobCount = Number(pageSubstrings[4]);
+	    
+	    var result = Math.ceil(totalJobCount / (lastJobNo-firstJobNo+1));
 
-            // Extracting info.
-            let rawText = await page.evaluate(element => element.textContent, advertContent[0])
-                .catch((error) => {
-                    throw new Error("page.evaluate() → " + error);
-                });
-
-
-            // Filtering number from text.
-            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
-            let capturedNumberGroup = match[1].replace(".", "");
-
-
-            // Calculating page numbers.
-            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
-            return numPages;
+            return result;
         } catch (error) {
-            console.log("Error at getNumPages() → " + error);
+            console.log("Error at getNumPages("+page+") → " + error);
         }
     }
 

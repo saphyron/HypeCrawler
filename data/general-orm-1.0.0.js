@@ -87,55 +87,6 @@ class ORM {
      *
      * @returns {Promise<String>}                                   Returns a checksum or empty string.
      */
-    static FindBodyChecksum(incomingChecksum) {
-        // Utility function to check if cache exists.
-        function isObjectEmpty(object) {
-            for (let key in object) {
-                if (object.hasOwnProperty(key))
-                    return false;
-            }
-            return true;
-        }
-
-        // Utility function to fill local cache with all current checksums from database.
-        function fillCache(cursor) {
-            for (let record of cursor) {
-                BODY_CHECKSUM_CACHE[record.checksum] = record.checksum;
-            }
-        }
-
-        return new Promise((resolve, reject) => {
-            // Checks if local cache is empty
-            if (isObjectEmpty(BODY_CHECKSUM_CACHE)) {
-                const query =
-                    'SELECT bodychecksum ' +
-                    `FROM ${ANNONCE_TABLE_NAME} `;
-
-                CONNECTION.query(query, [incomingChecksum], function (error, result) {
-                    if (error) reject("Error at ORM.FindBodyChecksum() → " + error);
-                    fillCache(result);
-                });
-            }
-
-            // Checks local cache for checksum
-            if (BODY_CHECKSUM_CACHE[incomingChecksum]) {
-                resolve(true);
-            } else {
-                resolve(false);
-            }
-        })
-    }
-
-    /**
-     * Searches for the checksum in local cache.
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     * @param {String}              incomingChecksum        Checksum to be searched for.
-     *
-     * @returns {Promise<String>}                           Returns a checksum or empty string.
-     */
     static FindChecksum(incomingChecksum) {
         // Utility function to check if cache exists.
         function isObjectEmpty(object) {
@@ -146,32 +97,35 @@ class ORM {
             return true;
         }
 
-        // Utility function to fill local cache with all current checksums from database.
-        function fillCache(cursor) {
-            for (let record of cursor) {
-                CHECKSUM_CACHE[record.checksum] = record.checksum;
-            }
-        }
-
         return new Promise((resolve, reject) => {
+
+	    // Resolve or reject based on cache
+	    // Checks local cache for checksum
+	    function settlePromise(checksum) {
+		if (CHECKSUM_CACHE[incomingChecksum])
+                    resolve(true);
+		else
+                    resolve(false);
+	    }
+
             // Checks if local cache is empty
             if (isObjectEmpty(CHECKSUM_CACHE)) {
                 const query =
                     'SELECT checksum ' +
                     `FROM ${ANNONCE_TABLE_NAME} `;
 
-                CONNECTION.query(query, [incomingChecksum], function (error, result) {
-                    if (error) reject("Error at ORM.FindChecksum() → " + error);
-                    fillCache(result);
+                CONNECTION.query(query, function (error, cursor) {
+                    if (error) {
+			reject("Error at ORM.FindChecksum() → " + error);
+		    } else { 
+			for (let record of cursor)
+			    CHECKSUM_CACHE[record.checksum] = record.checksum;
+			settlePromise(incomingChecksum);
+		    }
                 });
-            }
-
-            // Checks local cache for checksum
-            if (CHECKSUM_CACHE[incomingChecksum]) {
-                resolve(true);
-            } else {
-                resolve(false);
-            }
+	    } else {
+		settlePromise(incomingChecksum);
+	    }
         })
     }
 

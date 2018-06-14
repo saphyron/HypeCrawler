@@ -62,8 +62,6 @@ class JobindexScraper extends ScraperInterface {
                     throw new Error("page.$x() → " + error);
                 });
 
-            // JobIndex
-
             // Extracting num of pages string
             let textNum = await page.evaluate(element => element.textContent, pageRefs[pageRefs.length-2])
                 .catch((error) => {
