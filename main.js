@@ -5,7 +5,7 @@ let careerjetClass = require('./scrapers/careerjet-scraper-1.0.0');
 async function main() {
 
     const browser = await puppeteer.launch({
-        headless: true
+        headless: false //true
     });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
