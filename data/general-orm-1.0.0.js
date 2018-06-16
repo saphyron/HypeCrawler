@@ -4,13 +4,37 @@ const MYSQL = require('mysql');
 //</editor-fold>
 
 //<editor-fold desc="MySQL-connection">
-const CONNECTION = MYSQL.createConnection({
+const DB_CONFIG = {
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE
-});
+};
+let CONNECTION;
 //</editor-fold>
+
+function connectDatabase() {
+    CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
+                                                    // the old one cannot be reused.
+
+    CONNECTION.connect(function(err) {              // The server is either down
+        if(err) {                                     // or restarting (takes a while sometimes).
+            console.log('error when connecting to db:', err);
+            setTimeout(connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
+        }                                     // to avoid a hot loop, and to allow our node script to
+    });                                     // process asynchronous requests in the meantime.
+                                            // If you're also serving http, display a 503 error.
+    CONNECTION.on('error', function(err) {
+        console.log('db error', err);
+        if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+            connectDatabase();                         // lost due to either server restart, or a
+        } else {                                      // connnection idle timeout (the wait_timeout
+            throw err;                                  // server variable configures this)
+        }
+    });
+}
+
+connectDatabase();
 
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
