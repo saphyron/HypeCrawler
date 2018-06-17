@@ -23,7 +23,7 @@ const PATH_VARIATIONS = [
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr';
 const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
-const PAGE_TIMEOUT = 30000;
+const PAGE_TIMEOUT = 15000;
 
 /**
  * Class representing the algorithm for careerjet.dk

@@ -51,6 +51,13 @@ class JocscraperTemplate {
         this.errorTotalCounter = 0;
     }
 
+    async connectDatabase() {
+	return ORM.connectDatabase();
+    }
+
+    async disconnectDatabase() {
+	return ORM.disconnectDatabase();
+    }
 
     /**
      * Entry-point method used by main-module for access to the scraper.

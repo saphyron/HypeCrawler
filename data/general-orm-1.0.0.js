@@ -13,29 +13,6 @@ const DB_CONFIG = {
 let CONNECTION;
 //</editor-fold>
 
-function connectDatabase() {
-    CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
-                                                    // the old one cannot be reused.
-
-    CONNECTION.connect(function(err) {              // The server is either down
-        if(err) {                                     // or restarting (takes a while sometimes).
-            console.log('error when connecting to db:', err);
-            setTimeout(connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
-        }                                     // to avoid a hot loop, and to allow our node script to
-    });                                     // process asynchronous requests in the meantime.
-                                            // If you're also serving http, display a 503 error.
-    CONNECTION.on('error', function(err) {
-        console.log('db error', err);
-        if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-            connectDatabase();                         // lost due to either server restart, or a
-        } else {                                      // connnection idle timeout (the wait_timeout
-            throw err;                                  // server variable configures this)
-        }
-    });
-}
-
-connectDatabase();
-
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
 const CHECKSUM_CACHE = {};
@@ -49,6 +26,38 @@ const BODY_CHECKSUM_CACHE = {};
  * @access      public
  */
 class ORM {
+
+    static disconnectDatabase() {
+        return new Promise((resolve, reject) => {
+	    CONNECTION.end(function(err) {
+		if (err)
+		    reject(`Disconnect database error: ${err}`);
+		else
+		    resolve();
+	    });
+	});
+    }
+
+    static connectDatabase() {
+	CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
+        // the old one cannot be reused.
+
+	CONNECTION.connect(function(err) {              // The server is either down
+            if(err) {                                     // or restarting (takes a while sometimes).
+		console.log('error when connecting to db:', err);
+		setTimeout(this.connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
+            }                                     // to avoid a hot loop, and to allow our node script to
+	});                                     // process asynchronous requests in the meantime.
+        // If you're also serving http, display a 503 error.
+	CONNECTION.on('error', function(err) {
+            console.log('db error', err);
+            if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+		this.connectDatabase();                         // lost due to either server restart, or a
+            } else {                                      // connnection idle timeout (the wait_timeout
+		throw err;                                  // server variable configures this)
+            }
+	});
+    }
 
     /**
      * Creates the annonce database table if none exists

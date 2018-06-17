@@ -5,7 +5,7 @@ let careerjetClass = require('./scrapers/careerjet-scraper-1.0.0');
 async function main() {
 
     const browser = await puppeteer.launch({
-        headless: false //true
+        headless: true
     });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
@@ -32,6 +32,12 @@ async function main() {
 }
 
 async function run(scraper, browser, page) {
+    await scraper.connectDatabase()
+        .catch((error) => {
+            console.log("Error at main → connectDatabase(): " + error);
+	    throw error;
+        });
+
     await scraper.initializeDatabase()
         .catch((error) => {
             console.log("Error at main → initializeDatabase(): " + error);
@@ -42,6 +48,12 @@ async function run(scraper, browser, page) {
         .catch((error) => {
             console.log("Error at main → beginScraping(): " + error);
 
+        });
+
+    await scraper.disconnectDatabase()
+        .catch((error) => {
+            console.log("Error at main → disconnectDatabase(): " + error);
+	    throw error;
         });
 }
 
