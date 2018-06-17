@@ -70,7 +70,7 @@ A Jest test environment has been enabled in the project and is added as a script
 3. Follow the description standard set in already implemented tests.
 
 **Execution of tests**
-* Run the tests in terminal from project root with: *npm run tests*
+* Run the tests in terminal from project root with: *npm run test*
 
 ## Contact
 
