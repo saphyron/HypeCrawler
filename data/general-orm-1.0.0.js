@@ -4,17 +4,19 @@ const MYSQL = require('mysql');
 //</editor-fold>
 
 //<editor-fold desc="MySQL-connection">
-const CONNECTION = MYSQL.createConnection({
+const DB_CONFIG = {
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE
-});
+};
+let CONNECTION;
 //</editor-fold>
 
 const ANNONCE_TABLE_NAME = 'annonce';
 const REGION_TABLE_NAME = 'region';
 const CHECKSUM_CACHE = {};
+const BODY_CHECKSUM_CACHE = {};
 
 /**
  * @class
@@ -24,6 +26,38 @@ const CHECKSUM_CACHE = {};
  * @access      public
  */
 class ORM {
+
+    static disconnectDatabase() {
+        return new Promise((resolve, reject) => {
+	    CONNECTION.end(function(err) {
+		if (err)
+		    reject(`Disconnect database error: ${err}`);
+		else
+		    resolve();
+	    });
+	});
+    }
+
+    static connectDatabase() {
+	CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
+        // the old one cannot be reused.
+
+	CONNECTION.connect(function(err) {              // The server is either down
+            if(err) {                                     // or restarting (takes a while sometimes).
+		console.log('error when connecting to db:', err);
+		setTimeout(this.connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
+            }                                     // to avoid a hot loop, and to allow our node script to
+	});                                     // process asynchronous requests in the meantime.
+        // If you're also serving http, display a 503 error.
+	CONNECTION.on('error', function(err) {
+            console.log('db error', err);
+            if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+		this.connectDatabase();                         // lost due to either server restart, or a
+            } else {                                      // connnection idle timeout (the wait_timeout
+		throw err;                                  // server variable configures this)
+            }
+	});
+    }
 
     /**
      * Creates the annonce database table if none exists
@@ -77,14 +111,14 @@ class ORM {
     }
 
     /**
-     * Searches the checksum in local cache.
+     * Searches for the body checksum in local cache.
      *
      * @since       1.0.0
      * @access      public
      *
-     * @param {String}              incomingChecksum        Checksum to be searched for.
+     * @param   {String}              incomingChecksum              Checksum to be searched for.
      *
-     * @returns {Promise<String>}                           Returns a checksum or empty string.
+     * @returns {Promise<String>}                                   Returns a checksum or empty string.
      */
     static FindChecksum(incomingChecksum) {
         // Utility function to check if cache exists.
@@ -96,32 +130,35 @@ class ORM {
             return true;
         }
 
-        // Utility function to fill local cache with all current checksums from database.
-        function fillCache(cursor) {
-            for (let record of cursor) {
-                CHECKSUM_CACHE[record.checksum] = record.checksum;
-            }
-        }
-
         return new Promise((resolve, reject) => {
+
+	    // Resolve or reject based on cache
+	    // Checks local cache for checksum
+	    function settlePromise(checksum) {
+		if (CHECKSUM_CACHE[incomingChecksum])
+                    resolve(true);
+		else
+                    resolve(false);
+	    }
+
             // Checks if local cache is empty
             if (isObjectEmpty(CHECKSUM_CACHE)) {
                 const query =
                     'SELECT checksum ' +
                     `FROM ${ANNONCE_TABLE_NAME} `;
 
-                CONNECTION.query(query, [incomingChecksum], function (error, result) {
-                    if (error) reject("Error at ORM.FindChecksum() → " + error);
-                    fillCache(result);
+                CONNECTION.query(query, function (error, cursor) {
+                    if (error) {
+			reject("Error at ORM.FindChecksum() → " + error);
+		    } else {
+			for (let record of cursor)
+			    CHECKSUM_CACHE[record.checksum] = record.checksum;
+			settlePromise(incomingChecksum);
+		    }
                 });
-            }
-
-            // Checks local cache for checksum
-            if (CHECKSUM_CACHE[incomingChecksum]) {
-                resolve(true);
-            } else {
-                resolve(false);
-            }
+	    } else {
+		settlePromise(incomingChecksum);
+	    }
         })
     }
 

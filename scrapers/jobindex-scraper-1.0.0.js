@@ -28,7 +28,7 @@ const PATH_VARIATIONS = [
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
 const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
-const PAGE_TIMEOUT = 30000;
+const PAGE_TIMEOUT = 15000;
 
 /**
  * @class
@@ -54,8 +54,6 @@ class JobindexScraper extends ScraperInterface {
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
-
-            // JobIndex
 
             // Extracting num of pages string
             let textNum = await page.evaluate(element => element.textContent, pageRefs[pageRefs.length-2])

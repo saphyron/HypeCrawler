@@ -23,7 +23,7 @@ const PATH_VARIATIONS = [
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr';
 const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
-const PAGE_TIMEOUT = 30000;
+const PAGE_TIMEOUT = 15000;
 
 /**
  * Class representing the algorithm for careerjet.dk
@@ -130,35 +130,30 @@ class CareerjetScraper extends ScraperInterface {
      */
     async getNumPages(page, listLength) {
         try {
-            const ADVERTS_PER_PAGE = listLength;
-
-            // Collecting value string:
-            let advertContent = await page.$x(this.PAGE_NUMBER_XPATH)
+            // Collecting num of pages element text
+            //*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr
+            //*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr
+            let pageRefs = await page.$x("//*[@id=\"rightcol\"]/div[1]/nobr/table/tbody/tr/td/span/nobr")
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
+            let pageText = await page.evaluate(element => element.textContent, pageRefs[0])
 
+            // Extracting num of pages substrings
+            var pageRegEx = /([0-9]+)( til )([0-9]+)( af )([0-9]+) jobs/;
+            var pageSubstrings = pageText.match(pageRegEx);
 
-            // Extracting info.
-            let rawText = await page.evaluate(element => element.textContent, advertContent[0])
-                .catch((error) => {
-                    throw new Error("page.evaluate() → " + error);
-                });
+            // Calculate num of pages
+            var firstJobNo = Number(pageSubstrings[1]);
+            var lastJobNo = Number(pageSubstrings[3]);
+            var totalJobCount = Number(pageSubstrings[5]);
+            var result = Math.ceil(totalJobCount / (lastJobNo-firstJobNo+1));
 
-
-            // Filtering number from text.
-            let match = this.PAGE_NUMBER_TEXT_REGEX.exec(rawText); // Extract the captured group.
-            let capturedNumberGroup = match[1].replace(".", "");
-
-
-            // Calculating page numbers.
-            let numPages = Math.ceil(capturedNumberGroup / ADVERTS_PER_PAGE);
-            return numPages;
+            return result;
         } catch (error) {
-            console.log("Error at getNumPages() → " + error);
+            console.log("Error at getNumPages("+page+") → " + error);
         }
     }
-
 }
 
 module.exports = CareerjetScraper;

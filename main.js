@@ -32,6 +32,12 @@ async function main() {
 }
 
 async function run(scraper, browser, page) {
+    await scraper.connectDatabase()
+        .catch((error) => {
+            console.log("Error at main → connectDatabase(): " + error);
+	    throw error;
+        });
+
     await scraper.initializeDatabase()
         .catch((error) => {
             console.log("Error at main → initializeDatabase(): " + error);
@@ -42,6 +48,12 @@ async function run(scraper, browser, page) {
         .catch((error) => {
             console.log("Error at main → beginScraping(): " + error);
 
+        });
+
+    await scraper.disconnectDatabase()
+        .catch((error) => {
+            console.log("Error at main → disconnectDatabase(): " + error);
+	    throw error;
         });
 }
 

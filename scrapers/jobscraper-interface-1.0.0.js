@@ -51,6 +51,13 @@ class JocscraperTemplate {
         this.errorTotalCounter = 0;
     }
 
+    async connectDatabase() {
+	return ORM.connectDatabase();
+    }
+
+    async disconnectDatabase() {
+	return ORM.disconnectDatabase();
+    }
 
     /**
      * Entry-point method used by main-module for access to the scraper.
@@ -290,8 +297,8 @@ class JocscraperTemplate {
             };
 
 
+            console.log('Scrape page ' + (pageNum+1) + ' begun');
             for (let index = 0; index < length; index++) {
-                console.log('Run ' + (index + 1) + ': begun');
                 let url = titleUrlList.PAGE_URLS[index];
 
                 // Ignore pdf annoncer
@@ -443,8 +450,8 @@ class JocscraperTemplate {
      */
     insertAnnonce(annonceTitle, rawHTMLText, annonceURL) {
         return new Promise((resolve, reject) => {
+	    
             let sha1Checksum = sha1(`${annonceURL}`);
-
             ORM.FindChecksum(sha1Checksum)
                 .then((result) => {
                     if (!result)
