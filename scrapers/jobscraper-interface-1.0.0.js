@@ -221,11 +221,12 @@ class JocscraperTemplate {
         let titles = [], urls = [];
         try {
             // Sets the XPath to the elements.
-            let xpathTitleData = await page.$x(`//div[@class="${titleClass}"]${titleAttributes}`)
+            let xpathTitleData = await page.$x(`//div[contains(concat(' ', @class, ' '), "${titleClass}")]${titleAttributes}`)
+            // let xpathTitleData = await page.$x(`//div[contains(concat(' ', @class, ' '), "${titleClass}")]`)
                 .catch((error) => {
                     throw new Error("page.$x(): " + error);
                 });
-            let xpathUrlData = await page.$x(`//div[@class="${urlClass}"]${urlAttributes}`)
+            let xpathUrlData = await page.$x(`//div[contains(concat(' ', @class, ' '), "${urlClass}")]${urlAttributes}`)
                 .catch((error) => {
                     throw new Error("page.$x(): " + error);
                 });
