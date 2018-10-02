@@ -12,14 +12,14 @@ async function main() {
         'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
     });
 
-    if (process.env.SCRAPER === "all" || process.env.SCRAPER === "jobindex") {
+    if (process.env.ADVERTS_SCRAPE === undefined || process.env.ADVERTS_SCRAPE === "all" || process.env.ADVERTS_SCRAPE === "jobindex") {
 
         let scraper = new jobindexClass();
         await run(scraper, browser, page);
         //Print result
         scraper.printDatabaseResult();
     }
-    if (process.env.SCRAPER === "all" || process.env.SCRAPER === "careerjet") {
+    if (process.env.ADVERTS_SCRAPE === undefined || process.env.ADVERTS_SCRAPE === "all" || process.env.ADVERTS_SCRAPE === "careerjet") {
 
         let scraper = new careerjetClass();
         await run(scraper, browser, page);
