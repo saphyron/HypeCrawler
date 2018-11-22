@@ -13,8 +13,8 @@ const REGION_NAMES = new Map([
 
 const PATH_VARIATIONS = [
     {
-        URL_XPATH_CLASS: 'job', URL_XPATH_ATTRIBUTES: '/h2/a/@href', TITLE_XPATH_CLASS: 'job',
-        TITLE_XPATH_ATTRIBUTES: '/h2/a'
+        URL_XPATH_CLASS: 'job', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'job',
+        TITLE_XPATH_ATTRIBUTES: '/a/h2'
     },
     {
         URL_XPATH_CLASS: 'jix_robotjob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'jix_robotjob',

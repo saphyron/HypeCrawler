@@ -221,16 +221,17 @@ class JocscraperTemplate {
         let titles = [], urls = [];
         try {
             // Sets the XPath to the elements.
-            let xpathTitleData = await page.$x(`//div[contains(concat(' ', @class, ' '), "${titleClass}")]${titleAttributes}`)
+            let xPathTitleStr = `//div[contains(@class, "${titleClass}")]${titleAttributes}`;
+            let xpathTitleData = await page.$x(xPathTitleStr)
             // let xpathTitleData = await page.$x(`//div[contains(concat(' ', @class, ' '), "${titleClass}")]`)
                 .catch((error) => {
                     throw new Error("page.$x(): " + error);
                 });
-            let xpathUrlData = await page.$x(`//div[contains(concat(' ', @class, ' '), "${urlClass}")]${urlAttributes}`)
+            let xPathUrlStr = `//div[contains(@class, "${urlClass}")]${urlAttributes}`;
+            let xpathUrlData = await page.$x(xPathUrlStr)
                 .catch((error) => {
                     throw new Error("page.$x(): " + error);
                 });
-
 
             // Runs through all advertisements with XPath on current page.
             for (let i = 0; i < xpathTitleData.length; i++) {
