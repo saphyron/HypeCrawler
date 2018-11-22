@@ -131,13 +131,11 @@ class CareerjetScraper extends ScraperInterface {
     async getNumPages(page, listLength) {
         try {
             // Collecting num of pages element text
-            //*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr
-            //*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr
-            let pageRefs = await page.$x("//*[@id=\"rightcol\"]/div[1]/nobr/table/tbody/tr/td/span/nobr")
+            let pageRefs = await page.$x('//div[contains(@class,"search-filter-h1-prefix")]//nobr')
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
-            let pageText = await page.evaluate(element => element.textContent, pageRefs[0])
+            let pageText = await page.evaluate(element => element.textContent, pageRefs[0]);
 
             // Extracting num of pages substrings
             var pageRegEx = /([0-9]+)( til )([0-9]+)( af )([0-9]+) jobs/;
