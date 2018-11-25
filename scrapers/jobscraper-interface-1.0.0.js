@@ -52,11 +52,11 @@ class JocscraperTemplate {
     }
 
     async connectDatabase() {
-	return ORM.connectDatabase();
+        return ORM.connectDatabase();
     }
 
     async disconnectDatabase() {
-	return ORM.disconnectDatabase();
+        return ORM.disconnectDatabase();
     }
 
     /**
@@ -142,7 +142,7 @@ class JocscraperTemplate {
 
             for (let index = fromPage; index < toPage; index++) {
                 console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
-                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${getPageExtension()}`);
+                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
                 console.log("PAGE_SELECTOR: "+PAGE_SELECTOR);
 
                 this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
@@ -409,7 +409,7 @@ class JocscraperTemplate {
      */
     insertAnnonce(annonceTitle, rawHTMLText, annonceURL) {
         return new Promise((resolve, reject) => {
-	    
+
             let sha1Checksum = sha1(`${annonceURL}`);
             ORM.FindChecksum(sha1Checksum)
                 .then((result) => {

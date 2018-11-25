@@ -37,7 +37,7 @@ const PAGE_TIMEOUT = 15000;
 class JobindexScraper extends ScraperInterface {
 
     /**
-     * Constructor for 
+     * Constructor for
      * @constructor
      */
     constructor() {
@@ -45,7 +45,7 @@ class JobindexScraper extends ScraperInterface {
     }
 
     getPageExtension(pageNo) {
-        return `?page=${index}`;
+        return `?page=${pageNo}`;
     }
 
     /**

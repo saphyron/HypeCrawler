@@ -36,7 +36,7 @@ class CareerjetScraper extends ScraperInterface {
     }
 
     getPageExtension(pageNo) {
-        return `${(index * 20) + 1}`;
+        return `${(pageNo * 20) + 1}`;
     }
 
     /**

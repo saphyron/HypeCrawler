@@ -29,34 +29,34 @@ class ORM {
 
     static disconnectDatabase() {
         return new Promise((resolve, reject) => {
-	    CONNECTION.end(function(err) {
-		if (err)
-		    reject(`Disconnect database error: ${err}`);
-		else
-		    resolve();
-	    });
-	});
+            CONNECTION.end(function(err) {
+                if (err)
+                    reject(`Disconnect database error: ${err}`);
+                else
+                    resolve();
+            });
+        });
     }
 
     static connectDatabase() {
-	CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
+        CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
         // the old one cannot be reused.
 
-	CONNECTION.connect(function(err) {              // The server is either down
+        CONNECTION.connect(function(err) {              // The server is either down
             if(err) {                                     // or restarting (takes a while sometimes).
-		console.log('error when connecting to db:', err);
-		setTimeout(this.connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
+                console.log('error when connecting to db:', err);
+                setTimeout(this.connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
             }                                     // to avoid a hot loop, and to allow our node script to
-	});                                     // process asynchronous requests in the meantime.
+        });                                     // process asynchronous requests in the meantime.
         // If you're also serving http, display a 503 error.
-	CONNECTION.on('error', function(err) {
+        CONNECTION.on('error', function(err) {
             console.log('db error', err);
             if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-		this.connectDatabase();                         // lost due to either server restart, or a
+                this.connectDatabase();                         // lost due to either server restart, or a
             } else {                                      // connnection idle timeout (the wait_timeout
-		throw err;                                  // server variable configures this)
+                throw err;                                  // server variable configures this)
             }
-	});
+        });
     }
 
     /**
@@ -87,7 +87,7 @@ class ORM {
         })
     }
 
-     /**
+    /**
      * Creates the regions database table if none exists
      *
      * @since       1.0.0
@@ -132,14 +132,14 @@ class ORM {
 
         return new Promise((resolve, reject) => {
 
-	    // Resolve or reject based on cache
-	    // Checks local cache for checksum
-	    function settlePromise(checksum) {
-		if (CHECKSUM_CACHE[incomingChecksum])
+            // Resolve or reject based on cache
+            // Checks local cache for checksum
+            function settlePromise(checksum) {
+                if (CHECKSUM_CACHE[incomingChecksum])
                     resolve(true);
-		else
+                else
                     resolve(false);
-	    }
+            }
 
             // Checks if local cache is empty
             if (isObjectEmpty(CHECKSUM_CACHE)) {
@@ -149,16 +149,16 @@ class ORM {
 
                 CONNECTION.query(query, function (error, cursor) {
                     if (error) {
-			reject("Error at ORM.FindChecksum() → " + error);
-		    } else {
-			for (let record of cursor)
-			    CHECKSUM_CACHE[record.checksum] = record.checksum;
-			settlePromise(incomingChecksum);
-		    }
+                        reject("Error at ORM.FindChecksum() → " + error);
+                    } else {
+                        for (let record of cursor)
+                            CHECKSUM_CACHE[record.checksum] = record.checksum;
+                        settlePromise(incomingChecksum);
+                    }
                 });
-	    } else {
-		settlePromise(incomingChecksum);
-	    }
+            } else {
+                settlePromise(incomingChecksum);
+            }
         })
     }
 
