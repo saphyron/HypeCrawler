@@ -197,7 +197,7 @@ class ORM {
      *
      * @returns {Promise<void>}
      */
-    static InsertAnnonce(newRecord) {
+    static async InsertAnnonce(newRecord) {
         return new Promise((resolve, reject) => {
             let query = `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL) ` +
                 'VALUES (?, ?, ?, ?, ?, ?)';
@@ -235,6 +235,27 @@ class ORM {
                 function (error, result) {
                     if (error) reject("Error at ORM.InsertRegion() → " + error);
                     console.log('1 record inserted!');
+                    resolve(result);
+                })
+        });
+    }
+
+    /**
+     * Dummy call to database to keep connection alive
+     *
+     * @since       1.0.0
+     * @access      public
+     *
+     *
+     * @returns {Promise<void>}
+     */
+    static KeepConnectionAlive() {
+        return new Promise((resolve, reject) => {
+            let query = `SELECT 1`;
+
+            CONNECTION.query(query,
+                function (error, result) {
+                    if (error) reject("Error at ORM.KeepConnectionAlive() → " + error);
                     resolve(result);
                 })
         });
