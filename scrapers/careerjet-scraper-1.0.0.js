@@ -35,47 +35,8 @@ class CareerjetScraper extends ScraperInterface {
         super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, TOTAL_ADVERTS_REGEX, PAGE_TIMEOUT);
     }
 
-    /**
-     * @inheritDoc
-     */
-    async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
-        return new Promise((resolve, reject) => {
-            let resolveCounter = 0, rejectCounter = 0;
-            let result = '';
-
-            // Utility method to limit the amount of simultaneous running pages.
-            let settlePromise = () => {
-                if (resolveCounter + rejectCounter === (toPage - fromPage))
-                    if (rejectCounter > 0)
-                        reject(result);
-                    else
-                        resolve();
-            };
-
-            for (let index = fromPage; index < toPage; index++) {
-                console.log('BEGINNING SCRAPING ON PAGE: ' + index);
-                let pageExtension = (index * 20) + 1;
-                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${pageExtension}`);
-
-                this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
-                    .then((pageURLsAndTitles) => {
-                        return this.scrapePageList(browser, pageURLsAndTitles, index)
-                            .catch((error) => {
-                                rejectCounter++;
-                                result += "Error at scrapeRegion → scrapePageList: " + error + '\n';
-                            })
-                    })
-                    .then(() => {
-                        resolveCounter++;
-                        settlePromise();
-                    })
-                    .catch((error) => {
-                        rejectCounter++;
-                        result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
-                        settlePromise();
-                    })
-            }
-        });
+    getPageExtension(pageNo) {
+        return `${(index * 20) + 1}`;
     }
 
     /**

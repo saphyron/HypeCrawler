@@ -106,6 +106,11 @@ class JocscraperTemplate {
         }
     }
 
+    getPageExtension(pageNo) {
+        throw  new Error("Missing getPageExtension implementation");
+    }
+
+
     /**
      * Scrapes the region provided by REGION_PAGE_SELECTOR argument.
      *
@@ -137,7 +142,7 @@ class JocscraperTemplate {
 
             for (let index = fromPage; index < toPage; index++) {
                 console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
-                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`?page=${index}`);
+                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${getPageExtension()}`);
                 console.log("PAGE_SELECTOR: "+PAGE_SELECTOR);
 
                 this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
@@ -346,57 +351,9 @@ class JocscraperTemplate {
         })
     }
 
-    /**
-     * Scrapes the provided page and invokes database call.
-     *
-     * @since       1.0.0
-     * @access      private
-     *
-     * @param {Object}              page                    Browser tab from pagePool.
-     * @param {String}              title                   Title of the linked page.
-     * @param {String}              url                     Url of linked page.
-     * @param {int}                 index                   Indicator of advertisement position in the list.
-     * @param {int}                 pageNum                 Indicator of advertisement list page number in region.
-     *
-     * @returns {Promise<void>}
-     */
     async scrapePage(page, title, url, index, pageNum) {
-        //let newPage = undefined;
-        let errorResult = undefined;
-        console.time("runTime page number " + pageNum + " annonce " + index);
-
-        try {
-            await page.goto(url, {
-                timeout: this.PAGE_TIMEOUT
-            })
-                .catch((error) => {
-                    throw new Error("page.goto(): " + error);
-                });
-
-            // Filter the object and extract body as raw text.
-            let bodyHTML = await page.evaluate(() => document.body.outerHTML)
-                .catch((error) => {
-                    throw new Error("newPage.evaluate(): " + error)
-                });
-
-            // Insert or update annonce to database:
-            await this.insertAnnonce(title, bodyHTML, url)
-                .catch((error) => {
-                    throw new Error("insertAnnonce(" + url + "): " + error)
-                });
-
-        } catch (error) {
-            errorResult = error;
-        }
-
-        if (errorResult) {
-            this.errorTotalCounter++;
-            console.log("Error at scrapePage(" + url + ") → " + errorResult);
-        }
-
-        console.timeEnd("runTime page number " + pageNum + " annonce " + index);
-    }
-
+        throw new Error("Missing scrapePage implementation");
+    };
 
 //<editor-fold desc="HelperMethods">
     /**
