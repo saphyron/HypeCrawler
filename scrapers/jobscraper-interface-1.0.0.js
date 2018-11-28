@@ -132,7 +132,10 @@ class JocscraperTemplate {
             let result = '';
 
             // Avoid timeout idle database connection
-            ORM.KeepConnectionAlive().catch((err) => {
+            ORM.KeepConnectionAlive().then(() => {
+		console.log("KeepConnectionAlive done.")
+	    }).catch((err) => {
+		console.log("ERROR: KeepConnectionAlive failed: "+err)
                 throw err;
             });
 

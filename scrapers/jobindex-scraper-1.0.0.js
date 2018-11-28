@@ -28,7 +28,7 @@ const PATH_VARIATIONS = [
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
 const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
-const PAGE_TIMEOUT = 15000;
+const PAGE_TIMEOUT = 5000;
 
 /**
  * @class
