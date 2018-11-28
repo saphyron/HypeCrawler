@@ -26,9 +26,11 @@ const BODY_CHECKSUM_CACHE = {};
  * @access      public
  */
 class ORM {
-
     static disconnectDatabase() {
         return new Promise((resolve, reject) => {
+            clearInterval(ORM.keepDataConnectionAliveHandle);
+            ORM.keepDataConnectionAliveHandle = undefined;
+
             CONNECTION.end(function(err) {
                 if (err)
                     reject(`Disconnect database error: ${err}`);
@@ -39,6 +41,7 @@ class ORM {
     }
 
     static connectDatabase() {
+
         CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
         // the old one cannot be reused.
 
@@ -47,6 +50,21 @@ class ORM {
                 console.log('error when connecting to db:', err);
                 setTimeout(this.connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
             }                                     // to avoid a hot loop, and to allow our node script to
+            else
+            {
+                //Keep database connection alive by repetitive database calls
+                ORM.keepDataConnectionAliveHandle = setInterval(() => {
+                    let query = `SELECT 1`;
+
+                    CONNECTION.query(query,
+                        function (error) {
+                            if (error)
+                                console.log("Error at ORM.KeepConnectionAlive() → " + error);
+                            else
+                                console.log("Ok at ORM.KeepConnectionAlive()");
+                        })
+                }, 60000); //run each minute
+            }
         });                                     // process asynchronous requests in the meantime.
         // If you're also serving http, display a 503 error.
         CONNECTION.on('error', function(err) {
@@ -240,26 +258,6 @@ class ORM {
         });
     }
 
-    /**
-     * Dummy call to database to keep connection alive
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     *
-     * @returns {Promise<void>}
-     */
-    static KeepConnectionAlive() {
-        return new Promise((resolve, reject) => {
-            let query = `SELECT 1`;
-
-            CONNECTION.query(query,
-                function (error, result) {
-                    if (error) reject("Error at ORM.KeepConnectionAlive() → " + error);
-                    resolve(result);
-                })
-        });
-    }
 }
 
 module.exports = ORM;

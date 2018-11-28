@@ -131,14 +131,6 @@ class JocscraperTemplate {
             let resolveCounter = 0, rejectCounter = 0;
             let result = '';
 
-            // Avoid timeout idle database connection
-            ORM.KeepConnectionAlive().then(() => {
-		console.log("KeepConnectionAlive done.")
-	    }).catch((err) => {
-		console.log("ERROR: KeepConnectionAlive failed: "+err)
-                throw err;
-            });
-
             // Utility method to limit the amount of simultaneous running pages.
             let settlePromise = () => {
                 if (resolveCounter + rejectCounter === (toPage - fromPage))
