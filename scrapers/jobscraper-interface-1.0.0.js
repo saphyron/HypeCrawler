@@ -370,20 +370,20 @@ class JocscraperTemplate {
     printDatabaseResult() {
         let totalEntries = this.successTotalCounter + this.existingTotalCounter + this.errorTotalCounter;
 
-        console.log("\x1b[0m", '----------------------------------------------------------');
-        console.log(`\t\t\t${this.TARGET_WEBSITE} SCRAPER STATISTIK`);
-        console.log("\x1b[0m", '----------------------------------------------------------');
-        console.log("\x1b[32m" + '\t\t\t' + this.successTotalCounter + ' OUT OF ' + totalEntries
+        console.log('----------------------------------------------------------');
+        console.log(`${this.TARGET_WEBSITE} SCRAPER STATISTIK`);
+        console.log('----------------------------------------------------------');
+        console.log(this.successTotalCounter + ' OUT OF ' + totalEntries
             + ` (${Math.round(this.successTotalCounter / totalEntries) * 100} %) --- INSERTS`);
-        console.log("\x1b[0m", '----------------------------------------------------------');
+        console.log('----------------------------------------------------------');
 
-        console.log("\x1b[33m" + '\t\t\t' + this.existingTotalCounter + ' OUT OF ' + totalEntries
+        console.log(this.existingTotalCounter + ' OUT OF ' + totalEntries
             + ` (${Math.round(this.existingTotalCounter / totalEntries) * 100} %) --- EXISTS`);
-        console.log("\x1b[0m", '----------------------------------------------------------');
-        console.log("\x1b[31m" + '\t\t\t' + this.errorTotalCounter + ' OUT OF ' + totalEntries
+        console.log('----------------------------------------------------------');
+        console.log(this.errorTotalCounter + ' OUT OF ' + totalEntries
             + ` (${Math.round(this.errorTotalCounter / totalEntries) * 100} %) --- ERRORS`);
 
-        console.log("\x1b[0m", '----------------------------------------------------------');
+        console.log('----------------------------------------------------------');
     }
 
     /**
