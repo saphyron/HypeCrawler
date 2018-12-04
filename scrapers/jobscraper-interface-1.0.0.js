@@ -150,7 +150,7 @@ class JocscraperTemplate {
                         this.scrapePageList(browser, pageURLsAndTitles, index)
                             .catch((error) => {
                                 rejectCounter++;
-                                result += `Error at scrapeRegion → scrapePageList(${page},${PAGE_SELECTOR}): ${error} \n`;
+                                result += `Error at scrapeRegion → scrapePageList(${page},'${PAGE_SELECTOR}'): ${error.toString()}`;
                                 settlePromise();
                             })
                             .then(() => {
@@ -160,7 +160,7 @@ class JocscraperTemplate {
                     })
                     .catch((error) => {
                         rejectCounter++;
-                        result += `Error at scrapeRegion → getCurrentPageURLTitles(${page},${PAGE_SELECTOR}): ${error} \n`;
+                        result += `Error at scrapeRegion → getCurrentPageURLTitles(${page},'${PAGE_SELECTOR}'): ${error.toString()}`;
                         settlePromise();
                     });
             }
