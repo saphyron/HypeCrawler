@@ -150,17 +150,17 @@ class JocscraperTemplate {
                         this.scrapePageList(browser, pageURLsAndTitles, index)
                             .catch((error) => {
                                 rejectCounter++;
-                                result += "Error at scrapeRegion → scrapePageList: " + error + '\n';
-				settlePromise();
+                                result += `Error at scrapeRegion → scrapePageList(${page},${PAGE_SELECTOR}): ${error} \n`;
+                                settlePromise();
                             })
-			    .then(() => {
-				resolveCounter++;
-				settlePromise();
-			    })
+                            .then(() => {
+                                resolveCounter++;
+                                settlePromise();
+                            })
                     })
                     .catch((error) => {
                         rejectCounter++;
-                        result += "Error at scrapeRegion → getCurrentPageURLTitles: " + error + '\n';
+                        result += `Error at scrapeRegion → getCurrentPageURLTitles(${page},${PAGE_SELECTOR}): ${error} \n`;
                         settlePromise();
                     });
             }
@@ -179,34 +179,30 @@ class JocscraperTemplate {
      * @returns {Promise<{PAGE_TITLES: Array, PAGE_URLS: Array}>} - Lists with titles and urls.
      */
     async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
-        try {
-            await page.goto(PAGE_SELECTOR, {
-                timeout: this.PAGE_TIMEOUT
-            })
-                .catch((value) => {
-                    throw new Error("page.goto() → " + value);
-                });
+        await page.goto(PAGE_SELECTOR, {
+            timeout: this.PAGE_TIMEOUT
+        })
+            .catch((value) => {
+                throw new Error("page.goto() → " + value);
+            });
 
-            let counter = 0;
-            let titles = [], urls = [];
+        let counter = 0;
+        let titles = [], urls = [];
 
-            while (titles.length === 0 && counter < this.PATH_VARIATIONS.length) {
-                let currentObject = this.PATH_VARIATIONS[counter];
-                let candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS,
-                    currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
-                titles = candidateObj.titleList;
-                urls = candidateObj.urlList;
-                counter++;
-            }
-
-            if (titles.length === 0) {
-                throw new Error("No valid path found!");
-            }
-
-            return {PAGE_TITLES: titles, PAGE_URLS: urls};
-        } catch (error) {
-            console.log("Error at getCurrentPageURLTitles() → " + error)
+        while (titles.length === 0 && counter < this.PATH_VARIATIONS.length) {
+            let currentObject = this.PATH_VARIATIONS[counter];
+            let candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS,
+                currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
+            titles = candidateObj.titleList;
+            urls = candidateObj.urlList;
+            counter++;
         }
+
+        if (titles.length === 0) {
+            throw new Error("No valid path found!");
+        }
+
+        return {PAGE_TITLES: titles, PAGE_URLS: urls};
     }
 
     /**
@@ -343,15 +339,15 @@ class JocscraperTemplate {
                                     // Update rejects and throw error
                                     current_requests--;
                                     rejectCounter++;
-				    result += ("Error at scrapePageList() → " + error + ", ");
+                                    result += ("Error at scrapePageList() → " + error + ", ");
                                     settlePromise(index);
                                 });
                         }
                     }, (error) => {
-			rejectCounter++;
-				    result += ("Error at scrapePageList() → " + error + ", ");
-                            settlePromise(index);			
-		    })
+                        rejectCounter++;
+                        result += ("Error at scrapePageList() → " + error + ", ");
+                        settlePromise(index);
+                    })
             }
         })
     }
