@@ -369,16 +369,11 @@ class JocscraperTemplate {
         console.log('----------------------------------------------------------');
         console.log(`${this.TARGET_WEBSITE} SCRAPER STATISTIK`);
         console.log('----------------------------------------------------------');
-        console.log(this.successTotalCounter + ' OUT OF ' + totalEntries
-            + ` (${Math.round(this.successTotalCounter / totalEntries) * 100} %) --- INSERTS`);
+        console.log(`${this.successTotalCounter} OUT OF ${totalEntries} (${Math.round(this.successTotalCounter / totalEntries) * 100} %) --- INSERTS`);
         console.log('----------------------------------------------------------');
-
-        console.log(this.existingTotalCounter + ' OUT OF ' + totalEntries
-            + ` (${Math.round(this.existingTotalCounter / totalEntries) * 100} %) --- EXISTS`);
+        console.log(`${this.existingTotalCounter} OUT OF ${totalEntries} (${Math.round(this.existingTotalCounter / totalEntries) * 100} %) --- EXISTS`);
         console.log('----------------------------------------------------------');
-        console.log(this.errorTotalCounter + ' OUT OF ' + totalEntries
-            + ` (${Math.round(this.errorTotalCounter / totalEntries) * 100} %) --- ERRORS`);
-
+        console.log(`${this.errorTotalCounter} OUT OF ${totalEntries} (${Math.round(this.errorTotalCounter / totalEntries) * 100} %) --- ERRORS`);
         console.log('----------------------------------------------------------');
     }
 
