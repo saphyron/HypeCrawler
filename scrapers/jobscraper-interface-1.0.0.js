@@ -98,7 +98,9 @@ class JocscraperTemplate {
 
                 for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
                     await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber
-                        + this.PAGE_LIMIT);
+                        + this.PAGE_LIMIT).catch((error) => {
+                        console.log("Error at scrapeRegion → " + error);
+                    });
                 }
             }
         } catch (error) {
