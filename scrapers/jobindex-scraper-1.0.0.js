@@ -104,22 +104,26 @@ class JobindexScraper extends ScraperInterface {
                 .catch((error) => {
                     throw new Error("newPage.evaluate(): " + error)
                 });
+            let cvr = undefined;
 
-            await page.goto(companyURL, {
-                timeout: this.PAGE_TIMEOUT
-            }) .catch((error) => {
-                throw new Error("page.goto(): " + error)
-            })
+            if(companyURL !== undefined) {
+                await page.goto(companyURL, {
+                    timeout: this.PAGE_TIMEOUT
+                }) .catch((error) => {
+                    throw new Error("page.goto(): " + error)
+                })
 
-            let companyHTML = await page.evaluate(() => document.body.outerHTML)
-                .catch((error)=> {
-                    "CompanyDataScrape: " + error
-                });
+                let companyHTML = await page.evaluate(() => document.body.outerHTML)
+                    .catch((error)=> {
+                        "CompanyDataScrape: " + error
+                    });
 
 
-            let cvrRegexp = /DK([0-9]{8})/g
-            let cvr = cvrRegexp.exec(companyHTML)
-            cvr = cvr[1]; // Extract cvr in first capture group.
+                let cvrRegexp = /DK([0-9]{8})/g
+                cvr = cvrRegexp.exec(companyHTML)
+                cvr = cvr[1]; // Extract cvr in first capture group.
+
+            }
 
 
 
