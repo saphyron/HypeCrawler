@@ -19,11 +19,11 @@ const REGION_NAMES = new Map([
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
-        TITLE_XPATH_ATTRIBUTES: '/a/*[1]'
+        TITLE_XPATH_ATTRIBUTES: '/a/*[1]', COMPANY_XPATH_CLASS: 'toolbar-companyprofile', COMPANY_XPATH_ATTRIBUTES: '/a/@href'
     },
     {
         URL_XPATH_CLASS: 'jix_robotjob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'jix_robotjob',
-        TITLE_XPATH_ATTRIBUTES: '/a/strong'
+        TITLE_XPATH_ATTRIBUTES: '/a/strong', COMPANY_XPATH_CLASS: 'jix_robotjob', COMPANY_XPATH_ATTRIBUTES: '/a/@href'
     }
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
@@ -86,7 +86,7 @@ class JobindexScraper extends ScraperInterface {
      *
      * @returns {Promise<void>}
      */
-    async scrapePage(page, title, url, index, pageNum) {
+    async scrapePage(page, title, url, companyURL, index, pageNum) {
         //let newPage = undefined;
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
@@ -105,11 +105,31 @@ class JobindexScraper extends ScraperInterface {
                     throw new Error("newPage.evaluate(): " + error)
                 });
 
+            await page.goto(companyURL, {
+                timeout: this.PAGE_TIMEOUT
+            }) .catch((error) => {
+                throw new Error("page.goto(): " + error)
+            })
+
+            let companyHTML = await page.evaluate(() => document.body.outerHTML)
+                .catch((error)=> {
+                    "CompanyDataScrape: " + error
+                });
+
+
+            let cvrRegexp = /DK([0-9]{8})/g
+            let cvr = cvrRegexp.exec(companyHTML)
+            cvr = cvr[1]; // Extract cvr in first capture group.
+
+
+
             // Insert or update annonce to database:
-            await this.insertAnnonce(title, bodyHTML, url)
+            await this.insertAnnonce(title, bodyHTML, url, cvr)
                 .catch((error) => {
                     throw new Error("insertAnnonce(" + url + "): " + error)
-                });
+                })
+
+
 
         } catch (error) {
             errorResult = error;

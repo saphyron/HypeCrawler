@@ -42,7 +42,7 @@ class CareerjetScraper extends ScraperInterface {
     /**
      * @inheritDoc
      */
-    async scrapePage(page, title, url, index, pageNum) {
+    async scrapePage(page, title, url, companyUrl, index, pageNum) {
         let formattedUrl = (TARGET_WEBSITE + url);
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);

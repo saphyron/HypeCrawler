@@ -218,12 +218,12 @@ class ORM {
      */
     static async InsertAnnonce(newRecord) {
         return new Promise((resolve, reject) => {
-            let query = `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL) ` +
-                'VALUES (?, ?, ?, ?, ?, ?)';
+            let query = `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR) ` +
+                'VALUES (?, ?, ?, ?, ?, ?, ?)';
 
 
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
-                    newRecord.checksum, newRecord.url],
+                    newRecord.checksum, newRecord.url, newRecord.cvr],
                 function (error, result) {
                     if (error) reject("Error at ORM.InsertAnnonce() → " + error);
 

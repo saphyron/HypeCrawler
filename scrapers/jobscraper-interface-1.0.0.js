@@ -189,14 +189,22 @@ class JocscraperTemplate {
             });
 
         let counter = 0;
-        let titles = [], urls = [];
+        let titles = [], urls = [], companies = [];
 
         while (titles.length === 0 && counter < this.PATH_VARIATIONS.length) {
             let currentObject = this.PATH_VARIATIONS[counter];
-            let candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS,
-                currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
+            let candidateObj;
+            if(currentObject.COMPANY_XPATH_CLASS === undefined){
+                candidateObj = await this.tryPathVariationOnPage(page,currentObject.TITLE_XPATH_CLASS,currentObject.TITLE_XPATH_ATTRIBUTES,currentObject.URL_XPATH_CLASS,currentObject.URL_XPATH_ATTRIBUTES);
+            } else {
+                candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS,
+                    currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES, currentObject.COMPANY_XPATH_CLASS, currentObject.COMPANY_XPATH_ATTRIBUTES);
+                    companies = candidateObj.companyUrls
+            }
+
             titles = candidateObj.titleList;
             urls = candidateObj.urlList;
+
             counter++;
         }
 
@@ -204,7 +212,7 @@ class JocscraperTemplate {
             throw new Error("No valid path found!");
         }
 
-        return {PAGE_TITLES: titles, PAGE_URLS: urls};
+        return {PAGE_TITLES: titles, PAGE_URLS: urls, PAGE_COMPANY_URLS: companies};
     }
 
     /**
@@ -221,17 +229,30 @@ class JocscraperTemplate {
      *
      * @returns {Promise<{titleList: Array, urlList: Array}>}
      */
-    async tryPathVariationOnPage(page, titleClass, titleAttributes, urlClass, urlAttributes) {
-        let titles = [], urls = [];
+    async tryPathVariationOnPage(page, titleClass, titleAttributes, urlClass, urlAttributes, companyClass, companyAttributes) {
+        let titles = [], urls = [], company = [];
         try {
             // Sets the XPath to the elements.
             let xPathTitleStr = `//div[contains(@class, "${titleClass}")]${titleAttributes}`;
+            //let xPathTitleStr = `//[@id="result_list_box"]/div/div[2]/div[2]/div/a[2]/b`
             let xpathTitleData = await page.$x(xPathTitleStr)
-            // let xpathTitleData = await page.$x(`//div[contains(concat(' ', @class, ' '), "${titleClass}")]`)
                 .catch((error) => {
                     throw new Error("page.$x(): " + error);
                 });
+
+            let xpathCompany, xpathCompanyData;
+
+            if(companyClass !== undefined){
+                xpathCompany = `//li[contains(@class, "${companyClass}")]${companyAttributes}`;
+                xpathCompanyData = await page.$x(xpathCompany)
+                    .catch((error)=>{
+                        throw new Error("page.$x(): " + error)
+                    })
+
+            }
+
             let xPathUrlStr = `//div[contains(@class, "${urlClass}")]${urlAttributes}`;
+            //let xPathUrlStr = `//[@id="result_list_box"]/div/div[2]/div[2]/div/a[2]`
             let xpathUrlData = await page.$x(xPathUrlStr)
                 .catch((error) => {
                     throw new Error("page.$x(): " + error);
@@ -260,14 +281,30 @@ class JocscraperTemplate {
                         throw new Error("xpathUrlTextContent.getProperty(): " + error);
                     });
 
-
                 // If one property is empty, the advertisement is invalid.
                 if (titleText.length !== 0 && urlText !== 0) {
                     titles.push(titleText);
                     urls.push(urlText);
+                    //company.push("https://www.jobindex.dk" + companyText)
                 }
             }
-            return {titleList: titles, urlList: urls};
+            // Run through company data for all ads on current page.
+            if(xpathCompanyData !== undefined){
+                for (let i = 0; i < xpathCompanyData.length; i++) {
+
+                    let xpathCompanyTextContent = await xpathCompanyData[i].getProperty('textContent')
+                        .catch((error) => {
+                            throw new Error("xpathCompanyData.getProperty(): " + error)
+                        })
+                    let companyText = await xpathCompanyTextContent.jsonValue()
+                        .catch((error) => {
+                            throw new Error("xpathCompanyTextContent.getProperty(): " + error);
+                        })
+                    company.push("https://www.jobindex.dk" + companyText)
+                }
+            }
+
+            return {titleList: titles, urlList: urls, companyUrls: company};
         } catch (error) {
             console.log("Error at getPageTitlesAndUrls() → " + error)
         }
@@ -329,7 +366,7 @@ class JocscraperTemplate {
                                 .then((page) => {
                                     // Go to linked site and scrape it:
                                     return this.scrapePage(page, titleUrlList.PAGE_TITLES[index],
-                                        titleUrlList.PAGE_URLS[index], (index + 1), pageNum)
+                                        titleUrlList.PAGE_URLS[index], titleUrlList.PAGE_COMPANY_URLS[index],(index + 1), pageNum)
                                 })
                                 .then(() => {
                                     // Update resolves
@@ -405,14 +442,14 @@ class JocscraperTemplate {
      *
      * @returns {Promise<any>}
      */
-    insertAnnonce(annonceTitle, rawHTMLText, annonceURL) {
+    insertAnnonce(annonceTitle, rawHTMLText, annonceURL, cvr) {
         return new Promise((resolve, reject) => {
 
             let sha1Checksum = sha1(`${annonceURL}`);
             ORM.FindChecksum(sha1Checksum)
                 .then((result) => {
                     if (!result)
-                        return this.createAnnonceModel(annonceTitle, rawHTMLText, currentRegionID, sha1Checksum, annonceURL)
+                        return this.createAnnonceModel(annonceTitle, rawHTMLText, currentRegionID, sha1Checksum, annonceURL, cvr)
                             .catch((error) => {
                                 throw new Error("Already in database!" + error);
                             });
@@ -452,7 +489,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<any>}
      */
-    async createAnnonceModel(title, body, regionId = undefined, checksum, url) {
+    async createAnnonceModel(title, body, regionId = undefined, checksum, url, cvr) {
         return new Promise((resolve, reject) => {
             try {
                 // Format Timestamp:
@@ -463,7 +500,7 @@ class JocscraperTemplate {
 
 
                 // Model data into Annonce class:
-                resolve(new annonceModel(title, body, regionId, timestampFormat, checksum.toString(), url));
+                resolve(new annonceModel(title, body, regionId, timestampFormat, checksum.toString(), url, cvr));
             } catch (error) {
                 reject("Error at createAnnonceModel() → " + error);
             }
