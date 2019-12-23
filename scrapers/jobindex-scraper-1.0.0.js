@@ -54,19 +54,22 @@ class JobindexScraper extends ScraperInterface {
     async getNumPages(page, listLength) {
         try {
             // Collecting num of pages element
-            let pageRefs = await page.$x("//*[@id=\"result_list_box\"]/div/div[3]/div[2]/a")
+            let pageRefs = await page.$x("//*[@class=\"jix_pagination_total\"]/strong[3]")
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
 
             // Extracting num of pages string
-            let textNum = await page.evaluate(element => element.textContent, pageRefs[pageRefs.length-2])
+            let textNum = await page.evaluate(element => element.textContent, pageRefs[0])
                 .catch((error) => {
                     throw new Error("page.evaluate() → " + error);
                 });
 
             // Return number
-            return Number(textNum);
+            textNum = textNum.replace(/\./g, '');
+            let totalJobCount = Number(textNum);
+            var result = Math.ceil(totalJobCount / 20);
+            return result;
         } catch (error) {
             console.log("Error at getNumPages() → " + error);
         }
