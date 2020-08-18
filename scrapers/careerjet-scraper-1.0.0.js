@@ -3,22 +3,18 @@ let ScraperInterface = require('./jobscraper-interface-1.0.0');
 
 const TARGET_WEBSITE = 'https://www.careerjet.dk';
 const REGION_NAMES = new Map([
-    ['bornholm', '/jobs-i-bornholm-268760.html'],
-    ['storkoebenhavn', '/jobs-i-hovedstaden-268727.html'],
-    ['region-sjaelland', '/jobs-i-sjaelland-268728.html'],
-    ['region-nordjylland', '/jobs-i-nordjylland-268731.html'],
-    ['region-midtjylland', '/jobs-i-midtjylland-268730.html'],
-    ['sydjylland', '/jobs-i-syddanmark-268729.html'],
+    ['bornholm', '/jobs-i-bornholm-268760.html?p='],
+    ['storkoebenhavn', '/jobs-i-hovedstaden-268727.html?p='],
+    ['region-sjaelland', '/jobs-i-sjaelland-268728.html?p='],
+    ['region-nordjylland', '/jobs-i-nordjylland-268731.html?p='],
+    ['region-midtjylland', '/jobs-i-midtjylland-268730.html?p='],
+    ['sydjylland', '/jobs-i-syddanmark-268729.html?p='],
 ]);
 
 const PATH_VARIATIONS = [
     {
-        URL_XPATH_CLASS: 'job', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'job',
-        TITLE_XPATH_ATTRIBUTES: '/a/h2'
-    },
-    {
-        URL_XPATH_CLASS: 'jix_robotjob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'jix_robotjob',
-        TITLE_XPATH_ATTRIBUTES: '/a/strong'
+        URL_XPATH_CLASS: 'job', URL_XPATH_ATTRIBUTES: '/header/h2/a/@href', TITLE_XPATH_CLASS: 'job',
+        TITLE_XPATH_ATTRIBUTES: '/header/h2/a'
     }
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr';
@@ -36,7 +32,7 @@ class CareerjetScraper extends ScraperInterface {
     }
 
     getPageExtension(pageNo) {
-        return `${(pageNo * 20) + 1}`;
+        return `${pageNo + 1}`;
     }
 
     /**
@@ -92,21 +88,19 @@ class CareerjetScraper extends ScraperInterface {
     async getNumPages(page, listLength) {
         try {
             // Collecting num of pages element text
-            let pageRefs = await page.$x('//div[contains(@class,"search-filter-h1-prefix")]//nobr')
+            let pageRefs = await page.$x('//*[@id="search-content"]/header/p[2]/span[1]')
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
             let pageText = await page.evaluate(element => element.textContent, pageRefs[0]);
 
             // Extracting num of pages substrings
-            var pageRegEx = /([0-9]+)( til )([0-9]+)( af )([0-9]+) jobs/;
+            var pageRegEx = /([0-9]+) jobs/;
             var pageSubstrings = pageText.match(pageRegEx);
 
             // Calculate num of pages
-            var firstJobNo = Number(pageSubstrings[1]);
-            var lastJobNo = Number(pageSubstrings[3]);
-            var totalJobCount = Number(pageSubstrings[5]);
-            var result = Math.ceil(totalJobCount / (lastJobNo-firstJobNo+1));
+            var totalJobCount = Number(pageSubstrings[1]);
+            var result = Math.ceil(totalJobCount / 20);
 
             return result;
         } catch (error) {

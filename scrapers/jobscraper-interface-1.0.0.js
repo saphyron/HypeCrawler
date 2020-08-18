@@ -233,7 +233,7 @@ class JocscraperTemplate {
         let titles = [], urls = [], company = [];
         try {
             // Sets the XPath to the elements.
-            let xPathTitleStr = `//div[contains(@class, "${titleClass}")]${titleAttributes}`;
+            let xPathTitleStr = `//*[contains(@class, "${titleClass}")]${titleAttributes}`;
             //let xPathTitleStr = `//[@id="result_list_box"]/div/div[2]/div[2]/div/a[2]/b`
             let xpathTitleData = await page.$x(xPathTitleStr)
                 .catch((error) => {
@@ -251,7 +251,7 @@ class JocscraperTemplate {
 
             }
 
-            let xPathUrlStr = `//div[contains(@class, "${urlClass}")]${urlAttributes}`;
+            let xPathUrlStr = `//*[contains(@class, "${urlClass}")]${urlAttributes}`;
             //let xPathUrlStr = `//[@id="result_list_box"]/div/div[2]/div[2]/div/a[2]`
             let xpathUrlData = await page.$x(xPathUrlStr)
                 .catch((error) => {
@@ -276,6 +276,7 @@ class JocscraperTemplate {
                     .catch((error) => {
                         throw new Error("xpathTitleTextContent.getProperty(): " + error);
                     });
+                titleText = titleText.trim();
                 let urlText = await xpathUrlTextContent.jsonValue()
                     .catch((error) => {
                         throw new Error("xpathUrlTextContent.getProperty(): " + error);
