@@ -3,12 +3,12 @@ let ScraperInterface = require('./jobscraper-interface-1.0.0');
 
 const TARGET_WEBSITE = 'https://www.careerjet.dk';
 const REGION_NAMES = new Map([
-    ['bornholm', '/wsog/jobs?l=Bornholm&lid=268760&b='],
-    ['storkoebenhavn', '/wsog/jobs?l=Storkøbenhavn&lid=270167&b='],
-    ['region-sjaelland', '/wsog/jobs?l=Sjælland&lid=268728&b='],
-    ['region-nordjylland', '/wsog/jobs?l=Nordjylland&lid=268731&b='],
-    ['region-midtjylland', '/wsog/jobs?l=Midtjylland&lid=268730&b='],
-    ['sydjylland', '/wsog/jobs?l=Syddanmark&lid=268729&b='],
+    ['bornholm', '/jobs-i-bornholm-268760.html'],
+    ['storkoebenhavn', '/jobs-i-hovedstaden-268727.html'],
+    ['region-sjaelland', '/jobs-i-sjaelland-268728.html'],
+    ['region-nordjylland', '/jobs-i-nordjylland-268731.html'],
+    ['region-midtjylland', '/jobs-i-midtjylland-268730.html'],
+    ['sydjylland', '/jobs-i-syddanmark-268729.html'],
 ]);
 
 const PATH_VARIATIONS = [
