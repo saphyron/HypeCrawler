@@ -54,7 +54,7 @@ class JobindexScraper extends ScraperInterface {
     async getNumPages(page, listLength) {
         try {
             // Collecting num of pages element
-            let pageRefs = await page.$x("//*[@class=\"jix_pagination_total\"]/strong[3]")
+            let pageRefs = await page.$x("(//a[@class=\"page-link\"])[last()]")
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
