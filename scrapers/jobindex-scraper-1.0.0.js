@@ -45,7 +45,7 @@ class JobindexScraper extends ScraperInterface {
     }
 
     getPageExtension(pageNo) {
-        return `?page=${pageNo}`;
+        return `?page=${pageNo+1}`;
     }
 
     /**
@@ -67,8 +67,7 @@ class JobindexScraper extends ScraperInterface {
 
             // Return number
             textNum = textNum.replace(/\./g, '');
-            let totalJobCount = Number(textNum);
-            var result = Math.ceil(totalJobCount / 20);
+            let result = Number(textNum);
             return result;
         } catch (error) {
             console.log("Error at getNumPages() → " + error);
@@ -128,15 +127,11 @@ class JobindexScraper extends ScraperInterface {
 
             }
 
-
-
             // Insert or update annonce to database:
             await this.insertAnnonce(title, bodyHTML, url, cvr)
                 .catch((error) => {
                     throw new Error("insertAnnonce(" + url + "): " + error)
                 })
-
-
 
         } catch (error) {
             errorResult = error;

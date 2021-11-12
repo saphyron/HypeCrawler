@@ -248,7 +248,6 @@ class JocscraperTemplate {
                     .catch((error)=>{
                         throw new Error("page.$x(): " + error)
                     })
-
             }
 
             let xPathUrlStr = `//*[contains(@class, "${urlClass}")]${urlAttributes}`;
@@ -269,7 +268,6 @@ class JocscraperTemplate {
                     .catch((error) => {
                         throw new Error("xpathUrlData.getProperty(): " + error);
                     });
-
 
                 // Extracting the text values from gathered elements.
                 let titleText = await xpathTitleTextContent.jsonValue()
