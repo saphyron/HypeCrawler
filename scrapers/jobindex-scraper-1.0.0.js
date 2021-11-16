@@ -60,10 +60,21 @@ class JobindexScraper extends ScraperInterface {
                 });
 
             // Extracting num of pages string
-            let textNum = await page.evaluate(element => element.textContent, pageRefs[0])
-                .catch((error) => {
-                    throw new Error("page.evaluate() → " + error);
-                });
+            let textNum = undefined
+            await Promise.race([
+                page.evaluate(element => element.textContent, pageRefs[0]),
+                page.waitFor(this.PAGE_TIMEOUT)
+            ])
+            .then((value) => {
+                if (typeof value === "string") {
+                    textNum = value
+                } else {
+                    throw new Error("page.evaluate() textNum TIMEOUT")
+                }
+            })
+            .catch((error) => {
+                throw new Error("page.evaluate() textNum" + error)
+            });
 
             // Return number
             textNum = textNum.replace(/\./g, '');
@@ -102,9 +113,20 @@ class JobindexScraper extends ScraperInterface {
                 });
 
             // Filter the object and extract body as raw text.
-            let bodyHTML = await page.evaluate(() => document.body.outerHTML)
+            let bodyHTML = undefined
+            await Promise.race([
+                page.evaluate(() => document.body.outerHTML),
+                page.waitFor(this.PAGE_TIMEOUT)
+            ])
+                .then((value) => {
+                    if (typeof value === "string") {
+                        bodyHTML = value
+                    } else {
+                        throw new Error("newPage.evaluate() TIMEOUT")
+                    }
+                })
                 .catch((error) => {
-                    throw new Error("newPage.evaluate(): " + error)
+                    throw new Error("newPage.evaluate() ERROR: " + error)
                 });
             let cvr = undefined;
 
@@ -115,11 +137,21 @@ class JobindexScraper extends ScraperInterface {
                     throw new Error("page.goto(): " + error)
                 })
 
-                let companyHTML = await page.evaluate(() => document.body.outerHTML)
+                let companyHTML = undefined
+                await Promise.race([
+                    page.evaluate(() => document.body.outerHTML),
+                    page.waitFor(this.PAGE_TIMEOUT)
+                ])
+                    .then(() => {
+                        if (typeof value === "string") {
+                            companyHTML = value
+                        } else {
+                            throw new Error("CompanyDataScrape.evaluate() TIMEOUT")
+                        }
+                    })
                     .catch((error)=> {
-                        "CompanyDataScrape: " + error
+                        throw new Error("CompanyDataScrape.evaluate() ERROR: " + error)
                     });
-
 
                 let cvrRegexp = /DK([0-9]{8})/g
                 cvr = cvrRegexp.exec(companyHTML)
