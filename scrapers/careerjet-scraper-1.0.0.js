@@ -103,8 +103,22 @@ class CareerjetScraper extends ScraperInterface {
                 .catch((error) => {
                     throw new Error("page.$x() → " + error);
                 });
-            let pageText = await page.evaluate(element => element.textContent, pageRefs[0]);
-
+            let pageText = undefined
+            await Promise.race([
+                page.evaluate(element => element.textContent, pageRefs[0]),
+                page.waitFor(this.PAGE_TIMEOUT)
+            ])
+            .then((value) => {
+                if (typeof value === "string") {
+                    pageText = value
+                } else {
+                    throw new Error("page.evaluate() textNum TIMEOUT")
+                }
+            })
+            .catch((error) => {
+                throw new Error("page.evaluate() textNum" + error)
+            });
+	    
             // Extracting num of pages substrings
             var pageRegEx = /([0-9]+) jobs/;
             var pageSubstrings = pageText.match(pageRegEx);
