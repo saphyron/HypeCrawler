@@ -52,10 +52,21 @@ class CareerjetScraper extends ScraperInterface {
                 });
 
             // Filter the object and extract body as raw text.
-            let bodyHTML = await page.evaluate(() => document.body.outerHTML)
-                .catch((error) => {
-                    throw new Error("newPage.evaluate(): " + error)
-                });
+            let bodyHTML = undefined
+            await Promise.race([
+                page.evaluate(() => document.body.outerHTML),
+                page.waitFor(this.PAGE_TIMEOUT)
+            ])
+            .then((value) => {
+                    if (typeof value === "string") {
+                        bodyHTML = value
+                    } else {
+                        throw new Error("newPage.evaluate() TIMEOUT")
+                    }
+            })
+            .catch((error) => {
+                    throw new Error("newPage.evaluate() ERROR: " + error)
+            });
 
             // Insert or update annonce to database:
             await this.insertAnnonce(title, bodyHTML, formattedUrl)
