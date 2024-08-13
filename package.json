@@ -6,14 +6,13 @@
   "dependencies": {
     "hypecrawler": "file:",
     "mysql": "^2.15.0",
-    "npm": "^6.0.1",
-    "puppeteer": "^1.10.0",
+    "npm": "^10.8.2",
+    "puppeteer": "^22.8.2",
     "sha1": "^1.1.1"
   },
   "devDependencies": {
     "docdash": "^0.4.0",
-    "jest": "^27.3.1",
-    "jsdoc": "^3.5.5"
+    "jsdoc": "^4.0.3"
   },
   "scripts": {
     "test": "jest",
