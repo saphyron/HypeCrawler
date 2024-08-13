@@ -4,6 +4,7 @@
   "description": "Final AP-grade project",
   "main": "main.js",
   "dependencies": {
+    "hypecrawler": "file:",
     "mysql": "^2.15.0",
     "npm": "^6.0.1",
     "puppeteer": "^1.10.0",
@@ -16,7 +17,9 @@
   },
   "scripts": {
     "test": "jest",
-    "docs": "node node_modules/jsdoc/jsdoc.js -c conf.json"
+    "docs": "node node_modules/jsdoc/jsdoc.js -c conf.json",
+    "start": "node main.js",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",

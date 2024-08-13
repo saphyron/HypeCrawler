@@ -3,17 +3,17 @@ let ScraperInterface = require('./jobscraper-interface-1.0.0');
 
 const TARGET_WEBSITE = 'https://www.careerjet.dk';
 const REGION_NAMES = new Map([
-    ['bornholm', '/jobs-i-bornholm-268760.html?p='],
-    ['storkoebenhavn', '/jobs-i-hovedstaden-268727.html?p='],
-    ['region-sjaelland', '/jobs-i-sjaelland-268728.html?p='],
-    ['region-nordjylland', '/jobs-i-nordjylland-268731.html?p='],
-    ['region-midtjylland', '/jobs-i-midtjylland-268730.html?p='],
-    ['sydjylland', '/jobs-i-syddanmark-268729.html?p='],
+    ['bornholm', '/jobs?s=&l=Bornholm&p='],
+    ['storkoebenhavn', '/jobs?s=&l=Storkøbenhavn&p='],
+    ['region-sjaelland', '/jobs?s=&l=Sjælland&p='],
+    ['region-nordjylland', '/jobs?s=&l=Nordjylland&p='],
+    ['region-midtjylland', '/jobs?s=&l=Midtjylland&p='],
+    ['sydjylland', '/jobs?s=&l=Syddanmark&p='],
 ]);
 
 const PATH_VARIATIONS = [
     {
-        URL_XPATH_CLASS: 'job', URL_XPATH_ATTRIBUTES: '/header/h2/a/@href', TITLE_XPATH_CLASS: 'job',
+        URL_XPATH_CLASS: 'jobs', URL_XPATH_ATTRIBUTES: '/header/h2/a/@href', TITLE_XPATH_CLASS: 'jobs',
         TITLE_XPATH_ATTRIBUTES: '/header/h2/a'
     }
 ];
@@ -57,16 +57,16 @@ class CareerjetScraper extends ScraperInterface {
                 page.evaluate(() => document.body.outerHTML),
                 page.waitFor(this.PAGE_TIMEOUT)
             ])
-            .then((value) => {
+                .then((value) => {
                     if (typeof value === "string") {
                         bodyHTML = value
                     } else {
                         throw new Error("newPage.evaluate() TIMEOUT")
                     }
-            })
-            .catch((error) => {
+                })
+                .catch((error) => {
                     throw new Error("newPage.evaluate() ERROR: " + error)
-            });
+                });
 
             // Insert or update annonce to database:
             await this.insertAnnonce(title, bodyHTML, formattedUrl)
@@ -98,38 +98,36 @@ class CareerjetScraper extends ScraperInterface {
      */
     async getNumPages(page, listLength) {
         try {
+            // Log the HTML content of the page for debugging
+            const pageContent = await page.content();
+            console.log("Page Content: ", pageContent);
             // Collecting num of pages element text
-            let pageRefs = await page.$x('//*[@id="search-content"]/header/p[2]/span[1]')
+            let pageRefs = await page.$$('ul[data-page]');
+            if (pageRefs.length === 0) {
+                console.log("No elements found using CSS selector 'ul[data-page]'.");
+            } else {
+                //console.log("Elements found using CSS selector 'ul[data-page]': ", pageRefs);
+            }
+            // Extracting the data-page attribute value
+            let currentPage = await page.evaluate(element => element.getAttribute('data-page'), pageRefs[0])
                 .catch((error) => {
-                    throw new Error("page.$x() → " + error);
+                    throw new Error("page.evaluate() → " + error);
                 });
-            let pageText = undefined
-            await Promise.race([
-                page.evaluate(element => element.textContent, pageRefs[0]),
-                page.waitFor(this.PAGE_TIMEOUT)
-            ])
-            .then((value) => {
-                if (typeof value === "string") {
-                    pageText = value
-                } else {
-                    throw new Error("page.evaluate() textNum TIMEOUT")
-                }
-            })
-            .catch((error) => {
-                throw new Error("page.evaluate() textNum" + error)
-            });
-	    
-            // Extracting num of pages substrings
-            var pageRegEx = /([0-9]+) jobs/;
-            var pageSubstrings = pageText.match(pageRegEx);
 
-            // Calculate num of pages
-            var totalJobCount = Number(pageSubstrings[1]);
-            var result = Math.ceil(totalJobCount / 20);
+            console.log("Current page: " + currentPage);
 
-            return result;
+            // Further processing if needed
+            // For example, you can parse the currentPage to an integer
+            let currentPageNumber = parseInt(currentPage, 10);
+            if (isNaN(currentPageNumber)) {
+                throw new Error("Failed to parse current page number from data-page attribute: " + currentPage);
+            }
+
+            return currentPageNumber;
         } catch (error) {
-            console.log("Error at getNumPages("+page+") → " + error);
+            console.log("Error at getNumPages(" + page + ") → " + error);
+            console.error("getNumPages() → " + error);
+            throw error;
         }
     }
 }
