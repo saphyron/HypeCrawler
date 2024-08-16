@@ -194,11 +194,6 @@ class JocscraperTemplate {
         while (titles.length === 0 && counter < this.PATH_VARIATIONS.length) {
             let currentObject = this.PATH_VARIATIONS[counter];
             let candidateObj;
-            console.log('Trying path variation: ', currentObject);
-            console.log('Trying path variation, Title class: ', currentObject.TITLE_XPATH_CLASS);
-            console.log('Trying path variation, Title Attribute path: ', currentObject.TITLE_XPATH_ATTRIBUTES);
-            console.log('Trying path variation, URL Class: ', currentObject.URL_XPATH_CLASS);
-            console.log('Trying path variation, URL Attribute path: ', currentObject.URL_XPATH_ATTRIBUTES);
             if (currentObject.COMPANY_XPATH_CLASS === undefined) {
                 candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS, currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
             } else {
@@ -246,28 +241,16 @@ class JocscraperTemplate {
             let urlSelector = `.${urlClass} ${urlAttributes}`;
             let companySelector = `.${companyClass} ${companyAttributes}`;
 
-            console.log('Title Selector:', titleSelector);
-            console.log('URL Selector:', urlSelector);
-            console.log('Company Selector:', companySelector);
             const baseUrl = page.url();
             console.log("baseUrl: " + baseUrl);
 
             await page.goto(baseUrl, {
                 waitUntil: 'networkidle2',
-                timeout: 60000,
+                timeout: 200000,
             });
 
             await page.screenshot({ path: 'pre_check.png', fullPage: true });
             await page.screenshot({ path: 'post_check.png', fullPage: true });
-
-            // If in an iframe
-            const frames = page.frames();
-            frames.forEach(frame => console.log('Frame URL:', frame.url()));
-
-            const frame = frames.find(f => f.url().includes('part_of_the_url'));
-            if (frame) {
-                await frame.waitForSelector('.PaidJob-inner', { timeout: 20000 });
-            }
 
             // Extract elements
             let titleElements = await page.$$eval(titleSelector, elements =>
@@ -275,7 +258,7 @@ class JocscraperTemplate {
             let urlElements = await page.$$eval(urlSelector, elements =>
                 elements.map(el => el.href.trim()));
             let companyElements = await page.$$eval(companySelector, elements =>
-                elements.map(el => el.textContent.trim()));
+                elements.map(el => el.href.trim()));
 
             // Log the extracted elements
             console.log('Title Elements:', titleElements);
@@ -306,17 +289,8 @@ class JocscraperTemplate {
                 }
             }
 
-            /*// Define and populate elements
-            let titleSelector = `.${titleClass} ${titleAttributes}`;
-            console.log('Title Selector:', titleSelector);
-            let elements = await page.$$eval(titleSelector, elements => elements
-                .map(el => ({
-                    title: el.textContent.trim(),
-                    url: el.href
-                })));*/
-
             if (companyClass !== undefined) {
-                await page.waitForSelector(`.${companyClass} ${companyAttributes}`, { timeout: 5000 }).catch(() => {
+                await page.waitForSelector(`.${companyClass} ${companyAttributes}`, { timeout: 500 }).catch(() => {
                     console.error('Company Selector not found:', `.${companyClass} ${companyAttributes}`);
                     throw new Error('No valid path found!');
                 });
@@ -326,7 +300,6 @@ class JocscraperTemplate {
                     console.error('No Company Elements found for selector:', `.${companyClass} ${companyAttributes}`);
                     throw new Error('No valid path found!');
                 }
-                company = companyElements;
             }
 
             // Extract the title and URL from the selected elements
@@ -351,7 +324,7 @@ class JocscraperTemplate {
             console.log('URL Selector:', urlSelector);
 
             // Ensure the page is fully loaded
-            await page.waitForSelector(urlSelector, { timeout: 5000 }).catch(() => {
+            await page.waitForSelector(urlSelector, { timeout: 500 }).catch(() => {
                 console.error('URL Selector not found:', urlSelector);
                 throw new Error('No valid path found!');
             });*/

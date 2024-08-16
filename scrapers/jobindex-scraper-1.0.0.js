@@ -20,30 +20,34 @@ const REGION_NAMES = new Map([
 /*url to select datatime for jobs
 https://www.jobindex.dk/jobsoegning/nordsjaelland?jobage=1&page=2 //rigtig
 https://www.jobindex.dk/jobsoegning/nordsjaelland?jobage=1?page=1 //forkerte
+https://www.jobindex.dk/jobsoegning/region-nordjylland?jobage=1&page=9
+https://www.jobindex.dk/jobsoegning/bornholm?jobage=1&page=1
 */
-
+// div.jix_robotjob 
+// div.jix_robotjob-inner 
+// h4 a
 const PATH_VARIATIONS = [
     {
-        URL_XPATH_CLASS: 'PaidJob-inner', 
-        URL_XPATH_ATTRIBUTES: 'h4 a[href]', 
-        TITLE_XPATH_CLASS: 'PaidJob-inner', 
-        TITLE_XPATH_ATTRIBUTES: 'h4 a', 
-        COMPANY_XPATH_CLASS: 'jix-toolbar-top__company', 
+        URL_XPATH_CLASS: 'PaidJob-inner',
+        URL_XPATH_ATTRIBUTES: 'h4 a[href]',
+        TITLE_XPATH_CLASS: 'PaidJob-inner',
+        TITLE_XPATH_ATTRIBUTES: 'h4 a',
+        COMPANY_XPATH_CLASS: 'jix-toolbar-top__company',
         COMPANY_XPATH_ATTRIBUTES: 'a[href]'
     },
     {
-        URL_XPATH_CLASS: 'jix_robotjob', 
-        URL_XPATH_ATTRIBUTES: 'a[href]', 
-        TITLE_XPATH_CLASS: 'jix_robotjob',
-        TITLE_XPATH_ATTRIBUTES: 'a strong', 
-        COMPANY_XPATH_CLASS: 'jix_robotjob', 
-        COMPANY_XPATH_ATTRIBUTES: 'a[href]'
+        URL_XPATH_CLASS: 'jix_robotjob-inner',
+        URL_XPATH_ATTRIBUTES: 'h4 a[href]',
+        TITLE_XPATH_CLASS: 'jix_robotjob-inner',
+        TITLE_XPATH_ATTRIBUTES: 'h4 a',
+        COMPANY_XPATH_CLASS: 'jix_robotjob-inner',
+        COMPANY_XPATH_ATTRIBUTES: 'h4 a[href]'
     }
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@class="results"]/div/div/div/div[1]/h2/text()';
 //const TOTAL_ADVERTS_SELECTOR = '/html/body/div[1]/main/section/div[3]/div/div[3]/div[2]/div[2]/div[3]/nav/ul/li[3]';
 const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
-const PAGE_TIMEOUT = 60000;
+const PAGE_TIMEOUT = 6000000;
 
 /**
  * @class
@@ -73,7 +77,7 @@ class JobindexScraper extends ScraperInterface {
         await page.goto(baseUrl, { waitUntil: 'networkidle2' });
         try {
             console.log("Attempting to find the total number of pages using CSS selector...");
-
+            // todo: if only 1 page do something differently
             const pageRefs = await page.evaluate(() => {
                 const selector = "div.jix_pagination.jix_pagination_wide ul.pagination li.page-item a";
                 console.log("CSS Selector:", selector);
@@ -127,15 +131,18 @@ class JobindexScraper extends ScraperInterface {
         console.time("runTime page number " + pageNum + " annonce " + index);
 
         try {
+            // Validate the URL
+            if (!url || !url.startsWith("http")) {
+                throw new Error("Invalid URL: " + url);
+            }
+
+            console.log("Navigating to URL:", url);
             await page.goto(url, {
                 timeout: this.PAGE_TIMEOUT
-            })
-                .catch((error) => {
-                    throw new Error("page.goto(): " + error);
-                });
+            });
 
             // Filter the object and extract body as raw text.
-            let bodyHTML = undefined
+            /*let bodyHTML = undefined
             await Promise.race([
                 page.evaluate(() => document.body.outerHTML),
                 page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
@@ -149,17 +156,30 @@ class JobindexScraper extends ScraperInterface {
                 })
                 .catch((error) => {
                     throw new Error("newPage.evaluate() ERROR: " + error)
+                });*/
+            // Extract page content
+            let bodyHTML = await Promise.race([
+                page.evaluate(() => document.body.outerHTML),
+                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
+            ])
+                .catch((error) => {
+                    throw new Error("newPage.evaluate() ERROR: " + error);
                 });
+
             let cvr = undefined;
 
             if (companyURL !== undefined) {
+                if (!companyURL.startsWith("http")) {
+                    throw new Error("Invalid Company URL: " + companyURL);
+                }
+
+                console.log("Navigating to Company URL:", companyURL);
+
                 await page.goto(companyURL, {
                     timeout: this.PAGE_TIMEOUT
-                }).catch((error) => {
-                    throw new Error("page.goto(): " + error)
-                })
+                });
 
-                let companyHTML = undefined
+                /*let companyHTML = undefined
                 await Promise.race([
                     page.evaluate(() => document.body.outerHTML),
                     page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
@@ -173,11 +193,26 @@ class JobindexScraper extends ScraperInterface {
                     })
                     .catch((error) => {
                         throw new Error("CompanyDataScrape.evaluate() ERROR: " + error)
+                    });*/
+
+                let companyHTML = await Promise.race([
+                    page.evaluate(() => document.body.outerHTML),
+                    page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
+                ])
+                    .catch((error) => {
+                        throw new Error("CompanyDataScrape.evaluate() ERROR: " + error);
                     });
 
-                let cvrRegexp = /DK([0-9]{8})/g
+                /*let cvrRegexp = /DK([0-9]{8})/g
                 cvr = cvrRegexp.exec(companyHTML)
-                cvr = cvr[1]; // Extract cvr in first capture group.
+                cvr = cvr[1]; // Extract cvr in first capture group.*/
+                let cvrRegexp = /DK([0-9]{8})/g;
+                let match = cvrRegexp.exec(companyHTML);
+                if (match) {
+                    cvr = match[1];
+                } else {
+                    console.warn("CVR not found in company HTML.");
+                }
 
             }
 
