@@ -1,34 +1,49 @@
 let ScraperInterface = require('./jobscraper-interface-1.0.0');
+const puppeteer = require('puppeteer');
 
 
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
 const REGION_NAMES = new Map([
-    ['nordsjaelland', '/jobsoegning/nordsjaelland'],
-    ['region-sjaelland', '/jobsoegning/region-sjaelland'],
-    ['fyn', '/jobsoegning/fyn'],
-    ['region-nordjylland', '/jobsoegning/region-nordjylland'],
-    ['sydjylland', '/jobsoegning/sydjylland'],
-    ['bornholm', '/jobsoegning/bornholm'],
-    ['skaane', '/jobsoegning/skaane'],
-    ['groenland', '/jobsoegning/groenland'],
-    ['udlandet', '/jobsoegning/udlandet'],
-    ['faeroeerne', '/jobsoegning/faeroeerne'],
-    ['region-midtjylland', '/jobsoegning/region-midtjylland'],
-    ['storkoebenhavn', '/jobsoegning/storkoebenhavn'],
+    ['nordsjaelland', '/jobsoegning/nordsjaelland?jobage=1'],
+    ['region-sjaelland', '/jobsoegning/region-sjaelland?jobage=1'],
+    ['fyn', '/jobsoegning/fyn?jobage=1'],
+    ['region-nordjylland', '/jobsoegning/region-nordjylland?jobage=1'],
+    ['sydjylland', '/jobsoegning/sydjylland?jobage=1'],
+    ['bornholm', '/jobsoegning/bornholm?jobage=1'],
+    ['skaane', '/jobsoegning/skaane?jobage=1'],
+    ['groenland', '/jobsoegning/groenland?jobage=1'],
+    ['udlandet', '/jobsoegning/udlandet?jobage=1'],
+    ['faeroeerne', '/jobsoegning/faeroeerne?jobage=1'],
+    ['region-midtjylland', '/jobsoegning/region-midtjylland?jobage=1'],
+    ['storkoebenhavn', '/jobsoegning/storkoebenhavn?jobage=1'],
 ]);
+/*url to select datatime for jobs
+https://www.jobindex.dk/jobsoegning/nordsjaelland?jobage=1&page=2 //rigtig
+https://www.jobindex.dk/jobsoegning/nordsjaelland?jobage=1?page=1 //forkerte
+*/
+
 const PATH_VARIATIONS = [
     {
-        URL_XPATH_CLASS: 'PaidJob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'PaidJob',
-        TITLE_XPATH_ATTRIBUTES: '/a/*[1]', COMPANY_XPATH_CLASS: 'toolbar-companyprofile', COMPANY_XPATH_ATTRIBUTES: '/a/@href'
+        URL_XPATH_CLASS: 'PaidJob-inner', 
+        URL_XPATH_ATTRIBUTES: 'h4 a[href]', 
+        TITLE_XPATH_CLASS: 'PaidJob-inner', 
+        TITLE_XPATH_ATTRIBUTES: 'h4 a', 
+        COMPANY_XPATH_CLASS: 'jix-toolbar-top__company', 
+        COMPANY_XPATH_ATTRIBUTES: 'a[href]'
     },
     {
-        URL_XPATH_CLASS: 'jix_robotjob', URL_XPATH_ATTRIBUTES: '/a/@href', TITLE_XPATH_CLASS: 'jix_robotjob',
-        TITLE_XPATH_ATTRIBUTES: '/a/strong', COMPANY_XPATH_CLASS: 'jix_robotjob', COMPANY_XPATH_ATTRIBUTES: '/a/@href'
+        URL_XPATH_CLASS: 'jix_robotjob', 
+        URL_XPATH_ATTRIBUTES: 'a[href]', 
+        TITLE_XPATH_CLASS: 'jix_robotjob',
+        TITLE_XPATH_ATTRIBUTES: 'a strong', 
+        COMPANY_XPATH_CLASS: 'jix_robotjob', 
+        COMPANY_XPATH_ATTRIBUTES: 'a[href]'
     }
 ];
-const TOTAL_ADVERTS_SELECTOR = '//*[@id="result_list_box"]/div/div[1]/div/div[1]/h2/text()';
+const TOTAL_ADVERTS_SELECTOR = '//*[@class="results"]/div/div/div/div[1]/h2/text()';
+//const TOTAL_ADVERTS_SELECTOR = '/html/body/div[1]/main/section/div[3]/div/div[3]/div[2]/div[2]/div[3]/nav/ul/li[3]';
 const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
-const PAGE_TIMEOUT = 15000;
+const PAGE_TIMEOUT = 60000;
 
 /**
  * @class
@@ -45,44 +60,51 @@ class JobindexScraper extends ScraperInterface {
     }
 
     getPageExtension(pageNo) {
-        return `?page=${pageNo+1}`;
+        return `&page=${pageNo + 1}`;
     }
 
     /**
      * @inheritDoc
      */
-    async getNumPages(page, listLength) {
+    async getNumPages(page) {
+        let numPages;
+        const baseUrl = page.url();
+        console.log("baseUrl: " + baseUrl);
+        await page.goto(baseUrl, { waitUntil: 'networkidle2' });
         try {
-            // Collecting num of pages element
-            let pageRefs = await page.$x("(//a[@class=\"page-link\"])[last()]")
-                .catch((error) => {
-                    throw new Error("page.$x() → " + error);
-                });
+            console.log("Attempting to find the total number of pages using CSS selector...");
 
-            // Extracting num of pages string
-            let textNum = undefined
-            await Promise.race([
-                page.evaluate(element => element.textContent, pageRefs[0]),
-                page.waitFor(this.PAGE_TIMEOUT)
-            ])
-            .then((value) => {
-                if (typeof value === "string") {
-                    textNum = value
-                } else {
-                    throw new Error("page.evaluate() textNum TIMEOUT")
+            const pageRefs = await page.evaluate(() => {
+                const selector = "div.jix_pagination.jix_pagination_wide ul.pagination li.page-item a";
+                console.log("CSS Selector:", selector);
+                const elements = document.querySelectorAll(selector);
+                console.log("CSS Selector results:", elements);
+                if (elements.length === 0) {
+                    return null;
                 }
-            })
-            .catch((error) => {
-                throw new Error("page.evaluate() textNum" + error)
+                const lastPageElement = elements[elements.length - 2]; // Second to last element
+                console.log("Last page element:", lastPageElement);
+                return lastPageElement ? lastPageElement.textContent : null;
             });
 
-            // Return number
-            textNum = textNum.replace(/\./g, '');
-            let result = Number(textNum);
-            return result;
+            if (!pageRefs) {
+                throw new Error("No elements found with the given XPath.");
+            }
+
+            console.log("Found the pagination element:", pageRefs);
+
+            // Extracting num of pages string
+            const textNum = pageRefs;
+            console.log("textNum: " + textNum);
+
+            // Return number of pages
+            numPages = parseInt(textNum, 10);
         } catch (error) {
-            console.log("Error at getNumPages() → " + error);
+            console.error("Error while collecting num of pages element:", error);
+            throw new Error("document.querySelector() → " + error);
         }
+
+        return numPages;
     }
 
     /**
@@ -116,7 +138,7 @@ class JobindexScraper extends ScraperInterface {
             let bodyHTML = undefined
             await Promise.race([
                 page.evaluate(() => document.body.outerHTML),
-                page.waitFor(this.PAGE_TIMEOUT)
+                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
             ])
                 .then((value) => {
                     if (typeof value === "string") {
@@ -130,17 +152,17 @@ class JobindexScraper extends ScraperInterface {
                 });
             let cvr = undefined;
 
-            if(companyURL !== undefined) {
+            if (companyURL !== undefined) {
                 await page.goto(companyURL, {
                     timeout: this.PAGE_TIMEOUT
-                }) .catch((error) => {
+                }).catch((error) => {
                     throw new Error("page.goto(): " + error)
                 })
 
                 let companyHTML = undefined
                 await Promise.race([
                     page.evaluate(() => document.body.outerHTML),
-                    page.waitFor(this.PAGE_TIMEOUT)
+                    page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
                 ])
                     .then(() => {
                         if (typeof value === "string") {
@@ -149,7 +171,7 @@ class JobindexScraper extends ScraperInterface {
                             throw new Error("CompanyDataScrape.evaluate() TIMEOUT")
                         }
                     })
-                    .catch((error)=> {
+                    .catch((error) => {
                         throw new Error("CompanyDataScrape.evaluate() ERROR: " + error)
                     });
 

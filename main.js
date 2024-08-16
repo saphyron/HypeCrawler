@@ -6,7 +6,9 @@ async function main() {
 
     const browser = await puppeteer.launch({
         headless: true,
-        defaultViewport: null
+        defaultViewport: null,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        protocolTimeout: 60000
     });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({ // Handling of correct reading of danish alphabet
@@ -20,13 +22,13 @@ async function main() {
         //Print result
         scraper.printDatabaseResult();
     }
-    if (process.env.ADVERTS_SCRAPE === undefined || process.env.ADVERTS_SCRAPE === "all" || process.env.ADVERTS_SCRAPE === "careerjet") {
+    /*if (process.env.ADVERTS_SCRAPE === undefined || process.env.ADVERTS_SCRAPE === "all" || process.env.ADVERTS_SCRAPE === "careerjet") {
 
         let scraper = new careerjetClass();
         await run(scraper, browser, page);
         //Print result
         scraper.printDatabaseResult();
-    }
+    }*/
 
     // Clean up:
     browser.close();

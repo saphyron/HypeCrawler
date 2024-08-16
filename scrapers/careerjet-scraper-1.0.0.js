@@ -3,23 +3,25 @@ let ScraperInterface = require('./jobscraper-interface-1.0.0');
 
 const TARGET_WEBSITE = 'https://www.careerjet.dk';
 const REGION_NAMES = new Map([
-    ['bornholm', '/jobs?s=&l=Bornholm&p='],
-    ['storkoebenhavn', '/jobs?s=&l=Storkøbenhavn&p='],
-    ['region-sjaelland', '/jobs?s=&l=Sjælland&p='],
-    ['region-nordjylland', '/jobs?s=&l=Nordjylland&p='],
-    ['region-midtjylland', '/jobs?s=&l=Midtjylland&p='],
-    ['sydjylland', '/jobs?s=&l=Syddanmark&p='],
+    ['bornholm', '/jobs?s=&l=Bornholm&nw=1&p='],
+    ['storkoebenhavn', '/jobs?s=&l=Storkøbenhavn&nw=1&p='],
+    ['region-sjaelland', '/jobs?s=&l=Sjælland&nw=1&p='],
+    ['region-nordjylland', '/jobs?s=&l=Nordjylland&nw=1&p='],
+    ['region-midtjylland', '/jobs?s=&l=Midtjylland&nw=1&p='],
+    ['sydjylland', '/jobs?s=&l=Syddanmark&nw=1&p='],
 ]);
 
 const PATH_VARIATIONS = [
     {
-        URL_XPATH_CLASS: 'jobs', URL_XPATH_ATTRIBUTES: '/header/h2/a/@href', TITLE_XPATH_CLASS: 'jobs',
-        TITLE_XPATH_ATTRIBUTES: '/header/h2/a'
+        URL_XPATH_CLASS: 'jobs', 
+        URL_XPATH_ATTRIBUTES: 'li article header h2 a[href]', 
+        TITLE_XPATH_CLASS: 'jobs',
+        TITLE_XPATH_ATTRIBUTES: 'li article header h2 a'
     }
 ];
 const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/td/span/nobr';
 const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
-const PAGE_TIMEOUT = 15000;
+const PAGE_TIMEOUT = 60000;
 
 /**
  * Class representing the algorithm for careerjet.dk
@@ -39,7 +41,9 @@ class CareerjetScraper extends ScraperInterface {
      * @inheritDoc
      */
     async scrapePage(page, title, url, companyUrl, index, pageNum) {
-        let formattedUrl = (TARGET_WEBSITE + url);
+        //let formattedUrl = (TARGET_WEBSITE + url);
+        let formattedUrl = url;
+        console.log("Scraping page: " + formattedUrl);
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
 
@@ -55,7 +59,7 @@ class CareerjetScraper extends ScraperInterface {
             let bodyHTML = undefined
             await Promise.race([
                 page.evaluate(() => document.body.outerHTML),
-                page.waitFor(this.PAGE_TIMEOUT)
+                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
             ])
                 .then((value) => {
                     if (typeof value === "string") {
@@ -98,32 +102,53 @@ class CareerjetScraper extends ScraperInterface {
      */
     async getNumPages(page, listLength) {
         try {
-            // Log the HTML content of the page for debugging
-            const pageContent = await page.content();
-            console.log("Page Content: ", pageContent);
-            // Collecting num of pages element text
-            let pageRefs = await page.$$('ul[data-page]');
-            if (pageRefs.length === 0) {
-                console.log("No elements found using CSS selector 'ul[data-page]'.");
-            } else {
-                //console.log("Elements found using CSS selector 'ul[data-page]': ", pageRefs);
-            }
-            // Extracting the data-page attribute value
-            let currentPage = await page.evaluate(element => element.getAttribute('data-page'), pageRefs[0])
-                .catch((error) => {
-                    throw new Error("page.evaluate() → " + error);
-                });
+            // Log the current URL of the page
+            console.log("Current URL: " + page.url());
 
-            console.log("Current page: " + currentPage);
+            // Initialize the maximum page number
+            let maxPage = 0;
+            let currentPageNumber = 1
+            const baseUrl = page.url();
 
+            while (true) {
+                // Update the URL to the current page number
+                const url = baseUrl + currentPageNumber;
+                await page.goto(url, { waitUntil: 'networkidle2' });
+
+                // Collecting num of pages element text
+                let pageRefs = await page.$$('ul[data-page="' + currentPageNumber + '"]');
+                if (pageRefs.length === 0) {
+                    console.log("No elements found using CSS selector 'ul[data-page=\"" + currentPageNumber + "\"]'.");
+                    break;
+                } else {
+                    console.log("Elements found for page number: " + currentPageNumber);
+                    // Extracting the data-page attribute value
+                    let currentPage = await page.evaluate(element => element.getAttribute('data-page'), pageRefs[0])
+                        .catch((error) => {
+                            throw new Error("page.evaluate() → " + error);
+                        });
+
+                    console.log("Current page: " + currentPage);
+                    maxPage = parseInt(currentPage, 10);
+                    if (isNaN(maxPage)) {
+                        throw new Error("Failed to parse current page number from data-page attribute: " + currentPage);
+                    }
+                }
+
+                // Make sure to increment the currentPageNumber
+                currentPageNumber++;
+            };
+
+
+            /*
             // Further processing if needed
             // For example, you can parse the currentPage to an integer
             let currentPageNumber = parseInt(currentPage, 10);
             if (isNaN(currentPageNumber)) {
                 throw new Error("Failed to parse current page number from data-page attribute: " + currentPage);
-            }
+            }*/
 
-            return currentPageNumber;
+            return maxPage;
         } catch (error) {
             console.log("Error at getNumPages(" + page + ") → " + error);
             console.error("getNumPages() → " + error);

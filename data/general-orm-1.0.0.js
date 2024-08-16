@@ -98,6 +98,7 @@ class ORM {
                 'TIMESTAMP DATETIME,' +
                 'CHECKSUM TEXT, ' +
                 'URL TEXT, ' +
+                'CVR TEXT, ' +
                 'FOREIGN KEY(region_id) REFERENCES region(region_id))';
 
             CONNECTION.query(query, function (error, result) {
