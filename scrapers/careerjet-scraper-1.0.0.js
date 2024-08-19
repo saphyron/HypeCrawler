@@ -41,7 +41,6 @@ class CareerjetScraper extends ScraperInterface {
      * @inheritDoc
      */
     async scrapePage(page, title, url, companyUrl, index, pageNum) {
-        //let formattedUrl = (TARGET_WEBSITE + url);
         let formattedUrl = url;
         console.log("Scraping page: " + formattedUrl);
         let errorResult = undefined;
@@ -57,7 +56,7 @@ class CareerjetScraper extends ScraperInterface {
 
             // Filter the object and extract body as raw text.
             let bodyHTML = undefined
-            await Promise.race([
+            /*await Promise.race([
                 page.evaluate(() => document.body.outerHTML),
                 page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
             ])
@@ -70,6 +69,22 @@ class CareerjetScraper extends ScraperInterface {
                 })
                 .catch((error) => {
                     throw new Error("newPage.evaluate() ERROR: " + error)
+                });*/
+
+            // Test to see if I only get Inner value from html body.
+            await Promise.race([
+                page.evaluate(() => document.body.innerText),
+                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
+            ])
+                .then((value) => {
+                    if (typeof value === "string") {
+                        bodyHTML = value;
+                    } else {
+                        throw new Error("newPage.evaluate() TIMEOUT");
+                    }
+                })
+                .catch((error) => {
+                    throw new Error("newPage.evaluate() ERROR: " + error);
                 });
 
             // Insert or update annonce to database:

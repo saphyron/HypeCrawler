@@ -91,23 +91,33 @@ class JobindexScraper extends ScraperInterface {
                 return lastPageElement ? lastPageElement.textContent : null;
             });
 
-            if (!pageRefs) {
+            /*if (!pageRefs) {
                 throw new Error("No elements found with the given XPath.");
             }
-
             console.log("Found the pagination element:", pageRefs);
-
             // Extracting num of pages string
             const textNum = pageRefs;
             console.log("textNum: " + textNum);
 
             // Return number of pages
-            numPages = parseInt(textNum, 10);
+            numPages = parseInt(textNum, 10);*/
+
+            if (!pageRefs) {
+                console.log("No pagination elements found. Assuming there is only 1 page.");
+                numPages = 1;
+            } else {
+                console.log("Found the pagination element:", pageRefs);
+                numPages = parseInt(pageRefs, 10);
+                if (isNaN(numPages)) {
+                    throw new Error("Failed to parse the number of pages.");
+                }
+            }
         } catch (error) {
             console.error("Error while collecting num of pages element:", error);
             throw new Error("document.querySelector() → " + error);
         }
 
+        console.log("Total number of pages:", numPages);
         return numPages;
     }
 
@@ -142,8 +152,8 @@ class JobindexScraper extends ScraperInterface {
             });
 
             // Filter the object and extract body as raw text.
-            /*let bodyHTML = undefined
-            await Promise.race([
+            let bodyHTML = undefined
+            /*await Promise.race([
                 page.evaluate(() => document.body.outerHTML),
                 page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
             ])
@@ -158,10 +168,25 @@ class JobindexScraper extends ScraperInterface {
                     throw new Error("newPage.evaluate() ERROR: " + error)
                 });*/
             // Extract page content
-            let bodyHTML = await Promise.race([
+            /*let bodyHTML = await Promise.race([
                 page.evaluate(() => document.body.outerHTML),
                 page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
             ])
+                .catch((error) => {
+                    throw new Error("newPage.evaluate() ERROR: " + error);
+                });*/
+            //Test to see if i get value instead of entire html body
+            await Promise.race([
+                page.evaluate(() => document.body.innerText),
+                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
+            ])
+                .then((value) => {
+                    if (typeof value === "string") {
+                        bodyHTML = value;
+                    } else {
+                        throw new Error("newPage.evaluate() TIMEOUT");
+                    }
+                })
                 .catch((error) => {
                     throw new Error("newPage.evaluate() ERROR: " + error);
                 });

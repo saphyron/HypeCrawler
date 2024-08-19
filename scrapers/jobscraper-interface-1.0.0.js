@@ -190,8 +190,8 @@ class JocscraperTemplate {
 
         let counter = 0;
         let titles = [], urls = [], companies = [];
-
-        while (titles.length === 0 && counter < this.PATH_VARIATIONS.length) {
+        //Temporarily removed titles.length === 0 && to see if it will fix variation problems
+        while (counter < this.PATH_VARIATIONS.length) {
             let currentObject = this.PATH_VARIATIONS[counter];
             let candidateObj;
             if (currentObject.COMPANY_XPATH_CLASS === undefined) {
