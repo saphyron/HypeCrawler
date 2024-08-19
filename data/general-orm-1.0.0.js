@@ -34,7 +34,7 @@ class ORM {
             clearInterval(ORM.keepDataConnectionAliveHandle);
             ORM.keepDataConnectionAliveHandle = undefined;
 
-            CONNECTION.end(function(err) {
+            CONNECTION.end(function (err) {
                 if (err)
                     reject(`Disconnect database error: ${err}`);
                 else
@@ -44,39 +44,43 @@ class ORM {
     }
 
     static connectDatabase() {
+        return new Promise((resolve, reject) => {
 
-        CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
-        // the old one cannot be reused.
+            CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
+            // the old one cannot be reused.
 
-        CONNECTION.connect(function(err) {              // The server is either down
-            if(err) {                                     // or restarting (takes a while sometimes).
-                console.log('error when connecting to db:', err);
-                setTimeout(this.connectDatabase, 2000); // We introduce a delay before attempting to reconnect,
-            }                                     // to avoid a hot loop, and to allow our node script to
-            else
-            {
-                //Keep database connection alive by repetitive database calls
-                ORM.keepDataConnectionAliveHandle = setInterval(() => {
-                    let query = `SELECT 1`;
+            CONNECTION.connect(function (err) {              // The server is either down
+                if (err) {                                     // or restarting (takes a while sometimes).
+                    console.log('error when connecting to db:', err);
+                    setTimeout(() => {
+                        ORM.connectDatabase().then(resolve).catch(reject);
+                    }, 2000); // Retry connection after delay 
+                }                                     
+                else {
+                    //Keep database connection alive by repetitive database calls
+                    ORM.keepDataConnectionAliveHandle = setInterval(() => {
+                        let query = `SELECT 1`;
 
-                    CONNECTION.query(query,
-                        function (error) {
-                            if (error)
-                                console.log("Error at ORM.KeepConnectionAlive() → " + error);
-                            else
-                                console.log("Ok at ORM.KeepConnectionAlive()");
-                        })
-                }, 60000); //run each minute
-            }
-        });                                     // process asynchronous requests in the meantime.
-        // If you're also serving http, display a 503 error.
-        CONNECTION.on('error', function(err) {
-            console.log('db error', err);
-            if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-                this.connectDatabase();                         // lost due to either server restart, or a
-            } else {                                      // connnection idle timeout (the wait_timeout
-                throw err;                                  // server variable configures this)
-            }
+                        CONNECTION.query(query,
+                            function (error) {
+                                if (error)
+                                    console.log("Error at ORM.KeepConnectionAlive() → " + error);
+                                else
+                                    console.log("Ok at ORM.KeepConnectionAlive()");
+                            })
+                    }, 60000); //run each minute
+                    resolve(CONNECTION); // Resolve the promise with the connection
+                }
+            });                                     // process asynchronous requests in the meantime.
+            // If you're also serving http, display a 503 error.
+            CONNECTION.on('error', function (err) {
+                console.log('db error', err);
+                if (err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+                    ORM.connectDatabase().then(resolve).catch(reject);                        // lost due to either server restart, or a
+                } else {                                      // connnection idle timeout (the wait_timeout
+                    reject(err); // Reject with other errors                                 // server variable configures this)
+                }
+            });
         });
     }
 
@@ -226,7 +230,7 @@ class ORM {
 
 
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
-                    newRecord.checksum, newRecord.url, newRecord.cvr],
+            newRecord.checksum, newRecord.url, newRecord.cvr],
                 function (error, result) {
                     if (error) reject("Error at ORM.InsertAnnonce() → " + error);
 
