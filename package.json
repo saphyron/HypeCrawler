@@ -5,6 +5,7 @@
   "main": "main.js",
   "dependencies": {
     "hypecrawler": "file:",
+    "json2csv": "^6.0.0-alpha.2",
     "mysql": "^2.15.0",
     "mysql2": "^3.11.0",
     "npm": "^10.8.2",

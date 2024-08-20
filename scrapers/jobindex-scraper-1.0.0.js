@@ -17,15 +17,9 @@ const REGION_NAMES = new Map([
     ['region-midtjylland', '/jobsoegning/region-midtjylland?jobage=1'],
     ['storkoebenhavn', '/jobsoegning/storkoebenhavn?jobage=1'],
 ]);
-/*url to select datatime for jobs
-https://www.jobindex.dk/jobsoegning/nordsjaelland?jobage=1&page=2 //rigtig
-https://www.jobindex.dk/jobsoegning/nordsjaelland?jobage=1?page=1 //forkerte
-https://www.jobindex.dk/jobsoegning/region-nordjylland?jobage=1&page=9
-https://www.jobindex.dk/jobsoegning/bornholm?jobage=1&page=1
-*/
-// div.jix_robotjob 
-// div.jix_robotjob-inner 
-// h4 a
+
+    // TODO: Document the file. Add comments to the code.
+
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob-inner',
@@ -77,7 +71,6 @@ class JobindexScraper extends ScraperInterface {
         await page.goto(baseUrl, { waitUntil: 'networkidle2' });
         try {
             console.log("Attempting to find the total number of pages using CSS selector...");
-            // todo: if only 1 page do something differently
             const pageRefs = await page.evaluate(() => {
                 const selector = "div.jix_pagination.jix_pagination_wide ul.pagination li.page-item a";
                 console.log("CSS Selector:", selector);

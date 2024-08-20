@@ -1,6 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const orm = require('./general-orm-1.0.0'); // Adjust the path as necessary
+const { parse } = require('json2csv'); // Ensure this import is correct
+
+
+    // TODO: Document the file. Add comments to the code.
 
 async function exportToCSV() {
     console.log('Starting exportToCSV function');
@@ -19,8 +23,16 @@ async function exportToCSV() {
             GROUP BY a.id;
         `;
 
-        console.log('Executing query:', query);
-        connection.query(query, (err, results, fields) => {
+        const query2 = `
+            SELECT *
+            FROM annonce a
+            INNER JOIN region r ON r.region_id = a.region_id
+            WHERE DATE(a.timestamp) = '${formattedDate}'
+            GROUP BY a.id;
+        `;
+
+        console.log('Executing query:', query2);
+        connection.query(query2, (err, results, fields) => {
             if (err) {
                 console.error('Error executing query:', err);
                 connection.end();
@@ -63,38 +75,23 @@ async function exportToCSV() {
             });
 
             console.log('JSON Data:', jsonData);
+            const resultCount = jsonData.length;
+            console.log('Result count:', resultCount);
 
             const datePart = today.toISOString().split('T')[0]; // YYYY-MM-DD
-            const fileName = `${datePart}_data.json`;
-
-            const outputDir = 'C:\\Users\\jgra\\Desktop\\CSV Files';
-            const outputPath = path.join(outputDir, fileName);
-
-            console.log('Writing JSON file:', outputPath);
-            fs.writeFileSync(outputPath, JSON.stringify(jsonData, null, 2), 'utf8');
-            console.log('JSON file written successfully');
-            connection.end();
-
-            /*// Convert JSON back to CSV
-            const columns = fields.map(field => field.name);
-            const csvContent = [
-                columns.join(';'), // Header row with comma separator
-                ...jsonData.map(record => 
-                    columns.map(col => `"${record[col]}"`).join(';') // Data rows wrapped in quotes and comma-separated
-                )
-            ].join('\n');
-
-            const datePart = today.toISOString().split('T')[0]; // YYYY-MM-DD
-            const fileName = `${datePart} _${columns.length}.csv`;
+            const fileName = `${datePart}_All Fields_${resultCount}_data.csv`;
 
             const outputDir = 'C:\\Users\\jgra\\Desktop\\CSV Files';
             const outputPath = path.join(outputDir, fileName);
 
             console.log('Writing CSV file:', outputPath);
-            const BOM = '\uFEFF';
-            fs.writeFileSync(outputPath, BOM + csvContent, 'utf8'); // Add BOM for UTF-8 compatibility
+            const csvContent = parse(jsonData);
+            //console.log('CSV Content:', csvContent);
+            fs.writeFileSync(outputPath, csvContent, 'utf8');
+            //fs.writeFileSync(outputPath, JSON.stringify(jsonData, null, 2), 'utf8');
             console.log('CSV file written successfully');
-            connection.end();*/
+            //connection.end();
+            orm.disconnectDatabase();
         });
     } catch (error) {
         console.log("Error at main → connectDatabase(): " + error);

@@ -13,6 +13,7 @@ let currentRegionObject = 0;
 let currentRegionID;
 let current_requests = 0;
 
+    // TODO: Document the file. Add comments to the code.
 
 /**
  * Class representing a generic jobscraper algorithm.

@@ -1,5 +1,6 @@
 let ScraperInterface = require('./jobscraper-interface-1.0.0');
 
+    // TODO: Document the file. Add comments to the code.
 
 const TARGET_WEBSITE = 'https://www.careerjet.dk';
 const REGION_NAMES = new Map([

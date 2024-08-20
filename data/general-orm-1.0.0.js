@@ -5,6 +5,8 @@ const MYSQL = require('mysql');
 
 //<editor-fold desc="MySQL-connection">
 
+    // TODO: Document the file. Add comments to the code.
+
 const DB_CONFIG = {
     host: process.env.MYSQL_HOST,
     port: process.env.MYSQL_PORT,
