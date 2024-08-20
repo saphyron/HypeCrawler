@@ -4,7 +4,7 @@ const orm = require('./general-orm-1.0.0'); // Adjust the path as necessary
 const { parse } = require('json2csv'); // Ensure this import is correct
 
 
-    // TODO: Document the file. Add comments to the code.
+// TODO: Document the file. Add comments to the code.
 
 async function exportToCSV() {
     console.log('Starting exportToCSV function');
@@ -28,6 +28,14 @@ async function exportToCSV() {
             FROM annonce a
             INNER JOIN region r ON r.region_id = a.region_id
             WHERE DATE(a.timestamp) = '${formattedDate}'
+            GROUP BY a.id;
+        `;
+
+        const query3 = `
+        SELECT *
+            FROM annonce a
+            INNER JOIN region r ON r.region_id = a.region_id
+            WHERE r.name = 'cyber'
             GROUP BY a.id;
         `;
 

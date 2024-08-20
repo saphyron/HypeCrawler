@@ -29,14 +29,14 @@ async function main() {
             await run(scraper, browser, page); // Run the scraper with the browser and page instances
             scraper.printDatabaseResult(); // Print the result from the database
         }
-        if (process.env.ADVERTS_SCRAPE === undefined
+        /*if (process.env.ADVERTS_SCRAPE === undefined
             || process.env.ADVERTS_SCRAPE === "all"
             || process.env.ADVERTS_SCRAPE === "careerjet") {
             // If ADVERTS_SCRAPE is not set, or set to "all" or "careerjet", run the Careerjet scraper
             let scraper = new careerjetClass(); // Create an instance of the Careerjet scraper class
             await run(scraper, browser, page); // Run the scraper with the browser and page instances
             scraper.printDatabaseResult(); // Print the result from the database
-        }
+        }*/
         // Export data to CSV
         await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
 

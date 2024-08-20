@@ -1,67 +1,65 @@
-//<editor-fold desc="Modules">
-// Load npm modules:
+// Load the MySQL module from npm to interact with MySQL databases.
 const MYSQL = require('mysql');
-//</editor-fold>
 
-//<editor-fold desc="MySQL-connection">
-
-    // TODO: Document the file. Add comments to the code.
-
+// Define the database connection parameters.
 const DB_CONFIG = {
-    host: process.env.MYSQL_HOST,
-    port: process.env.MYSQL_PORT,
-    user: 'root',
-    password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T',
-    database: 'test_database_mariadb'
+    host: process.env.MYSQL_HOST,      // Database host address from environment variables.
+    port: process.env.MYSQL_PORT,      // Database port from environment variables.
+    user: 'root',                      // Default database user.
+    password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T', // Secure password for the database user.
+    database: 'test_database_mariadb'  // Name of the database to connect to.
 };
-console.log('DB_CONFIG:', DB_CONFIG);
-let CONNECTION;
-//</editor-fold>
+console.log('DB_CONFIG:', DB_CONFIG); // Log the database configuration for debugging.
+let CONNECTION;                       // Variable to hold the database connection object.
 
-const ANNONCE_TABLE_NAME = 'annonce';
-const REGION_TABLE_NAME = 'region';
-const CHECKSUM_CACHE = {};
-const BODY_CHECKSUM_CACHE = {};
+// Constants for table names in the database.
+const ANNONCE_TABLE_NAME = 'annonce'; // Table name for announcements.
+const REGION_TABLE_NAME = 'region';   // Table name for regions.
+
+// Caches to store data and reduce database access.
+const CHECKSUM_CACHE = {};            // Cache to store checksums to avoid redundant database queries.
+const BODY_CHECKSUM_CACHE = {};       // Cache specifically for body checksums, used for data integrity.
 
 /**
- * @class
- * Class implementing ORM-techniques to paradigm match OO-models and database schema.
- *
- * @since       1.0.0
- * @access      public
+ * Class providing ORM functionalities to map object models to a database schema.
  */
 class ORM {
+    /**
+     * Closes the database connection cleanly.
+     * @returns {Promise<void>} Promise that resolves when the connection is closed.
+     */
     static disconnectDatabase() {
         return new Promise((resolve, reject) => {
-            clearInterval(ORM.keepDataConnectionAliveHandle);
-            ORM.keepDataConnectionAliveHandle = undefined;
+            clearInterval(ORM.keepDataConnectionAliveHandle); // Stop the interval that keeps the connection alive.
+            ORM.keepDataConnectionAliveHandle = undefined;    // Clear the handle after stopping the interval.
 
-            CONNECTION.end(function (err) {
+            CONNECTION.end(function (err) {                   // Attempt to close the database connection.
                 if (err)
-                    reject(`Disconnect database error: ${err}`);
+                    reject(`Disconnect database error: ${err}`); // Reject the promise if an error occurs.
                 else
-                    resolve();
+                    resolve();                                 // Resolve the promise on successful disconnection.
             });
         });
     }
-
+     /**
+     * Establishes a connection to the database with error handling and reconnection logic.
+     * @returns {Promise<MYSQL.Connection>} Promise that resolves with the database connection.
+     */
     static connectDatabase() {
         return new Promise((resolve, reject) => {
 
-            CONNECTION = MYSQL.createConnection(DB_CONFIG); // Recreate the connection, since
-            // the old one cannot be reused.
-
-            CONNECTION.connect(function (err) {              // The server is either down
-                if (err) {                                     // or restarting (takes a while sometimes).
+            CONNECTION = MYSQL.createConnection(DB_CONFIG); // Create a new connection using the config settings.
+            CONNECTION.connect(function (err) {             // Attempt to connect to the database.
+                if (err) {                                  // Handle errors during the connection attempt.
                     console.log('error when connecting to db:', err);
-                    setTimeout(() => {
+                    setTimeout(() => {                      // Set a timeout to retry connection after a delay.
                         ORM.connectDatabase().then(resolve).catch(reject);
-                    }, 2000); // Retry connection after delay 
-                }                                     
+                    }, 2000); // Retry connection after 2 seconds
+                }
                 else {
                     //Keep database connection alive by repetitive database calls
                     ORM.keepDataConnectionAliveHandle = setInterval(() => {
-                        let query = `SELECT 1`;
+                        let query = `SELECT 1`;             // Query to keep the database connection alive.
 
                         CONNECTION.query(query,
                             function (error) {
@@ -70,29 +68,25 @@ class ORM {
                                 else
                                     console.log("Ok at ORM.KeepConnectionAlive()");
                             })
-                    }, 60000); //run each minute
-                    resolve(CONNECTION); // Resolve the promise with the connection
+                    }, 60000); // Run the keep-alive query every minute.
+                    resolve(CONNECTION);                   // Resolve the promise with the connection object.
                 }
-            });                                     // process asynchronous requests in the meantime.
+            });
             // If you're also serving http, display a 503 error.
-            CONNECTION.on('error', function (err) {
+            CONNECTION.on('error', function (err) {        // Listen for errors on the connection.
                 console.log('db error', err);
-                if (err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-                    ORM.connectDatabase().then(resolve).catch(reject);                        // lost due to either server restart, or a
-                } else {                                      // connnection idle timeout (the wait_timeout
-                    reject(err); // Reject with other errors                                 // server variable configures this)
+                if (err.code === 'PROTOCOL_CONNECTION_LOST') { // Automatically reconnect if the connection is lost.
+                    ORM.connectDatabase().then(resolve).catch(reject);                        
+                } else {
+                    reject(err);                          // Reject the promise on any other database error.
                 }
             });
         });
     }
 
     /**
-     * Creates the annonce database table if none exists
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     * @returns {Promise<any>}
+     * Creates the 'annonce' table if it does not exist in the database.
+     * @returns {Promise<void>} Promise that resolves when the table is created or confirmed to exist.
      */
     static CreateAnnonceTable() {
         return new Promise((resolve, reject) => {
@@ -116,12 +110,8 @@ class ORM {
     }
 
     /**
-     * Creates the regions database table if none exists
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     * @returns {Promise<any>}
+     * Creates the 'region' table if it does not exist in the database.
+     * @returns {Promise<void>} Promise that resolves when the table is created or confirmed to exist.
      */
     static CreateRegionTable() {
         return new Promise((resolve, reject) => {
@@ -131,25 +121,20 @@ class ORM {
                 ');';
 
             CONNECTION.query(query, function (error, result) {
-                if (error) reject("Error at ORM.CreateRegionTable() → " + error);
-                console.log('SUCCESS!');
-                resolve(result);
+                if (error) reject("Error at ORM.CreateRegionTable() → " + error); // Reject on query error.
+                console.log('SUCCESS!');           // Log success message.
+                resolve(result);                   // Resolve the promise with the query result.
             });
         });
     }
 
     /**
-     * Searches for the body checksum in local cache.
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     * @param   {String}              incomingChecksum              Checksum to be searched for.
-     *
-     * @returns {Promise<String>}                                   Returns a checksum or empty string.
+     * Checks if a checksum is already present in the local cache or the database.
+     * @param {String} incomingChecksum Checksum to be checked.
+     * @returns {Promise<boolean>} Promise that resolves to 'true' if checksum exists, otherwise 'false'.
      */
     static FindChecksum(incomingChecksum) {
-        // Utility function to check if cache exists.
+        // Helper function to determine if an object is empty.
         function isObjectEmpty(object) {
             for (let key in object) {
                 if (object.hasOwnProperty(key))
@@ -159,17 +144,15 @@ class ORM {
         }
 
         return new Promise((resolve, reject) => {
-
-            // Resolve or reject based on cache
-            // Checks local cache for checksum
+            // Resolve or reject the promise based on whether the checksum is in the cache.
             function settlePromise(checksum) {
                 if (CHECKSUM_CACHE[incomingChecksum])
-                    resolve(true);
+                    resolve(true);  // Resolve with 'true' if the checksum is found.
                 else
-                    resolve(false);
+                    resolve(false); // Resolve with 'false' if the checksum is not found.
             }
 
-            // Checks if local cache is empty
+            // If the cache is empty, query the database for checksums.
             if (isObjectEmpty(CHECKSUM_CACHE)) {
                 const query =
                     'SELECT checksum ' +
@@ -177,8 +160,9 @@ class ORM {
 
                 CONNECTION.query(query, function (error, cursor) {
                     if (error) {
-                        reject("Error at ORM.FindChecksum() → " + error);
+                        reject("Error at ORM.FindChecksum() → " + error); // Reject on query error.
                     } else {
+                        // Populate the cache with checksums from the database.
                         for (let record of cursor)
                             CHECKSUM_CACHE[record.checksum] = record.checksum;
                         settlePromise(incomingChecksum);
@@ -191,14 +175,9 @@ class ORM {
     }
 
     /**
-     * Searches the database for specified region.
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     * @param {String}              incomingRegionName      Checksum to be searched for.
-     *
-     * @returns {Promise<String>}                           Returns the id of the specified region.
+     * Retrieves a region's ID from the database based on its name.
+     * @param {String} incomingRegionName Name of the region to find.
+     * @returns {Promise<number>} Promise that resolves to the region ID or null if not found.
      */
     static FindRegionID(incomingRegionName) {
         return new Promise((resolve, reject) => {
@@ -209,65 +188,54 @@ class ORM {
                 'LIMIT 1';
 
             CONNECTION.query(query, [incomingRegionName], function (error, result) {
-                if (error) reject("Error at ORM.FindRegionID() → " + error);
-                resolve(result);
+                if (error) reject("Error at ORM.FindRegionID() → " + error); // Reject on query error.
+                resolve(result); // Resolve the promise with the result of the query.
             });
         })
     }
 
     /**
-     * Inserts a new Annonce record into the database
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     * @param {Annonce}             newRecord               Annonce model to add to database.
-     *
-     * @returns {Promise<void>}
+     * Inserts a new announcement record into the 'annonce' table.
+     * @param {Annonce} newRecord Announcement record to insert.
+     * @returns {Promise<void>} Promise that resolves when the insertion is complete.
      */
     static async InsertAnnonce(newRecord) {
         return new Promise((resolve, reject) => {
             let query = `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR) ` +
                 'VALUES (?, ?, ?, ?, ?, ?, ?)';
 
-
+            // Execute the query with values from the newRecord object.
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
             newRecord.checksum, newRecord.url, newRecord.cvr],
                 function (error, result) {
-                    if (error) reject("Error at ORM.InsertAnnonce() → " + error);
-
-                    // Update local cache with new entry:
+                    if (error) reject("Error at ORM.InsertAnnonce() → " + error); // Reject on query error.
+                    // Update local cache with new checksum entry:
                     CHECKSUM_CACHE[newRecord.checksum] = newRecord.checksum;
-                    console.log('1 record inserted!');
-                    resolve(result);
+                    console.log('1 record inserted!'); // Log the success of the insertion.
+                    resolve(result); // Resolve the promise with the query result.
                 })
         });
     }
 
     /**
-     * Inserts a new region with specified unique name into database
-     *
-     * @since       1.0.0
-     * @access      public
-     *
-     * @param {String}              newRegion               Region to add to database
-     *
-     * @returns {Promise<void>}
+     * Inserts a new region into the 'region' table with a unique name.
+     * @param {String} newRegion Name of the region to add.
+     * @returns {Promise<void>} Promise that resolves when the insertion is complete.
      */
     static InsertRegion(newRegion) {
         return new Promise((resolve, reject) => {
             let query = `INSERT IGNORE INTO ${REGION_TABLE_NAME} (NAME) ` +
                 'VALUES (?)';
-
+            // Execute the query with the name of the new region.
             CONNECTION.query(query, [newRegion.name],
                 function (error, result) {
-                    if (error) reject("Error at ORM.InsertRegion() → " + error);
-                    console.log('1 record inserted!');
-                    resolve(result);
+                    if (error) reject("Error at ORM.InsertRegion() → " + error); // Reject on query error.
+                    console.log('1 record inserted!'); // Log the success of the insertion.
+                    resolve(result); // Resolve the promise with the query result.
                 })
         });
     }
 
 }
-
+// Make the ORM class available for import in other modules.
 module.exports = ORM;

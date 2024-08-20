@@ -1,8 +1,11 @@
+// Import the ScraperInterface module from a local file.
 let ScraperInterface = require('./jobscraper-interface-1.0.0');
+// Import Puppeteer for headless browser manipulation.
 const puppeteer = require('puppeteer');
 
-
+// Define the base URL of the job indexing site to scrape.
 const TARGET_WEBSITE = 'https://www.jobindex.dk';
+// Define a mapping from region names to their specific search URL paths.
 const REGION_NAMES = new Map([
     ['nordsjaelland', '/jobsoegning/nordsjaelland?jobage=1'],
     ['region-sjaelland', '/jobsoegning/region-sjaelland?jobage=1'],
@@ -16,10 +19,12 @@ const REGION_NAMES = new Map([
     ['faeroeerne', '/jobsoegning/faeroeerne?jobage=1'],
     ['region-midtjylland', '/jobsoegning/region-midtjylland?jobage=1'],
     ['storkoebenhavn', '/jobsoegning/storkoebenhavn?jobage=1'],
+    // Any regions below this are Temporary search criterias
+    // Aim is to have extended functionality in future that allows for custom search criterias
+    //['cyber', '/jobsoegning?maxdate=20240731&mindate=20240101&jobage=archive&q=it-sikkerhed+%27cyber+security%27'],
 ]);
 
-    // TODO: Document the file. Add comments to the code.
-
+// Define different configurations for locating job details in the scraped HTML using XPath classes and attributes.
 const PATH_VARIATIONS = [
     {
         URL_XPATH_CLASS: 'PaidJob-inner',
@@ -38,31 +43,38 @@ const PATH_VARIATIONS = [
         COMPANY_XPATH_ATTRIBUTES: 'h4 a[href]'
     }
 ];
+// Define the XPath selector for finding the total number of job adverts on a page.
 const TOTAL_ADVERTS_SELECTOR = '//*[@class="results"]/div/div/div/div[1]/h2/text()';
-//const TOTAL_ADVERTS_SELECTOR = '/html/body/div[1]/main/section/div[3]/div/div[3]/div[2]/div[2]/div[3]/nav/ul/li[3]';
+// Regular expression to extract numerical values, intended to parse the total number of job adverts.
 const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
+// Define the maximum timeout in milliseconds to wait for page responses.
 const PAGE_TIMEOUT = 6000000;
 
 /**
- * @class
- * @implements {JocscraperTemplate}
+ * Class for scraping job listings from Jobindex.dk.
+ * Implements methods from ScraperInterface to customize for specific site structure.
  */
 class JobindexScraper extends ScraperInterface {
 
     /**
-     * Constructor for
-     * @constructor
+     * Initializes the scraper with website-specific settings.
      */
     constructor() {
         super(TARGET_WEBSITE, REGION_NAMES, PATH_VARIATIONS, TOTAL_ADVERTS_SELECTOR, TOTAL_ADVERTS_REGEX, PAGE_TIMEOUT);
     }
-
+    /**
+     * Generates a URL parameter for pagination based on the current page number.
+     * @param {number} pageNo - Current page number.
+     * @returns {string} URL parameter to access the next page.
+     */
     getPageExtension(pageNo) {
         return `&page=${pageNo + 1}`;
     }
 
     /**
-     * @inheritDoc
+     * Retrieves the total number of pages available for job listings.
+     * @param {object} page - Puppeteer page object for browser interaction.
+     * @returns {Promise<number>} Total number of pages as an integer.
      */
     async getNumPages(page) {
         let numPages;
@@ -115,18 +127,14 @@ class JobindexScraper extends ScraperInterface {
     }
 
     /**
-     * Scrapes the provided page and invokes database call.
-     *
-     * @since       1.0.0
-     * @access      private
-     *
-     * @param {Object}              page                    Browser tab from pagePool.
-     * @param {String}              title                   Title of the linked page.
-     * @param {String}              url                     Url of linked page.
-     * @param {int}                 index                   Indicator of advertisement position in the list.
-     * @param {int}                 pageNum                 Indicator of advertisement list page number in region.
-     *
-     * @returns {Promise<void>}
+     * Scrapes job data from a specific page and optionally navigates to a company URL for additional details.
+     * @param {Object} page - Puppeteer page object.
+     * @param {String} title - Job title.
+     * @param {String} url - URL of the job listing.
+     * @param {String} companyURL - URL of the company listing the job.
+     * @param {int} index - Job listing's index on the page.
+     * @param {int} pageNum - Current page number of job listings.
+     * @returns {Promise<void>} Completes when the scraping and any data insertion are done.
      */
     async scrapePage(page, title, url, companyURL, index, pageNum) {
         //let newPage = undefined;
@@ -215,7 +223,7 @@ class JobindexScraper extends ScraperInterface {
 
                 let companyHTML = await Promise.race([
                     page.evaluate(() => document.body.outerHTML),
-                    page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
+                    page.waitForSelector('body', { timeout: 60000 }) //temporarily removed this part after timeout: this.PAGE_TIMEOUT
                 ])
                     .catch((error) => {
                         throw new Error("CompanyDataScrape.evaluate() ERROR: " + error);
@@ -253,5 +261,5 @@ class JobindexScraper extends ScraperInterface {
     }
 
 }
-
+// Export the JobindexScraper class for use in other modules.
 module.exports = JobindexScraper;
