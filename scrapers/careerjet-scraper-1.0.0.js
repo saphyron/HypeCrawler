@@ -26,7 +26,7 @@ const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/t
 // Define the regex pattern for extracting the total number of job adverts
 const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
 // Define the page timeout duration in milliseconds
-const PAGE_TIMEOUT = 6000000;
+const PAGE_TIMEOUT = 200000;
 
 /**
  * Class representing the algorithm for careerjet.dk
@@ -139,10 +139,44 @@ class CareerjetScraper extends ScraperInterface {
 
             // Initialize the maximum page number
             let maxPage = 0;
-            let currentPageNumber = 1
+            let currentPageNumber = 1;
             const baseUrl = page.url();
+            const url = baseUrl + currentPageNumber;
+            await page.goto(url, { waitUntil: 'networkidle2' });
 
-            while (true) {
+            const pageRefs = await page.evaluate(() => {
+                const selector = "p.col.col-xs-12.col-m-4.col-m-r.cr span";
+                const elements = document.querySelectorAll(selector);
+
+                if (elements.length === 0) {
+                    console.log("No elements found using CSS selector.");
+                    return null;
+                }
+
+                const textContents = Array.from(elements).map(element => {
+                    const text = element.textContent.trim();
+                    const numberOnly = text.match(/\d+/);
+                    return numberOnly ? numberOnly[0] : null;
+                });
+
+                return textContents.filter(number => number !== null);
+            });
+
+            if (!pageRefs || pageRefs.length === 0) {
+                throw new Error("Failed to retrieve valid number from page.");
+            }
+
+            const totalNumbersFromPage = parseInt(pageRefs[0], 10);
+
+            if (isNaN(totalNumbersFromPage)) {
+                throw new Error("Failed to parse total numbers from page content.");
+            }
+
+            maxPage = Math.ceil(totalNumbersFromPage / 20);
+            console.log("Max Page:", maxPage);
+
+
+            /*while (true) {
                 // Update the URL to the current page number
                 const url = baseUrl + currentPageNumber;
                 await page.goto(url, { waitUntil: 'networkidle2' });
@@ -169,7 +203,7 @@ class CareerjetScraper extends ScraperInterface {
 
                 // Make sure to increment the currentPageNumber
                 currentPageNumber++;
-            };
+            };*/
 
             // Deprecated code that is kept just in case.
             /*

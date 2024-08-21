@@ -48,7 +48,7 @@ const TOTAL_ADVERTS_SELECTOR = '//*[@class="results"]/div/div/div/div[1]/h2/text
 // Regular expression to extract numerical values, intended to parse the total number of job adverts.
 const TOTAL_ADVERTS_REGEX = /(\d*\.?\d*)/g;
 // Define the maximum timeout in milliseconds to wait for page responses.
-const PAGE_TIMEOUT = 6000000;
+const PAGE_TIMEOUT = 200000;
 
 /**
  * Class for scraping job listings from Jobindex.dk.

@@ -13,7 +13,7 @@ let currentRegionObject = 0;
 let currentRegionID;
 let current_requests = 0;
 
-    // TODO: Document the file. Add comments to the code.
+// TODO: Document the file. Add comments to the code.
 
 /**
  * Class representing a generic jobscraper algorithm.
@@ -129,7 +129,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<String>}                           a string to indicate if any errors have been thrown.
      */
-    async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
+    /*async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
         return new Promise((resolve, reject) => {
             let resolveCounter = 0, rejectCounter = 0;
             let result = '';
@@ -168,7 +168,38 @@ class JocscraperTemplate {
                     });
             }
         });
-    }
+    }*/
+        async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
+            try {
+                const promises = [];
+        
+                for (let index = fromPage; index < toPage; index++) {
+                    const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
+                    console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
+                    console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
+        
+                    promises.push(
+                        (async () => {
+                            const newPage = await browser.newPage();  // Open a new page for parallel processing
+                            try {
+                                const pageURLsAndTitles = await this.getCurrentPageURLTitles(newPage, PAGE_SELECTOR);
+                                await this.scrapePageList(browser, pageURLsAndTitles, index);
+                            } catch (error) {
+                                throw new Error(`Error on page ${index + 1}: ${error.toString()}`);
+                            } finally {
+                                await newPage.close();  // Close the page after processing
+                            }
+                        })()
+                    );
+                }
+        
+                await Promise.all(promises);
+                return 'Scraping completed successfully.';
+            } catch (error) {
+                return `Error in scrapeRegion: ${error.toString()}`;
+            }
+        }
+        
 
     /**
      * Gets a list of title/url pairs.
@@ -181,7 +212,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<{PAGE_TITLES: Array, PAGE_URLS: Array}>} - Lists with titles and urls.
      */
-    async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
+    /*async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
         await page.goto(PAGE_SELECTOR, {
             timeout: this.PAGE_TIMEOUT
         })
@@ -210,6 +241,50 @@ class JocscraperTemplate {
         }
 
         if (titles.length === 0) {
+            throw new Error("No valid path found!");
+        }
+
+        return { PAGE_TITLES: titles, PAGE_URLS: urls, PAGE_COMPANY_URLS: companies };
+    }*/
+
+    async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
+        await page.goto(PAGE_SELECTOR, {
+            timeout: this.PAGE_TIMEOUT
+        }).catch((value) => {
+            throw new Error("page.goto() → " + value);
+        });
+
+        let titles = [], urls = [], companies = [];
+        let counter = 0;
+
+        while (counter < this.PATH_VARIATIONS.length) {
+            let currentObject = this.PATH_VARIATIONS[counter];
+            let candidateObj;
+
+            try {
+                if (currentObject.COMPANY_XPATH_CLASS === undefined) {
+                    candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS, currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
+                } else {
+                    candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS,
+                        currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES, currentObject.COMPANY_XPATH_CLASS, currentObject.COMPANY_XPATH_ATTRIBUTES);
+                    companies.push(...candidateObj.companyUrls);
+                }
+
+                titles.push(...candidateObj.titleList);
+                urls.push(...candidateObj.urlList);
+
+                // Stop if we find valid titles and URLs
+                if (titles.length > 0 && urls.length > 0) {
+                    break;
+                }
+            } catch (error) {
+                console.error(`Error trying path variation ${counter}: `, error);
+            }
+
+            counter++;
+        }
+
+        if (titles.length === 0 || urls.length === 0) {
             throw new Error("No valid path found!");
         }
 
