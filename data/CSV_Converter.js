@@ -48,7 +48,7 @@ async function exportToCSV() {
             }
 
             console.log('Query executed successfully');
-            console.log('Results:', results);
+            //console.log('Results:', results);
 
             if (results.length === 0) {
                 console.log('No data returned from the query.');
@@ -82,7 +82,7 @@ async function exportToCSV() {
                 return jsonObject;
             });
 
-            console.log('JSON Data:', jsonData);
+            //console.log('JSON Data:', jsonData);
             const resultCount = jsonData.length;
             console.log('Result count:', resultCount);
 

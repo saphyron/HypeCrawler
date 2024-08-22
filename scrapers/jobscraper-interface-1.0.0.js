@@ -278,7 +278,7 @@ class JocscraperTemplate {
                     break;
                 }
             } catch (error) {
-                console.error(`Error trying path variation ${counter}: `, error);
+                console.error(`Error trying path variation ${counter}: `);
             }
 
             counter++;
@@ -325,8 +325,8 @@ class JocscraperTemplate {
                 timeout: 200000,
             });
 
-            await page.screenshot({ path: 'pre_check.png', fullPage: true });
-            await page.screenshot({ path: 'post_check.png', fullPage: true });
+            /*await page.screenshot({ path: 'pre_check.png', fullPage: true });
+            await page.screenshot({ path: 'post_check.png', fullPage: true });*/
 
             // Extract elements
             let titleElements = await page.$$eval(titleSelector, elements =>
@@ -337,9 +337,9 @@ class JocscraperTemplate {
                 elements.map(el => el.href.trim()));
 
             // Log the extracted elements
-            console.log('Title Elements:', titleElements);
+            /*console.log('Title Elements:', titleElements);
             console.log('URL Elements:', urlElements);
-            console.log('Company Elements:', companyElements);
+            console.log('Company Elements:', companyElements);*/
 
             // Check if titleElements and urlElements are empty or undefined
             if (!titleElements || titleElements.length === 0) {
@@ -430,7 +430,7 @@ class JocscraperTemplate {
 
             return { titleList: titles, urlList: urls, companyUrls: company };
         } catch (error) {
-            console.error('Error at getPageTitlesAndUrls() →', error);
+            console.error('Error at getPageTitlesAndUrls() →');
             throw error;
         }
     }

@@ -79,7 +79,7 @@ class JobindexScraper extends ScraperInterface {
     async getNumPages(page) {
         let numPages;
         const baseUrl = page.url();
-        console.log("baseUrl: " + baseUrl);
+        //console.log("baseUrl: " + baseUrl);
         await page.goto(baseUrl, { waitUntil: 'networkidle2' });
         try {
             console.log("Attempting to find the total number of pages using CSS selector...");
@@ -87,7 +87,7 @@ class JobindexScraper extends ScraperInterface {
                 const selector = "div.jix_pagination.jix_pagination_wide ul.pagination li.page-item a";
                 console.log("CSS Selector:", selector);
                 const elements = document.querySelectorAll(selector);
-                console.log("CSS Selector results:", elements);
+                //console.log("CSS Selector results:", elements);
                 if (elements.length === 0) {
                     return null;
                 }
