@@ -98,8 +98,9 @@ class JocscraperTemplate {
                 console.log(NUM_PAGES + " PAGES");
 
                 for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
-                    await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber
-                        + this.PAGE_LIMIT).catch((error) => {
+                    await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, 
+                        pageNumber, pageNumber + this.PAGE_LIMIT)
+                        .catch((error) => {
                             console.log("Error at scrapeRegion → " + error);
                         });
                 }
@@ -169,37 +170,41 @@ class JocscraperTemplate {
             }
         });
     }*/
-        async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
-            try {
-                const promises = [];
-        
-                for (let index = fromPage; index < toPage; index++) {
-                    const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
-                    console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
-                    console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
-        
-                    promises.push(
-                        (async () => {
-                            const newPage = await browser.newPage();  // Open a new page for parallel processing
-                            try {
-                                const pageURLsAndTitles = await this.getCurrentPageURLTitles(newPage, PAGE_SELECTOR);
-                                await this.scrapePageList(browser, pageURLsAndTitles, index);
-                            } catch (error) {
-                                throw new Error(`Error on page ${index + 1}: ${error.toString()}`);
-                            } finally {
-                                await newPage.close();  // Close the page after processing
-                            }
-                        })()
-                    );
-                }
-        
-                await Promise.all(promises);
-                return 'Scraping completed successfully.';
-            } catch (error) {
-                return `Error in scrapeRegion: ${error.toString()}`;
+    async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
+        try {
+            const promises = [];
+
+            for (let index = fromPage; index < toPage; index++) {
+                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
+                console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
+                console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
+
+                promises.push(
+                    (async () => {
+                        const newPage = await browser.newPage();  // Open a new page for parallel processing
+                        try {
+                            const pageURLsAndTitles = await this.getCurrentPageURLTitles(newPage, PAGE_SELECTOR);
+                            await this.scrapePageList(browser, pageURLsAndTitles, index);
+                        } catch (error) {
+                            throw new Error(`Error on page ${index + 1}: ${error.toString()}`);
+                        } finally {
+                            await newPage.close();  // Close the page after processing
+                        }
+                    })()
+                );
             }
+
+            await Promise.all(promises).catch(error => {
+                console.error("Error during scraping in Promise.all:", error);
+                throw error;
+            });
+            return 'Scraping completed successfully.';
+        } catch (error) {
+            console.error(`Error in scrapeRegion: ${error.toString()}`);
+            return `Error in scrapeRegion: ${error.toString()}`;
         }
-        
+    }
+
 
     /**
      * Gets a list of title/url pairs.
@@ -568,11 +573,13 @@ class JocscraperTemplate {
      * @returns {Promise<any>}
      */
     insertAnnonce(annonceTitle, rawHTMLText, annonceURL, cvr) {
+        console.log("Inserting Annonce:", { annonceTitle, annonceURL, cvr });
         return new Promise((resolve, reject) => {
 
             let sha1Checksum = sha1(`${annonceURL}`);
             ORM.FindChecksum(sha1Checksum)
                 .then((result) => {
+                    console.log("Checksum found:", result);
                     if (!result)
                         return this.createAnnonceModel(
                             annonceTitle,
@@ -582,7 +589,8 @@ class JocscraperTemplate {
                             annonceURL,
                             cvr)
                             .catch((error) => {
-                                throw new Error("Already in database!" + error);
+                                console.error("Error creating Annonce model: " + error);
+                                throw new Error("Error creating Annonce model: " + error);
                             });
                     this.existingTotalCounter++;
                     resolve();
@@ -591,16 +599,19 @@ class JocscraperTemplate {
                     if (newAnnonceModel)
                         return ORM.InsertAnnonce(newAnnonceModel)
                             .catch((error) => {
-                                throw new Error("annonceModel failed" + error);
+                                console.error("Error inserting Annonce into database: " + error);
+                                throw new Error("Error inserting Annonce into database: " + error);
                             });
 
                 })
                 .then((result) => {
+                    console.log("Annonce inserted successfully");
                     this.successTotalCounter++;
                     resolve(result);
                 })
                 .catch((error) => {
                     this.errorTotalCounter++;
+                    console.error("Error at insertAnnonce() → " + error);
                     reject(new Error("Error at insertAnnonce() → " + error));
                 });
         });
