@@ -26,7 +26,7 @@ const TOTAL_ADVERTS_SELECTOR = '//*[@id="rightcol"]/div[1]/nobr/table/tbody/tr/t
 // Define the regex pattern for extracting the total number of job adverts
 const TOTAL_ADVERTS_REGEX = /af (.*?) jobs/g;
 // Define the page timeout duration in milliseconds
-const PAGE_TIMEOUT = 200000;
+const PAGE_TIMEOUT = 60000;
 
 /**
  * Class representing the algorithm for careerjet.dk
@@ -59,8 +59,9 @@ class CareerjetScraper extends ScraperInterface {
      * @param {number} pageNum - The number of the page being scraped.
      * @async
      */
-    async scrapePage(page, title, url, companyUrl, index, pageNum) {
+    async scrapePage(page, title, url, companyUrl, index, pageNum, scraperName) {
         let formattedUrl = url;
+        let cvr;
         console.log("Scraping page: " + formattedUrl);
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
@@ -108,7 +109,7 @@ class CareerjetScraper extends ScraperInterface {
                 });
 
             // Insert or update the job listing in the database.
-            await this.insertAnnonce(title, bodyHTML, formattedUrl)
+            await this.insertAnnonce(title, bodyHTML, formattedUrl, cvr, scraperName)
                 .catch((error) => {
                     throw new Error("insertAnnonce(" + formattedUrl + "): " + error)
                 });

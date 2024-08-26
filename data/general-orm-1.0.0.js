@@ -41,10 +41,10 @@ class ORM {
             });
         });
     }
-     /**
-     * Establishes a connection to the database with error handling and reconnection logic.
-     * @returns {Promise<MYSQL.Connection>} Promise that resolves with the database connection.
-     */
+    /**
+    * Establishes a connection to the database with error handling and reconnection logic.
+    * @returns {Promise<MYSQL.Connection>} Promise that resolves with the database connection.
+    */
     static connectDatabase() {
         return new Promise((resolve, reject) => {
 
@@ -76,7 +76,7 @@ class ORM {
             CONNECTION.on('error', function (err) {        // Listen for errors on the connection.
                 console.log('db error', err);
                 if (err.code === 'PROTOCOL_CONNECTION_LOST') { // Automatically reconnect if the connection is lost.
-                    ORM.connectDatabase().then(resolve).catch(reject);                        
+                    ORM.connectDatabase().then(resolve).catch(reject);
                 } else {
                     reject(err);                          // Reject the promise on any other database error.
                 }
@@ -96,9 +96,10 @@ class ORM {
                 'BODY MEDIUMBLOB, ' +
                 'region_id INTEGER, ' +
                 'TIMESTAMP DATETIME,' +
-                'CHECKSUM TEXT, ' +
+                'CHECKSUM varchar(40), ' +
                 'URL TEXT, ' +
                 'CVR TEXT, ' +
+                'Homepage TEXT, ' +
                 'FOREIGN KEY(region_id) REFERENCES region(region_id))';
 
             CONNECTION.query(query, function (error, result) {
@@ -129,11 +130,41 @@ class ORM {
     }
 
     /**
+ * Checks if a checksum is already present in the local cache or the database.
+ * @param {String} incomingChecksum Checksum to be checked.
+ * @returns {Promise<boolean>} Promise that resolves to 'true' if checksum exists, otherwise 'false'.
+ */
+    static FindChecksum(incomingChecksum) {
+        return new Promise((resolve, reject) => {
+            // First, check if the checksum is in the cache
+            if (CHECKSUM_CACHE[incomingChecksum]) {
+                return resolve(true);  // Resolve with 'true' if the checksum is found in the cache
+            }
+
+            // If not in the cache, query the database using the index
+            const query = `SELECT 1 FROM ${ANNONCE_TABLE_NAME} WHERE checksum = ? LIMIT 1`;
+
+            CONNECTION.query(query, [incomingChecksum], function (error, results) {
+                if (error) {
+                    return reject("Error at ORM.FindChecksum() → " + error); // Reject on query error
+                }
+
+                if (results.length > 0) {
+                    CHECKSUM_CACHE[incomingChecksum] = incomingChecksum;  // Cache the result
+                    return resolve(true);  // Resolve with 'true' if the checksum is found in the database
+                } else {
+                    return resolve(false);  // Resolve with 'false' if the checksum is not found
+                }
+            });
+        });
+    }
+
+    /**
      * Checks if a checksum is already present in the local cache or the database.
      * @param {String} incomingChecksum Checksum to be checked.
      * @returns {Promise<boolean>} Promise that resolves to 'true' if checksum exists, otherwise 'false'.
      */
-    static FindChecksum(incomingChecksum) {
+    /*static FindChecksum(incomingChecksum) {
         // Helper function to determine if an object is empty.
         function isObjectEmpty(object) {
             for (let key in object) {
@@ -172,7 +203,7 @@ class ORM {
                 settlePromise(incomingChecksum);
             }
         })
-    }
+    }*/
 
     /**
      * Retrieves a region's ID from the database based on its name.
@@ -201,12 +232,12 @@ class ORM {
      */
     static async InsertAnnonce(newRecord) {
         return new Promise((resolve, reject) => {
-            let query = `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR) ` +
-                'VALUES (?, ?, ?, ?, ?, ?, ?)';
+            let query = `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage) ` +
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
             // Execute the query with values from the newRecord object.
             CONNECTION.query(query, [newRecord.titel, newRecord.body, newRecord.regionId, newRecord.timestamp,
-            newRecord.checksum, newRecord.url, newRecord.cvr],
+            newRecord.checksum, newRecord.url, newRecord.cvr, newRecord.homepage],
                 function (error, result) {
                     if (error) reject("Error at ORM.InsertAnnonce() → " + error); // Reject on query error.
                     // Update local cache with new checksum entry:

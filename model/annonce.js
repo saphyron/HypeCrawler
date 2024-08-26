@@ -1,5 +1,5 @@
 class Annonce {
-    constructor(title, body, regionId, timestamp, checksum, url, cvr) {
+    constructor(title, body, regionId, timestamp, checksum, url, cvr, homepage) {
         this.titel = title;
         this.body = body;
         this.regionId = regionId;
@@ -7,6 +7,7 @@ class Annonce {
         this.checksum = checksum;
         this.url = url;
         this.cvr = cvr;
+        this.homepage = homepage;
     }
 }
 module.exports = Annonce;

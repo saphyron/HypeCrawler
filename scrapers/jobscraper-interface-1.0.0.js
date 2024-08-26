@@ -1,4 +1,5 @@
 const ORM = require('../data/general-orm-1.0.0');
+//const ORM = require('../data/general-orm-1.0.1-pool');
 const sha1 = require('sha1');
 const annonceModel = require('../model/annonce');
 const regionModel = require('../model/region');
@@ -73,7 +74,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<void>}
      */
-    async beginScraping(page, browser, pageLimit, poolLimit) {
+    async beginScraping(page, browser, pageLimit, poolLimit, scraperName) {
         this.PAGE_LIMIT = pageLimit;
         this.PAGE_POOL = new Pagepool(browser, poolLimit);
         try {
@@ -98,8 +99,8 @@ class JocscraperTemplate {
                 console.log(NUM_PAGES + " PAGES");
 
                 for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
-                    await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, 
-                        pageNumber, pageNumber + this.PAGE_LIMIT)
+                    await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR,
+                        pageNumber, pageNumber + this.PAGE_LIMIT, scraperName)
                         .catch((error) => {
                             console.log("Error at scrapeRegion → " + error);
                         });
@@ -170,7 +171,7 @@ class JocscraperTemplate {
             }
         });
     }*/
-    async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
+    /*async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
         try {
             const promises = [];
 
@@ -203,7 +204,71 @@ class JocscraperTemplate {
             console.error(`Error in scrapeRegion: ${error.toString()}`);
             return `Error in scrapeRegion: ${error.toString()}`;
         }
+    }*/
+    //Parallel processing version
+    /*async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage, scraperName) {
+        try {
+            const promises = [];
+
+            for (let index = fromPage; index < toPage; index++) {
+                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
+                console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
+                console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
+
+                promises.push(
+                    (async () => {
+                        const newPage = await browser.newPage();  // Open a new page for parallel processing
+                        try {
+                            const pageURLsAndTitles = await this.getCurrentPageURLTitles(newPage, PAGE_SELECTOR);
+                            await this.scrapePageList(browser, pageURLsAndTitles, index, scraperName);
+                        } catch (error) {
+                            console.error(`Error on page ${index + 1}: ${error}`);
+                            throw new Error(`Error on page ${index + 1}: ${error.toString()}`);
+                        } finally {
+                            await newPage.close();  // Close the page after processing
+                        }
+                    })()
+                );
+            }
+
+            await Promise.all(promises).catch(error => {
+                console.error("Error during scraping in Promise.all:", error);
+                throw error;
+            });
+            return 'Scraping completed successfully.';
+        } catch (error) {
+            console.error(`Error in scrapeRegion: ${error.toString()}`);
+            return `Error in scrapeRegion: ${error.toString()}`;
+        }
+    }*/
+    //sequential processing version.
+    async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage, scraperName) {
+        try {
+            for (let index = fromPage; index < toPage; index++) {
+                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
+                console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
+                console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
+
+                const newPage = await browser.newPage();  // Open a new page for processing
+                try {
+                    const pageURLsAndTitles = await this.getCurrentPageURLTitles(newPage, PAGE_SELECTOR);
+                    await this.scrapePageList(browser, pageURLsAndTitles, index, scraperName);
+                } catch (error) {
+                    console.error(`Error on page ${index + 1}: ${error}`);
+                    throw new Error(`Error on page ${index + 1}: ${error.toString()}`);
+                } finally {
+                    await newPage.close();  // Close the page after processing
+                }
+            }
+
+            return 'Scraping completed successfully.';
+        } catch (error) {
+            console.error(`Error in scrapeRegion: ${error.toString()}`);
+            return `Error in scrapeRegion: ${error.toString()}`;
+        }
     }
+
+
 
 
     /**
@@ -252,7 +317,7 @@ class JocscraperTemplate {
         return { PAGE_TITLES: titles, PAGE_URLS: urls, PAGE_COMPANY_URLS: companies };
     }*/
 
-    async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
+    /*async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
         await page.goto(PAGE_SELECTOR, {
             timeout: this.PAGE_TIMEOUT
         }).catch((value) => {
@@ -294,7 +359,59 @@ class JocscraperTemplate {
         }
 
         return { PAGE_TITLES: titles, PAGE_URLS: urls, PAGE_COMPANY_URLS: companies };
+    }*/
+
+    async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
+        const maxRetries = 3;  // Maximum number of retries
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                await page.goto(PAGE_SELECTOR, { timeout: this.PAGE_TIMEOUT });
+                break;  // Exit the loop if the page loads successfully
+            } catch (error) {
+                console.error(`Attempt ${attempt} failed for page.goto() → ${error}`);
+                if (attempt === maxRetries) {
+                    throw new Error(`page.goto() failed after ${maxRetries} attempts → ${error}`);
+                }
+            }
+        }
+
+        let titles = [], urls = [], companies = [];
+        let counter = 0;
+
+        while (counter < this.PATH_VARIATIONS.length) {
+            let currentObject = this.PATH_VARIATIONS[counter];
+            let candidateObj;
+
+            try {
+                if (currentObject.COMPANY_XPATH_CLASS === undefined) {
+                    candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS, currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES);
+                } else {
+                    candidateObj = await this.tryPathVariationOnPage(page, currentObject.TITLE_XPATH_CLASS,
+                        currentObject.TITLE_XPATH_ATTRIBUTES, currentObject.URL_XPATH_CLASS, currentObject.URL_XPATH_ATTRIBUTES, currentObject.COMPANY_XPATH_CLASS, currentObject.COMPANY_XPATH_ATTRIBUTES);
+                    companies.push(...candidateObj.companyUrls);
+                }
+
+                titles.push(...candidateObj.titleList);
+                urls.push(...candidateObj.urlList);
+
+                // Stop if we find valid titles and URLs
+                if (titles.length > 0 && urls.length > 0) {
+                    break;
+                }
+            } catch (error) {
+                console.error(`Error trying path variation ${counter}: `);
+            }
+
+            counter++;
+        }
+
+        if (titles.length === 0 || urls.length === 0) {
+            throw new Error("No valid path found!");
+        }
+
+        return { PAGE_TITLES: titles, PAGE_URLS: urls, PAGE_COMPANY_URLS: companies };
     }
+
 
     /**
      * Tries the path variations defined in PATH_VARIATIONS on the current page.
@@ -310,7 +427,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<{titleList: Array, urlList: Array}>}
      */
-    async tryPathVariationOnPage(page, titleClass, titleAttributes, urlClass, urlAttributes, companyClass, companyAttributes) {
+    /*async tryPathVariationOnPage(page, titleClass, titleAttributes, urlClass, urlAttributes, companyClass, companyAttributes) {
         try {
             // Initialize arrays to store valid titles and URLs
             let titles = [];
@@ -333,112 +450,174 @@ class JocscraperTemplate {
             /*await page.screenshot({ path: 'pre_check.png', fullPage: true });
             await page.screenshot({ path: 'post_check.png', fullPage: true });*/
 
-            // Extract elements
-            let titleElements = await page.$$eval(titleSelector, elements =>
-                elements.map(el => el.textContent.trim()));
-            let urlElements = await page.$$eval(urlSelector, elements =>
-                elements.map(el => el.href.trim()));
-            let companyElements = await page.$$eval(companySelector, elements =>
-                elements.map(el => el.href.trim()));
+    // Extract elements
+    /*let titleElements = await page.$$eval(titleSelector, elements =>
+        elements.map(el => el.textContent.trim()));
+    let urlElements = await page.$$eval(urlSelector, elements =>
+        elements.map(el => el.href.trim()));
+    let companyElements = await page.$$eval(companySelector, elements =>
+        elements.map(el => el.href.trim()));
 
-            // Log the extracted elements
-            /*console.log('Title Elements:', titleElements);
-            console.log('URL Elements:', urlElements);
-            console.log('Company Elements:', companyElements);*/
+    // Log the extracted elements
+    /*console.log('Title Elements:', titleElements);
+    console.log('URL Elements:', urlElements);
+    console.log('Company Elements:', companyElements);*/
 
-            // Check if titleElements and urlElements are empty or undefined
-            if (!titleElements || titleElements.length === 0) {
-                console.error('No Title Elements found for selector:', `.${titleClass} ${titleAttributes}`);
-                throw new Error('No valid path found!');
-            }
-            if (!urlElements || urlElements.length === 0) {
-                console.error('No URL Elements found for selector:', `.${urlClass} ${urlAttributes}`);
-                throw new Error('No valid path found!');
-            }
+    // Check if titleElements and urlElements are empty or undefined
+    /*if (!titleElements || titleElements.length === 0) {
+        console.error('No Title Elements found for selector:', `.${titleClass} ${titleAttributes}`);
+        throw new Error('No valid path found!');
+    }
+    if (!urlElements || urlElements.length === 0) {
+        console.error('No URL Elements found for selector:', `.${urlClass} ${urlAttributes}`);
+        throw new Error('No valid path found!');
+    }
 
 
 
-            // Process the elements
-            for (let i = 0; i < titleElements.length; i++) {
-                let titleText = titleElements[i].trim();
-                let urlText = urlElements[i]?.trim(); // Use optional chaining to avoid errors
+    // Process the elements
+    /*for (let i = 0; i < titleElements.length; i++) {
+        let titleText = titleElements[i].trim();
+        let urlText = urlElements[i]?.trim(); // Use optional chaining to avoid errors
 
-                // If one property is empty, the advertisement is invalid.
-                if (titleText.length !== 0 && urlText.length !== 0) {
-                    titles.push(titleText);
-                    urls.push(urlText);
+        // If one property is empty, the advertisement is invalid.
+        if (titleText.length !== 0 && urlText.length !== 0) {
+            titles.push(titleText);
+            urls.push(urlText);
+        }
+    }
+
+    /*if (companyClass !== undefined) {
+        await page.waitForSelector(`.${companyClass} ${companyAttributes}`, { timeout: 500 }).catch(() => {
+            console.error('Company Selector not found:', `.${companyClass} ${companyAttributes}`);
+            throw new Error('No valid path found!');
+        });
+
+        let companyElements = await page.$$eval(`.${companyClass} ${companyAttributes}`, elements => elements.map(el => el.textContent.trim()));
+        if (!companyElements || companyElements.length === 0) {
+            console.error('No Company Elements found for selector:', `.${companyClass} ${companyAttributes}`);
+            throw new Error('No valid path found!');
+        }
+    }*/
+
+    // Extract the title and URL from the selected elements
+    /*console.log('Element:', elements);
+    elements.forEach(element => {
+
+        if (element.title) titles.push(element.title);
+        if (element.url) urls.push(element.url);
+    });*/
+
+    //let companySelector, companyElements;
+
+    /*if (companyClass !== undefined) {
+        companySelector = `.${companyClass} ${companyAttributes}`;
+        console.log('Company Selector:', companySelector);
+        companyElements = await page.$$eval(companySelector, elements => elements
+            .map(el => el.textContent.trim()));
+        console.log('Company Elements:', companyElements);
+    }*/
+
+    /*let urlSelector = `.${urlClass} ${urlAttributes}`;
+    console.log('URL Selector:', urlSelector);
+
+    // Ensure the page is fully loaded
+    await page.waitForSelector(urlSelector, { timeout: 500 }).catch(() => {
+        console.error('URL Selector not found:', urlSelector);
+        throw new Error('No valid path found!');
+    });*/
+
+    /*let urlElements = await page.$$eval(urlSelector, elements => elements
+        .map(el => el.href.trim()));
+    console.log('URL Elements:', urlElements);*/
+
+    /*// Runs through all advertisements with CSS selector on current page.
+    for (let i = 0; i < elements.length; i++) {
+        let titleText = elements[i].title.trim();
+        let urlText = urlElements[i]?.trim(); // Use optional chaining to avoid errors
+
+        // If one property is empty, the advertisement is invalid.
+        if (titleText.length !== 0 && urlText.length !== 0) {
+            titles.push(titleText);
+            urls.push(urlText);
+        }
+    }
+
+    // Run through company data for all ads on current page.
+    if (companyElements !== undefined) {
+        companyElements.forEach(companyText => {
+            company.push(companyText);
+        });
+    }
+
+    return { titleList: titles, urlList: urls, companyUrls: company };
+} catch (error) {
+    console.error('Error at getPageTitlesAndUrls() →');
+    throw error;
+}
+}*/
+    async tryPathVariationOnPage(page, titleClass, titleAttributes, urlClass, urlAttributes, companyClass, companyAttributes) {
+        try {
+            // Initialize arrays to store valid titles and URLs
+            let titles = [];
+            let urls = [];
+            let company = [];
+
+            // Define the selectors
+            let titleSelector = `.${titleClass} ${titleAttributes}`;
+            let urlSelector = `.${urlClass} ${urlAttributes}`;
+            let companySelector = `.${companyClass} ${companyAttributes}`;
+
+            const baseUrl = page.url();
+            console.log("baseUrl: " + baseUrl);
+
+            await page.goto(baseUrl, {
+                waitUntil: 'networkidle2',
+                timeout: 60000,
+            });
+
+            // Retry element extraction up to 3 times
+            const maxRetries = 3;
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    // Extract elements
+                    let titleElements = await page.$$eval(titleSelector, elements =>
+                        elements.map(el => el.textContent.trim()));
+                    let urlElements = await page.$$eval(urlSelector, elements =>
+                        elements.map(el => el.href.trim()));
+                    let companyElements = await page.$$eval(companySelector, elements =>
+                        elements.map(el => el.href.trim()));
+
+                    // Process the elements
+                    if (titleElements.length > 0 && urlElements.length > 0) {
+                        titles = titleElements;
+                        urls = urlElements;
+                        if (companyElements) {
+                            company = companyElements;
+                        }
+                        break; // Exit the loop if extraction is successful
+                    } else {
+                        console.log(`Attempt ${attempt} failed to extract all elements. Retrying...`);
+                    }
+                } catch (error) {
+                    console.log(`Attempt ${attempt} failed → ${error}`);
+                    if (attempt === maxRetries) {
+                        throw new Error(`Failed to extract elements after ${maxRetries} attempts → ${error}`);
+                    }
                 }
             }
 
-            if (companyClass !== undefined) {
-                await page.waitForSelector(`.${companyClass} ${companyAttributes}`, { timeout: 500 }).catch(() => {
-                    console.error('Company Selector not found:', `.${companyClass} ${companyAttributes}`);
-                    throw new Error('No valid path found!');
-                });
-
-                let companyElements = await page.$$eval(`.${companyClass} ${companyAttributes}`, elements => elements.map(el => el.textContent.trim()));
-                if (!companyElements || companyElements.length === 0) {
-                    console.error('No Company Elements found for selector:', `.${companyClass} ${companyAttributes}`);
-                    throw new Error('No valid path found!');
-                }
-            }
-
-            // Extract the title and URL from the selected elements
-            /*console.log('Element:', elements);
-            elements.forEach(element => {
-
-                if (element.title) titles.push(element.title);
-                if (element.url) urls.push(element.url);
-            });*/
-
-            //let companySelector, companyElements;
-
-            /*if (companyClass !== undefined) {
-                companySelector = `.${companyClass} ${companyAttributes}`;
-                console.log('Company Selector:', companySelector);
-                companyElements = await page.$$eval(companySelector, elements => elements
-                    .map(el => el.textContent.trim()));
-                console.log('Company Elements:', companyElements);
-            }*/
-
-            /*let urlSelector = `.${urlClass} ${urlAttributes}`;
-            console.log('URL Selector:', urlSelector);
-
-            // Ensure the page is fully loaded
-            await page.waitForSelector(urlSelector, { timeout: 500 }).catch(() => {
-                console.error('URL Selector not found:', urlSelector);
+            if (titles.length === 0 || urls.length === 0) {
                 throw new Error('No valid path found!');
-            });*/
-
-            /*let urlElements = await page.$$eval(urlSelector, elements => elements
-                .map(el => el.href.trim()));
-            console.log('URL Elements:', urlElements);*/
-
-            /*// Runs through all advertisements with CSS selector on current page.
-            for (let i = 0; i < elements.length; i++) {
-                let titleText = elements[i].title.trim();
-                let urlText = urlElements[i]?.trim(); // Use optional chaining to avoid errors
-
-                // If one property is empty, the advertisement is invalid.
-                if (titleText.length !== 0 && urlText.length !== 0) {
-                    titles.push(titleText);
-                    urls.push(urlText);
-                }
-            }*/
-
-            // Run through company data for all ads on current page.
-            if (companyElements !== undefined) {
-                companyElements.forEach(companyText => {
-                    company.push(companyText);
-                });
             }
 
             return { titleList: titles, urlList: urls, companyUrls: company };
         } catch (error) {
-            console.error('Error at getPageTitlesAndUrls() →');
+            console.error('Error at tryPathVariationOnPage() →', error);
             throw error;
         }
     }
+
 
     /**
      * Iterates through provided titles and urls.
@@ -452,7 +631,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<void>}
      */
-    scrapePageList(browser, PageTitlesAndURLObject, pageNum) {
+    scrapePageList(browser, PageTitlesAndURLObject, pageNum, scraperName) {
         return new Promise((resolve, reject) => {
             let titleUrlList = PageTitlesAndURLObject;
             let length = titleUrlList.PAGE_TITLES.length;
@@ -496,7 +675,7 @@ class JocscraperTemplate {
                                 .then((page) => {
                                     // Go to linked site and scrape it:
                                     return this.scrapePage(page, titleUrlList.PAGE_TITLES[index],
-                                        titleUrlList.PAGE_URLS[index], titleUrlList.PAGE_COMPANY_URLS[index], (index + 1), pageNum)
+                                        titleUrlList.PAGE_URLS[index], titleUrlList.PAGE_COMPANY_URLS[index], (index + 1), pageNum, scraperName)
                                 })
                                 .then(() => {
                                     // Update resolves
@@ -521,7 +700,7 @@ class JocscraperTemplate {
         })
     }
 
-    async scrapePage(page, title, url, index, pageNum) {
+    async scrapePage(page, title, url, index, pageNum, scraperName) {
         throw new Error("Missing scrapePage implementation");
     };
 
@@ -572,8 +751,8 @@ class JocscraperTemplate {
      *
      * @returns {Promise<any>}
      */
-    insertAnnonce(annonceTitle, rawHTMLText, annonceURL, cvr) {
-        console.log("Inserting Annonce:", { annonceTitle, annonceURL, cvr });
+    insertAnnonce(annonceTitle, rawHTMLText, annonceURL, cvr, scraperName) {
+        console.log("Inserting Annonce:", { annonceTitle, annonceURL, cvr, scraperName });
         return new Promise((resolve, reject) => {
 
             let sha1Checksum = sha1(`${annonceURL}`);
@@ -587,7 +766,8 @@ class JocscraperTemplate {
                             currentRegionID,
                             sha1Checksum,
                             annonceURL,
-                            cvr)
+                            cvr,
+                            scraperName)
                             .catch((error) => {
                                 console.error("Error creating Annonce model: " + error);
                                 throw new Error("Error creating Annonce model: " + error);
@@ -631,7 +811,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<any>}
      */
-    async createAnnonceModel(title, body, regionId = undefined, checksum, url, cvr) {
+    async createAnnonceModel(title, body, regionId = undefined, checksum, url, cvr, scraperName) {
         return new Promise((resolve, reject) => {
             try {
                 // Format Timestamp:
@@ -643,7 +823,7 @@ class JocscraperTemplate {
 
 
                 // Model data into Annonce class:
-                resolve(new annonceModel(title, body, regionId, timestampFormat, checksum.toString(), url, cvr));
+                resolve(new annonceModel(title, body, regionId, timestampFormat, checksum.toString(), url, cvr, scraperName));
             } catch (error) {
                 reject("Error at createAnnonceModel() → " + error);
             }

@@ -49,10 +49,28 @@ async function main() {
     }
 }
 
+async function initBrowser() {
+    if (!browser) {
+        browser = await puppeteer.launch({
+            headless: true,                            // Run in headless mode without a GUI.
+            defaultViewport: null,                     // Use the default viewport size.
+            args: ['--no-sandbox', '--disable-setuid-sandbox'], // Security arguments for running in certain environments.
+            protocolTimeout: 600000                    // Set a long timeout to avoid premature disconnections.
+        });
+    }
+}
+
+async function closeBrowser() {
+    if (browser) {
+        await browser.close();
+        browser = null;  // Reset the browser variable to allow reinitialization later
+    }
+}
+
 /**
  * Initialize a shared browser instance to be reused.
  */
-async function initBrowser() {
+/*async function initBrowser() {
     if (!browser) {
         browser = await puppeteer.launch({
             headless: true,                            // Run in headless mode without a GUI.
@@ -61,17 +79,17 @@ async function initBrowser() {
             protocolTimeout: 300000                    // Set a long timeout to avoid premature disconnections.
         });
     }
-}
+}*/
 
 /**
  * Clean up browser instances when all scraping is done.
  */
-async function closeBrowser() {
+/*async function closeBrowser() {
     if (browser) {
         await browser.close();
         browser = null;  // Reset the browser variable to allow reinitialization later
     }
-}
+}*/
 
 /**
  * Asynchronously performs web scraping for job adverts using Puppeteer and a specific scraper implementation.
@@ -91,7 +109,7 @@ async function jobIndexScraping() {
         // Create an instance of the Jobindex scraper class.
         let scraper = new jobindexClass();
         // Execute the scraping process using the instantiated scraper, browser, and page objects.
-        await run(scraper, browser, page); // Run the scraper with the browser and page instances
+        await run(scraper, browser, page, "JobIndex"); // Run the scraper with the browser and page instances
         // After scraping, print results from the database operations performed by the scraper.
         scraper.printDatabaseResult(); // Print the result from the database
     }
@@ -114,7 +132,7 @@ async function careerjetScraping() {
         || process.env.ADVERTS_SCRAPE === "careerjet") {
         // If ADVERTS_SCRAPE is not set, or set to "all" or "careerjet", run the Careerjet scraper
         let scraper = new careerjetClass(); // Create an instance of the Careerjet scraper class
-        await run(scraper, browser, page); // Run the scraper with the browser and page instances
+        await run(scraper, browser, page, "CareerJet"); // Run the scraper with the browser and page instances
         scraper.printDatabaseResult(); // Print the result from the database
     }
     // Close the browser once all scraping tasks are completed to free resources.
@@ -160,39 +178,36 @@ async function run(scraper, browser, page) {
  * @param {Object} browser - A Puppeteer Browser instance used for scraping.
  * @param {Object} page - A Puppeteer Page instance to be used for scraping.
  */
-async function run(scraper, browser, page) {
+async function retryOperation(operation, retries = 3, delay = 2000) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            return await operation();
+        } catch (error) {
+            if (attempt === retries) throw error;
+            console.log(`Retrying operation... Attempt ${attempt}`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Exponential backoff
+        }
+    }
+}
+
+async function run(scraper, browser, page, scraperName) {
     try {
-        // Attempt to connect to the database.
-        // This is essential to ensure data can be stored during the scraping process.
-        await scraper.connectDatabase();
-
-        // Initialize the database structure as needed.
-        // This typically involves setting up tables and possibly seeding initial data.
-        // This step can handle non-critical errors internally, allowing the process to continue.
-        await scraper.initializeDatabase();
-
-        // Begin the main scraping process.
-        // This will typically navigate through web pages and collect data.
-        // Errors during scraping are managed here but will not halt the process, as
-        // the goal is to ensure all other cleanup operations (like database disconnection)
-        // can still proceed.
-        await scraper.beginScraping(page, browser, 1, 3);
+        await retryOperation(() => scraper.connectDatabase());
+        await retryOperation(() => scraper.initializeDatabase());
+        await retryOperation(() => scraper.beginScraping(page, browser, 1, 3, scraperName));
     } catch (error) {
-        // Log and handle any critical errors that occurred during the database connection,
-        // initialization, or scraping process.
         console.log("Critical error during scraping process: " + error);
-        // Attempt to safely close the database connection to prevent resource leaks.
         try {
             await scraper.disconnectDatabase();
         } catch (disconnectError) {
-            // Log additional errors that occur during the cleanup phase.
             console.log("Error during database disconnection: " + disconnectError);
         }
-        // Rethrow the error to handle or log it at a higher level, signaling an unsuccessful operation.
         throw error;
+    } finally {
+        await scraper.disconnectDatabase();
+        if (page) await page.close(); // Ensure pages are closed
     }
-    // Finally, ensure the database is disconnected cleanly.
-    await scraper.disconnectDatabase();
 }
 
 
