@@ -10,7 +10,6 @@ let browser;  // Declare browser outside to reuse if needed across multiple scra
 async function main() {
     try {
 
-        // TODO: Scraper skal hente hvilke side jobannonce kom fra og skrive til database
 
         // Run the job index scraper
         var jobStartTime = performance.now();

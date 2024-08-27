@@ -13,6 +13,9 @@ async function exportToCSV() {
         const connection = await orm.connectDatabase();
         console.log('Database connection established');
 
+        const fs = require('fs');
+        console.log("If you see this, const works fine.");
+
         const today = new Date();
         const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
 
@@ -40,8 +43,15 @@ async function exportToCSV() {
             GROUP BY a.id;
         `;
 
-        console.log('Executing query:', query2);
-        connection.query(query2, (err, results, fields) => {
+        const query4 = `
+        SELECT *
+            FROM annonce a
+            INNER JOIN region r ON r.region_id = a.region_id
+            GROUP BY a.id;
+        `;
+
+        console.log('Executing query:', query4);
+        connection.query(query4, (err, results, fields) => {
             if (err) {
                 console.error('Error executing query:', err);
                 connection.end();

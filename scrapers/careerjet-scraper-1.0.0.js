@@ -1,6 +1,8 @@
 // Import the ScraperInterface module from the local file 'jobscraper-interface-1.0.0'
 let ScraperInterface = require('./jobscraper-interface-1.0.0');
 
+TODO: //Fix careerjet error when no jobs in a region. It should continue with next region instead of stopping fully.
+
 // Define the target website URL for scraping
 const TARGET_WEBSITE = 'https://www.careerjet.dk';
 // Define a map of region names to their corresponding URL paths for job listings
