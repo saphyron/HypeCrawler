@@ -13,7 +13,7 @@ async function main() {
 
         // Run the job index scraper
         var jobStartTime = performance.now();
-        await jobIndexScraping();
+        //await jobIndexScraping();
         var jobEndTime = performance.now();
         // Run the Careerjet scraper
         var careerStartTime = performance.now();
@@ -29,7 +29,7 @@ async function main() {
         });
         // Export data to CSV
         var csvStartTime = performance.now();
-        await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
+        //await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
         var csvEndTime = performance.now();
 
         console.log("Jobindex scraper execution time: " + (jobEndTime - jobStartTime) / 1000 + " seconds");

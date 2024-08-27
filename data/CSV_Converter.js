@@ -50,8 +50,8 @@ async function exportToCSV() {
             GROUP BY a.id;
         `;
 
-        console.log('Executing query:', query4);
-        connection.query(query4, (err, results, fields) => {
+        console.log('Executing query:', query2);
+        connection.query(query2, (err, results, fields) => {
             if (err) {
                 console.error('Error executing query:', err);
                 connection.end();
@@ -100,14 +100,14 @@ async function exportToCSV() {
             const datePart = today.toISOString().split('T')[0]; // YYYY-MM-DD
             const fileName = `${datePart}_All Fields_${resultCount}_data.csv`;
 
-            const outputDir = 'C:\\Users\\jgra\\Desktop\\CSV Files';
-            const outputPath = path.join(outputDir, fileName);
+            // Use the absolute path directly
+            const outputDir = 'C:\\Users\\jgra\\OneDrive - EFIF\\Skrivebord\\CSV Files';
+            const outputPath = path.resolve(outputDir, fileName);  // Resolve to ensure correct path handling
 
             console.log('Writing CSV file:', outputPath);
+
             const csvContent = parse(jsonData);
-            //console.log('CSV Content:', csvContent);
             fs.writeFileSync(outputPath, csvContent, 'utf8');
-            //fs.writeFileSync(outputPath, JSON.stringify(jsonData, null, 2), 'utf8');
             console.log('CSV file written successfully');
             //connection.end();
             orm.disconnectDatabase();
