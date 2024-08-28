@@ -74,7 +74,7 @@ class JocscraperTemplate {
      *
      * @returns {Promise<void>}
      */
-    /*async beginScraping(page, browser, pageLimit, poolLimit, scraperName) {
+    async beginScraping(page, browser, pageLimit, poolLimit, scraperName) {
         this.PAGE_LIMIT = pageLimit;
         this.PAGE_POOL = new Pagepool(browser, poolLimit);
         try {
@@ -97,6 +97,10 @@ class JocscraperTemplate {
 
                 const NUM_PAGES = await this.getNumPages(page, ADVERTS_PER_PAGE);
                 console.log(NUM_PAGES + " PAGES");
+                if (NUM_PAGES === 0) {
+                    console.log(`No pages found for region ${key}. Skipping to the next region.`);
+                    continue; // Skip to the next region
+                }
 
                 for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
                     await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR,
@@ -109,38 +113,8 @@ class JocscraperTemplate {
         } catch (error) {
             console.log("Error at beginScraping → " + error);
         }
-    }*/
+    }
 
-        async beginScraping(page, browser, pageLimit, poolLimit) {
-            this.PAGE_LIMIT = pageLimit;
-            this.PAGE_POOL = new Pagepool(browser, poolLimit);
-            try {
-                for (let [key, value] of this.REGION_NAMES) {
-                    console.log(`BEGINNING SCRAPING IN REGION: ${key}`);
-                    const REGION_PAGE_SELECTOR = `${this.TARGET_WEBSITE}${value}`;
-        
-                    try {
-                        await page.goto(REGION_PAGE_SELECTOR, { timeout: this.PAGE_TIMEOUT });
-                        const NUM_PAGES = await this.getNumPages(page, ADVERTS_PER_PAGE);
-        
-                        if (NUM_PAGES === 0) {
-                            console.log(`No pages found for region ${key}. Skipping to the next region.`);
-                            continue; // Skip to the next region
-                        }
-        
-                        // Loop through pages in batches controlled by pageLimit
-                        for (let pageNumber = 0; pageNumber < NUM_PAGES; pageNumber += this.PAGE_LIMIT) {
-                            await this.scrapeRegion(page, browser, REGION_PAGE_SELECTOR, pageNumber, pageNumber + this.PAGE_LIMIT, key);
-                        }
-                    } catch (error) {
-                        console.error(`Error at beginScraping for region ${key} → ${error}`);
-                        // Continue with the next region in case of an error
-                    }
-                }
-            } catch (error) {
-                console.error(`Error in beginScraping: ${error}`);
-            }
-        }
         
 
     getPageExtension(pageNo) {

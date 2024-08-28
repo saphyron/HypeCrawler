@@ -3,17 +3,20 @@ let puppeteer = require('puppeteer'); // Puppeteer for web scraping
 let jobindexClass = require('./scrapers/jobindex-scraper-1.0.0'); // Jobindex scraper class
 let careerjetClass = require('./scrapers/careerjet-scraper-1.0.0'); // Careerjet scraper class
 let csvConverter = require('./data/CSV_Converter'); // CSV converter module
+let uploadCSVToDatabase = require('./data/database_uploader'); // Database uploader module
 const { performance } = require('perf_hooks'); // Performance module for measuring execution time
 let browser;  // Declare browser outside to reuse if needed across multiple scraping sessions
+const path = require('path'); // Path module for handling file paths
 
 // Main function to run the scrapers and export data to CSV
 async function main() {
     try {
-
+        // Path to your CSV file
+        //uploadCSVToDatabase.main();
 
         // Run the job index scraper
         var jobStartTime = performance.now();
-        //await jobIndexScraping();
+        await jobIndexScraping();
         var jobEndTime = performance.now();
         // Run the Careerjet scraper
         var careerStartTime = performance.now();
@@ -29,7 +32,7 @@ async function main() {
         });
         // Export data to CSV
         var csvStartTime = performance.now();
-        //await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
+        await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
         var csvEndTime = performance.now();
 
         console.log("Jobindex scraper execution time: " + (jobEndTime - jobStartTime) / 1000 + " seconds");

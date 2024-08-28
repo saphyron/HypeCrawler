@@ -4,6 +4,7 @@
   "description": "Final AP-grade project",
   "main": "main.js",
   "dependencies": {
+    "csv-parser": "^3.0.0",
     "hypecrawler": "file:",
     "json2csv": "^6.0.0-alpha.2",
     "mysql": "^2.15.0",
