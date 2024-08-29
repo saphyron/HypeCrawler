@@ -7,6 +7,7 @@ let uploadCSVToDatabase = require('./data/database_uploader'); // Database uploa
 const { performance } = require('perf_hooks'); // Performance module for measuring execution time
 let browser;  // Declare browser outside to reuse if needed across multiple scraping sessions
 const path = require('path'); // Path module for handling file paths
+const possible_duplicates = require('./data/duplicates_Checker'); // Duplicates checker module
 
 // Main function to run the scrapers and export data to CSV
 async function main() {
@@ -16,11 +17,11 @@ async function main() {
 
         // Run the job index scraper
         var jobStartTime = performance.now();
-        await jobIndexScraping();
+        //await jobIndexScraping();
         var jobEndTime = performance.now();
         // Run the Careerjet scraper
         var careerStartTime = performance.now();
-        await careerjetScraping();
+        //await careerjetScraping();
         var careerEndTime = performance.now();
 
         // Run the CSV converter
@@ -32,13 +33,17 @@ async function main() {
         });
         // Export data to CSV
         var csvStartTime = performance.now();
-        await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
+        //await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
         var csvEndTime = performance.now();
+
+        var duplicatesStartTime = performance.now();
+        await possible_duplicates.checkForDuplicates();
+        var duplicatesEndTime = performance.now();
 
         console.log("Jobindex scraper execution time: " + (jobEndTime - jobStartTime) / 1000 + " seconds");
         console.log("Careerjet scraper execution time: " + (careerEndTime - careerStartTime) / 1000 + " seconds");
         console.log("CSV converter execution time: " + (csvEndTime - csvStartTime) / 1000 + " seconds");
-
+        console.log("Duplicates checker execution time: " + (duplicatesEndTime - duplicatesStartTime) / 1000 + " seconds");
         // Close the browser once all scraping tasks are completed to free resources.
         await closeBrowser();  // Close the browser instanceF
     } catch (error) {
