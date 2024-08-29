@@ -79,7 +79,7 @@ class JocscraperTemplate {
         this.PAGE_POOL = new Pagepool(browser, poolLimit);
         try {
             for (let [key, value] of this.REGION_NAMES) {
-                console.log(key.toString());
+                //console.log(key.toString());
                 currentRegionObject = await ORM.FindRegionID(key.toString());
                 currentRegionID = currentRegionObject[0].region_id;
 
@@ -575,7 +575,7 @@ class JocscraperTemplate {
             let companySelector = `.${companyClass} ${companyAttributes}`;
 
             const baseUrl = page.url();
-            console.log("baseUrl: " + baseUrl);
+            //console.log("baseUrl: " + baseUrl);
 
             await page.goto(baseUrl, {
                 waitUntil: 'networkidle2',
@@ -758,13 +758,13 @@ class JocscraperTemplate {
      * @returns {Promise<any>}
      */
     insertAnnonce(annonceTitle, rawHTMLText, annonceURL, cvr, scraperName) {
-        console.log("Inserting Annonce:", { annonceTitle, annonceURL, cvr, scraperName });
+        //console.log("Inserting Annonce:", { annonceTitle, annonceURL, cvr, scraperName });
         return new Promise((resolve, reject) => {
 
             let sha1Checksum = sha1(`${annonceURL}`);
             ORM.FindChecksum(sha1Checksum)
                 .then((result) => {
-                    console.log("Checksum found:", result);
+                    //console.log("Checksum found:", result);
                     if (!result)
                         return this.createAnnonceModel(
                             annonceTitle,

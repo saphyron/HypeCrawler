@@ -83,7 +83,7 @@ class JobindexScraper extends ScraperInterface {
             console.log("Attempting to find the total number of pages using CSS selector...");
             const pageRefs = await page.evaluate(() => {
                 const selector = "div.jix_pagination.jix_pagination_wide ul.pagination li.page-item a";
-                console.log("CSS Selector:", selector);
+                //console.log("CSS Selector:", selector);
                 const elements = document.querySelectorAll(selector);
                 //console.log("CSS Selector results:", elements);
                 if (elements.length === 0) {
@@ -145,7 +145,7 @@ class JobindexScraper extends ScraperInterface {
                 throw new Error("Invalid URL: " + url);
             }
 
-            console.log("Navigating to URL:", url);
+            //console.log("Navigating to URL:", url);
             await page.goto(url, {
                 timeout: this.PAGE_TIMEOUT
             });
@@ -197,7 +197,7 @@ class JobindexScraper extends ScraperInterface {
                     throw new Error("Invalid Company URL: " + companyURL);
                 }
 
-                console.log("Navigating to Company URL:", companyURL);
+                //console.log("Navigating to Company URL:", companyURL);
 
                 await page.goto(companyURL, {
                     timeout: this.PAGE_TIMEOUT

@@ -64,7 +64,7 @@ class CareerjetScraper extends ScraperInterface {
     async scrapePage(page, title, url, companyUrl, index, pageNum, scraperName) {
         let formattedUrl = url;
         let cvr;
-        console.log("Scraping page: " + formattedUrl);
+        //console.log("Scraping page: " + formattedUrl);
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
 
@@ -138,7 +138,7 @@ class CareerjetScraper extends ScraperInterface {
     async getNumPages(page, listLength) {
         try {
             // Log the current URL of the page
-            console.log("Current URL: " + page.url());
+            //console.log("Current URL: " + page.url());
 
             // Initialize the maximum page number
             let maxPage = 0;

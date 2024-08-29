@@ -17,11 +17,11 @@ async function main() {
 
         // Run the job index scraper
         var jobStartTime = performance.now();
-        //await jobIndexScraping();
+        await jobIndexScraping();
         var jobEndTime = performance.now();
         // Run the Careerjet scraper
         var careerStartTime = performance.now();
-        //await careerjetScraping();
+        await careerjetScraping();
         var careerEndTime = performance.now();
 
         // Run the CSV converter
@@ -33,8 +33,15 @@ async function main() {
         });
         // Export data to CSV
         var csvStartTime = performance.now();
-        //await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
+        await csvConverter.exportToCSV(); // Call the exportToCSV function from the csvConverter module
         var csvEndTime = performance.now();
+
+        await initBrowser();  // Ensure the browser is initialized before scraping
+        const page2 = await browser.newPage(); // Open a new tab in the browser
+        // Set HTTP headers to handle the Danish alphabet correctly
+        await page2.setExtraHTTPHeaders({
+            'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7'
+        });
 
         var duplicatesStartTime = performance.now();
         await possible_duplicates.checkForDuplicates();

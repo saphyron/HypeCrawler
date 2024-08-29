@@ -9,12 +9,10 @@ const { parse } = require('json2csv'); // Ensure this import is correct
 
 async function exportToCSV() {
     console.log('Starting exportToCSV function');
+    let connection;
     try {
-        const connection = await orm.connectDatabase();
+        connection = await orm.connectDatabase();
         console.log('Database connection established');
-
-        const fs = require('fs');
-        console.log("If you see this, const works fine.");
 
         const today = new Date();
         const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -109,12 +107,13 @@ async function exportToCSV() {
             const csvContent = parse(jsonData);
             fs.writeFileSync(outputPath, csvContent, 'utf8');
             console.log('CSV file written successfully');
-            //connection.end();
-            orm.disconnectDatabase();
+
         });
     } catch (error) {
         console.log("Error at main → connectDatabase(): " + error);
         throw error;
+    } finally {
+        if (connection) await orm.disconnectDatabase();
     }
 }
 

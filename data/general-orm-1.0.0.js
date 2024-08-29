@@ -9,7 +9,7 @@ const DB_CONFIG = {
     password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T', // Secure password for the database user.
     database: 'test_database_mariadb'  // Name of the database to connect to.
 };
-console.log('DB_CONFIG:', DB_CONFIG); // Log the database configuration for debugging.
+//console.log('DB_CONFIG:', DB_CONFIG); // Log the database configuration for debugging.
 let CONNECTION;                       // Variable to hold the database connection object.
 
 // Constants for table names in the database.
