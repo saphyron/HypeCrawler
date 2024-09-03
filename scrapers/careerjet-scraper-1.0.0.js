@@ -137,93 +137,54 @@ class CareerjetScraper extends ScraperInterface {
      */
     async getNumPages(page, listLength) {
         try {
-            // Log the current URL of the page
-            //console.log("Current URL: " + page.url());
-
             // Initialize the maximum page number
             let maxPage = 0;
             let currentPageNumber = 1;
             const baseUrl = page.url();
             const url = baseUrl + currentPageNumber;
             await page.goto(url, { waitUntil: 'networkidle2' });
-
+    
             const pageRefs = await page.evaluate(() => {
                 const selector = "p.col.col-xs-12.col-m-4.col-m-r.cr span";
                 const elements = document.querySelectorAll(selector);
-
+    
                 if (elements.length === 0) {
                     console.log("No elements found using CSS selector.");
                     return null;
                 }
-
+    
                 const textContents = Array.from(elements).map(element => {
                     const text = element.textContent.trim();
                     const numberOnly = text.match(/\d+/);
                     return numberOnly ? numberOnly[0] : null;
                 });
-
+    
                 return textContents.filter(number => number !== null);
             });
-
+    
             if (!pageRefs || pageRefs.length === 0) {
-                throw new Error("Failed to retrieve valid number from page.");
+                console.log("No valid page references found, returning 0 pages.");
+                return 0;
             }
-
+    
             const totalNumbersFromPage = parseInt(pageRefs[0], 10);
-
+    
             if (isNaN(totalNumbersFromPage)) {
-                throw new Error("Failed to parse total numbers from page content.");
+                console.log("Failed to parse total numbers from page content.");
+                return 0;
             }
-
+    
             maxPage = Math.ceil(totalNumbersFromPage / 20);
             console.log("Max Page:", maxPage);
-
-
-            /*while (true) {
-                // Update the URL to the current page number
-                const url = baseUrl + currentPageNumber;
-                await page.goto(url, { waitUntil: 'networkidle2' });
-
-                // Collecting num of pages element text
-                let pageRefs = await page.$$('ul[data-page="' + currentPageNumber + '"]');
-                if (pageRefs.length === 0) {
-                    console.log("No elements found using CSS selector 'ul[data-page=\"" + currentPageNumber + "\"]'.");
-                    break;
-                } else {
-                    console.log("Elements found for page number: " + currentPageNumber);
-                    // Extracting the data-page attribute value
-                    let currentPage = await page.evaluate(element => element.getAttribute('data-page'), pageRefs[0])
-                        .catch((error) => {
-                            throw new Error("page.evaluate() → " + error);
-                        });
-
-                    console.log("Current page: " + currentPage);
-                    maxPage = parseInt(currentPage, 10);
-                    if (isNaN(maxPage)) {
-                        throw new Error("Failed to parse current page number from data-page attribute: " + currentPage);
-                    }
-                }
-
-                // Make sure to increment the currentPageNumber
-                currentPageNumber++;
-            };*/
-
-            // Deprecated code that is kept just in case.
-            /*
-            // Further processing if needed
-            // For example, you can parse the currentPage to an integer
-            let currentPageNumber = parseInt(currentPage, 10);
-            if (isNaN(currentPageNumber)) {
-                throw new Error("Failed to parse current page number from data-page attribute: " + currentPage);
-            }*/
-
+    
             return maxPage;
         } catch (error) {
-            console.log("Error at getNumPages(" + page + ") → " + error);
+            console.log("Error at getNumPages(" + page.url() + ") → " + error);
             console.error("getNumPages() → " + error);
-            throw error;
+            return 0;  // Return 0 to indicate that the region should be skipped
         }
     }
+    
 }
 // Make the CareerjetScraper class available for import in other files.
 module.exports = CareerjetScraper;

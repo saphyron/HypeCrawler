@@ -5,11 +5,11 @@ async function checkForDuplicates() {
     let connection;
     try {
         connection = await orm.connectDatabase();
-
+         
         const query = `
             SELECT id, COUNT(*) as count
             FROM annonce
-            WHERE DATE(timestamp) = '2024-08-29'
+            WHERE DATE(timestamp) = curdate()
             GROUP BY title, body, DATE(timestamp)
             HAVING count > 1;
         `;

@@ -115,8 +115,6 @@ class JocscraperTemplate {
         }
     }
 
-        
-
     getPageExtension(pageNo) {
         throw new Error("Missing getPageExtension implementation");
     }
@@ -137,116 +135,6 @@ class JocscraperTemplate {
      *
      * @returns {Promise<String>}                           a string to indicate if any errors have been thrown.
      */
-    /*async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
-        return new Promise((resolve, reject) => {
-            let resolveCounter = 0, rejectCounter = 0;
-            let result = '';
-
-            // Utility method to limit the amount of simultaneous running pages.
-            let settlePromise = () => {
-                if (resolveCounter + rejectCounter === (toPage - fromPage))
-                    if (rejectCounter > 0)
-                        reject(result);
-                    else
-                        resolve();
-            };
-
-            for (let index = fromPage; index < toPage; index++) {
-                console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
-                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
-                console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
-
-                this.getCurrentPageURLTitles(page, PAGE_SELECTOR)
-                    .then((pageURLsAndTitles) => {
-                        this.scrapePageList(browser, pageURLsAndTitles, index)
-                            .catch((error) => {
-                                rejectCounter++;
-                                result += `Error at scrapeRegion → scrapePageList(${page},'${PAGE_SELECTOR}'): ${error.toString()}`;
-                                settlePromise();
-                            })
-                            .then(() => {
-                                resolveCounter++;
-                                settlePromise();
-                            })
-                    })
-                    .catch((error) => {
-                        rejectCounter++;
-                        result += `Error at scrapeRegion → getCurrentPageURLTitles(${page},'${PAGE_SELECTOR}'): ${error.toString()}`;
-                        settlePromise();
-                    });
-            }
-        });
-    }*/
-    /*async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage) {
-        try {
-            const promises = [];
-
-            for (let index = fromPage; index < toPage; index++) {
-                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
-                console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
-                console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
-
-                promises.push(
-                    (async () => {
-                        const newPage = await browser.newPage();  // Open a new page for parallel processing
-                        try {
-                            const pageURLsAndTitles = await this.getCurrentPageURLTitles(newPage, PAGE_SELECTOR);
-                            await this.scrapePageList(browser, pageURLsAndTitles, index);
-                        } catch (error) {
-                            throw new Error(`Error on page ${index + 1}: ${error.toString()}`);
-                        } finally {
-                            await newPage.close();  // Close the page after processing
-                        }
-                    })()
-                );
-            }
-
-            await Promise.all(promises).catch(error => {
-                console.error("Error during scraping in Promise.all:", error);
-                throw error;
-            });
-            return 'Scraping completed successfully.';
-        } catch (error) {
-            console.error(`Error in scrapeRegion: ${error.toString()}`);
-            return `Error in scrapeRegion: ${error.toString()}`;
-        }
-    }*/
-    //Parallel processing version
-    /*async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage, scraperName) {
-        try {
-            const promises = [];
-
-            for (let index = fromPage; index < toPage; index++) {
-                const PAGE_SELECTOR = REGION_PAGE_SELECTOR.concat(`${this.getPageExtension(index)}`);
-                console.log('BEGINNING SCRAPING ON PAGE: ' + (index + 1));
-                console.log("PAGE_SELECTOR: " + PAGE_SELECTOR);
-
-                promises.push(
-                    (async () => {
-                        const newPage = await browser.newPage();  // Open a new page for parallel processing
-                        try {
-                            const pageURLsAndTitles = await this.getCurrentPageURLTitles(newPage, PAGE_SELECTOR);
-                            await this.scrapePageList(browser, pageURLsAndTitles, index, scraperName);
-                        } catch (error) {
-                            console.error(`Error on page ${index + 1}: ${error}`);
-                            throw new Error(`Error on page ${index + 1}: ${error.toString()}`);
-                        } finally {
-                            await newPage.close();  // Close the page after processing
-                        }
-                    })()
-                );
-            }
-
-            await Promise.all(promises).catch(error => {
-                console.error("Error during scraping in Promise.all:", error);
-                throw error;
-            });
-            return 'Scraping completed successfully.';
-        } catch (error) {
-            console.error(`Error in scrapeRegion: ${error.toString()}`);
-            return `Error in scrapeRegion: ${error.toString()}`;
-        }
-    }*/
     //sequential processing version.
     async scrapeRegion(page, browser, REGION_PAGE_SELECTOR, fromPage, toPage, scraperName) {
         try {
@@ -273,8 +161,6 @@ class JocscraperTemplate {
             return `Error in scrapeRegion: ${error.toString()}`;
         }
     }
-
-
 
 
     /**
