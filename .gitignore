@@ -64,3 +64,6 @@ typings/
 # credentials
 credentials/credentials/database-credentials.js 
 depricated_code.js 
+
+# VScode
+.VScode
