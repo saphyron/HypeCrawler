@@ -208,3 +208,5 @@ main().then((result) => {
 }, (error) => {
     console.log("Failed termination: " + error);
 });
+
+module.exports = { main };

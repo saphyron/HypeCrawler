@@ -79,9 +79,9 @@ async function exportToCSV() {
 
             // Define the output directory and resolve the full output path
             //Work Laptop
-            //const outputDir = 'C:\\Users\\jgra\\OneDrive - EFIF\\Skrivebord\\CSV Files'; // Define the directory
+            const outputDir = 'C:\\Users\\jgra\\OneDrive - EFIF\\Skrivebord\\CSV Files'; // Define the directory
             //Home System
-            const outputDir = 'C:\\Users\\Saphy\\OneDrive\\Desktop'; // Define the directory
+            //const outputDir = 'C:\\Users\\Saphy\\OneDrive\\Desktop'; // Define the directory
             const outputPath = path.resolve(outputDir, fileName); // Resolve the full file path
 
             console.log('Writing CSV file:', outputPath);

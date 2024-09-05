@@ -83,7 +83,7 @@ class ORM {
             });
         });
     }
-
+    // TODO: tilføj possible_duplicate column
     /**
      * Creates the 'annonce' table if it does not exist in the database.
      * @returns {Promise<void>} Promise that resolves when the table is created or confirmed to exist.
