@@ -12,7 +12,7 @@ const { parse } = require('json2csv'); // Module for converting JSON to CSV form
  *
  * @returns {Promise<void>} - A promise that resolves when the CSV file is successfully written.
  */
-async function exportToCSV() {
+async function exportToCSV(queryNumber) {
     console.log('Starting exportToCSV function');
     let connection; // Variable to hold the database connection
 
@@ -23,7 +23,7 @@ async function exportToCSV() {
 
         const today = new Date(); // Get the current date
 
-        const querychosen = sqlQueries(2); // Choose the SQL query to execute
+        const querychosen = sqlQueries(queryNumber); // Choose the SQL query to execute
 
         // Execute the chosen query
         console.log('Executing query:', querychosen);

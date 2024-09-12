@@ -10,6 +10,14 @@ const DB_CONFIG = {
   database: "test_database_mariadb", // Name of the database to connect to.
 };
 
+const DB_CONFIG_NEW = {
+  host: 'localhost',
+  port: process.env.MYSQL_PORT,
+  user: 'root',
+  password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T',
+  database: 'Merged_Database_Test'
+}
+
 let CONNECTION; // Variable to hold the database connection object.
 
 // Constants for table names in the database.
@@ -57,7 +65,7 @@ class ORM {
    */
   static connectDatabase() {
     return new Promise((resolve, reject) => {
-      CONNECTION = MYSQL.createConnection(DB_CONFIG); // Create a new connection using the config settings
+      CONNECTION = MYSQL.createConnection(DB_CONFIG_NEW); // Create a new connection using the config settings
       CONNECTION.connect(function (err) {
         if (err) {
           console.log("error when connecting to db:", err);

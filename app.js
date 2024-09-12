@@ -19,6 +19,14 @@ let totalEndTime = null;
 let duplicatesStartTime = null;
 let csvStartTime = null;
 
+const DB_CONFIG_NEW = {
+  host: 'localhost',
+  port: process.env.MYSQL_PORT,
+  user: 'root',
+  password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T',
+  database: 'Merged_Database_Test'
+}
+
 /**
  * Main function to orchestrate the scraping, CSV conversion, duplicate checking, 
  * and database disconnection process.
@@ -40,7 +48,7 @@ async function main() {
     await Promise.all([jobindexPromise, careerjetPromise]);
 
     // Run CSV conversion and duplicates checker after scraping
-    await runCSVConversionAndDuplicateCheck();
+    await runCSVConversionAndDuplicateCheck(2);
     totalEndTime = performance.now();
 
     // Log execution times
@@ -115,10 +123,10 @@ async function logAllTimings(jobStartTime, careerStartTime, totalStartTime) {
 /**
  * Runs the CSV conversion and duplicate check process sequentially.
  */
-async function runCSVConversionAndDuplicateCheck() {
+async function runCSVConversionAndDuplicateCheck(queryNumber) {
   // CSV Conversion
   csvStartTime = performance.now();
-  await csvConverter.exportToCSV(); // Convert the scraped data to CSV format
+  await csvConverter.exportToCSV(queryNumber); // Convert the scraped data to CSV format
   csvEndTime = performance.now();
 
   // Duplicates Checker

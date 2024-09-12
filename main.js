@@ -20,16 +20,16 @@ const possible_duplicates = require('./data/duplicates_Checker'); // Duplicates 
 async function main() {
     try {
         // Path to your CSV file (commented out, can be uncommented to use)
-        //uploadCSVToDatabase.main();
+        uploadCSVToDatabase.main();
 
         // Run the Jobindex scraper
         var jobStartTime = performance.now(); // Start timer for Jobindex scraper
-        await jobIndexScraping(); // Run Jobindex scraping
+        //await jobIndexScraping(); // Run Jobindex scraping
         var jobEndTime = performance.now(); // End timer for Jobindex scraper
 
         // Run the Careerjet scraper
         var careerStartTime = performance.now(); // Start timer for Careerjet scraper
-        await careerjetScraping(); // Run Careerjet scraping
+        //await careerjetScraping(); // Run Careerjet scraping
         var careerEndTime = performance.now(); // End timer for Careerjet scraper
 
         // Run the CSV converter
@@ -41,7 +41,7 @@ async function main() {
         });
         // Export data to CSV
         var csvStartTime = performance.now(); // Start timer for CSV conversion
-        await csvConverter.exportToCSV(); // Convert data to CSV and export
+        //await csvConverter.exportToCSV(2); // Convert data to CSV and export
         var csvEndTime = performance.now(); // End timer for CSV conversion
 
         // Run the duplicates checker
@@ -53,7 +53,7 @@ async function main() {
         });
 
         var duplicatesStartTime = performance.now(); // Start timer for duplicates checker
-        await possible_duplicates.checkForDuplicates(); // Check for duplicates in the database
+        //await possible_duplicates.checkForDuplicates(); // Check for duplicates in the database
         var duplicatesEndTime = performance.now(); // End timer for duplicates checker
 
         // Log the execution time for each operation
