@@ -118,31 +118,27 @@ function sqlQueries(queryNumber) {
         SELECT a.id, a.body as searchable_body, r.region_id, r.name as region_name, a.timestamp, a.title, a.cvr
         FROM annonce a
         INNER JOIN region r ON r.region_id = a.region_id
-        WHERE DATE(a.timestamp) = '${formattedDate}'
-        GROUP BY a.id;
+        WHERE DATE(a.timestamp) = '${formattedDate}';
     `;
 
     const query2 = `
         SELECT *
         FROM annonce a
         INNER JOIN region r ON r.region_id = a.region_id
-        WHERE DATE(a.timestamp) = '${formattedDate}'
-        GROUP BY a.id;
+        WHERE DATE(a.timestamp) = '${formattedDate}';
     `;
 
     const query3 = `
         SELECT *
         FROM annonce a
         INNER JOIN region r ON r.region_id = a.region_id
-        WHERE r.name = 'cyber'
-        GROUP BY a.id;
+        WHERE r.name = 'cyber';
     `;
 
     const query4 = `
         SELECT *
         FROM annonce a
-        INNER JOIN region r ON r.region_id = a.region_id
-        GROUP BY a.id;
+        INNER JOIN region r ON r.region_id = a.region_id;
     `;
 
     // Returning the query based on the input number

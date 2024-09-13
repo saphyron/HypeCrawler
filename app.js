@@ -5,7 +5,7 @@ let careerjetClass = require("./scrapers/careerjet-scraper-1.0.0"); // Careerjet
 let csvConverter = require("./data/CSV_Converter"); // CSV converter module
 let uploadCSVToDatabase = require("./data/database_uploader"); // Database uploader module
 const { performance } = require("perf_hooks"); // Performance module for measuring execution time
-let browser; // Declare browser outside to reuse if needed across multiple scraping sessions
+let browser; // Declare browser globally to reuse across multiple scraping sessions
 const path = require("path"); // Path module for handling file paths
 const possible_duplicates = require("./data/duplicates_Checker"); // Duplicates checker module
 const orm = require("../HypeCrawler/data/general-orm-1.0.0"); // ORM module for database operations
@@ -20,58 +20,75 @@ let duplicatesStartTime = null;
 let csvStartTime = null;
 
 const DB_CONFIG_NEW = {
-  host: 'localhost',
+  host: "localhost",
   port: process.env.MYSQL_PORT,
-  user: 'root',
-  password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T',
-  database: 'Merged_Database_Test'
-}
+  user: "root",
+  password: "4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T",
+  database: "Merged_Database_Test",
+};
 
 /**
- * Main function to orchestrate the scraping, CSV conversion, duplicate checking, 
- * and database disconnection process.
+ * Main function to orchestrate scraping, CSV conversion, duplicate checking,
+ * and database disconnection.
+ *
+ * This function runs the Jobindex and Careerjet scrapers in parallel, checks for duplicates, 
+ * and converts the scraped data into a CSV file. It also handles error checking and resource cleanup.
  */
 async function main() {
   try {
-    await initBrowser(); // Initialize the Puppeteer browser
+    // Initialize the Puppeteer browser
+    await initBrowser();
 
-    // Start timers to measure the total execution time and individual scraper times
-    var totalStartTime = performance.now();
-    var jobStartTime = performance.now();
-    var careerStartTime = performance.now();
+    // Start a timer to track the total execution time of the whole process
+    const totalStartTime = performance.now();
 
-    // Start Jobindex and Careerjet scrapers in parallel
-    const jobindexPromise = jobIndexScraping();
-    const careerjetPromise = careerjetScraping();
+    // Run both scrapers (Jobindex and Careerjet) in parallel
+    const [jobindexResult, careerjetResult] = await Promise.allSettled([
+      jobIndexScraping(),
+      careerjetScraping(),
+    ]);
 
-    // Wait for both scrapers to complete
-    await Promise.all([jobindexPromise, careerjetPromise]);
+    // Check if either of the scrapers failed and log the errors
+    if (jobindexResult.status === "rejected") {
+      console.error("Jobindex scraper failed:", jobindexResult.reason);
+    }
+    if (careerjetResult.status === "rejected") {
+      console.error("Careerjet scraper failed:", careerjetResult.reason);
+    }
 
-    // Run CSV conversion and duplicates checker after scraping
-    await runCSVConversionAndDuplicateCheck(2);
-    totalEndTime = performance.now();
+    // Only proceed with CSV conversion and duplicate checking if both scrapers succeeded
+    if (
+      jobindexResult.status === "fulfilled" &&
+      careerjetResult.status === "fulfilled"
+    ) {
+      await runCSVConversionAndDuplicateCheck(2); // Run CSV conversion and duplicate checking
+      totalEndTime = performance.now(); // Mark the end time of the total process
 
-    // Log execution times
-    await logAllTimings(jobStartTime, careerStartTime, totalStartTime);
+      // Log the execution times of all major tasks
+      await logAllTimings(totalStartTime);
+    } else {
+      console.log(
+        "One or more scrapers failed. Skipping CSV conversion and duplicates check."
+      );
+    }
 
-    await closeBrowser(); // Close the browser after scraping is complete
-
-    // Properly disconnect the database after everything is done
-    await disconnectAllDatabases();
-    await cleanup(); // Clean up all resources before exiting
-
-    console.log("All tasks completed successfully. Exiting gracefully.");
+    await closeBrowser(); // Close the browser after the scraping is complete
+    await disconnectAllDatabases(); // Ensure the database is disconnected
   } catch (error) {
-    handleErrors(error); // Handle any errors that occur during the process
+    handleErrors(error); // Handle errors during the entire process
+  } finally {
+    await cleanup(); // Cleanup any remaining resources
   }
 }
 
 /**
- * Disconnect all databases properly.
+ * Disconnect all active database connections.
+ *
+ * This ensures that the database connection is properly closed after all tasks are done.
  */
 async function disconnectAllDatabases() {
   try {
-    await orm.disconnectDatabase(); // Disconnect from the database
+    await orm.disconnectDatabase(); // Disconnect from the database using ORM
     console.log("Successfully disconnected from the database.");
   } catch (error) {
     console.error("Error disconnecting from the database:", error);
@@ -79,12 +96,14 @@ async function disconnectAllDatabases() {
 }
 
 /**
- * Clean up resources by closing the browser and database connections.
+ * Cleanup resources like browser instances and database connections.
+ *
+ * This function ensures that both the browser and the database connections are properly cleaned up.
  */
 async function cleanup() {
   try {
     await closeBrowser(); // Close the Puppeteer browser
-    await disconnectAllDatabases(); // Disconnect the database
+    await disconnectAllDatabases(); // Disconnect from the database
     console.log("All resources cleaned up successfully.");
   } catch (error) {
     console.error("Error during cleanup:", error);
@@ -92,17 +111,19 @@ async function cleanup() {
 }
 
 /**
- * Logs the execution time of each major task (scraping, CSV conversion, duplicate checking).
+ * Log the execution time of each major task (scraping, CSV conversion, duplicate checking).
+ *
+ * @param {number} totalStartTime - The start time for the entire process.
  */
-async function logAllTimings(jobStartTime, careerStartTime, totalStartTime) {
+async function logAllTimings(totalStartTime) {
   console.log(
     "Jobindex scraper execution time: " +
-      (jobEndTime - jobStartTime) / 1000 +
+      (jobEndTime - totalStartTime) / 1000 +
       " seconds"
   );
   console.log(
     "Careerjet scraper execution time: " +
-      (careerEndTime - careerStartTime) / 1000 +
+      (careerEndTime - totalStartTime) / 1000 +
       " seconds"
   );
   console.log(
@@ -121,12 +142,16 @@ async function logAllTimings(jobStartTime, careerStartTime, totalStartTime) {
 }
 
 /**
- * Runs the CSV conversion and duplicate check process sequentially.
+ * Run the CSV conversion and duplicate checking process sequentially.
+ *
+ * This function is only called after the scrapers have successfully run.
+ * 
+ * @param {number} queryNumber - The query number for the CSV conversion process.
  */
 async function runCSVConversionAndDuplicateCheck(queryNumber) {
   // CSV Conversion
   csvStartTime = performance.now();
-  await csvConverter.exportToCSV(queryNumber); // Convert the scraped data to CSV format
+  await csvConverter.exportToCSV(queryNumber); // Convert scraped data to CSV format
   csvEndTime = performance.now();
 
   // Duplicates Checker
@@ -136,64 +161,54 @@ async function runCSVConversionAndDuplicateCheck(queryNumber) {
 }
 
 /**
- * Handles errors that occur during the process.
+ * Handles and logs errors that occur during the process.
+ *
+ * @param {Error} error - The error object to handle.
  */
 function handleErrors(error) {
   if (error instanceof AggregateError) {
-    console.error("Multiple errors occurred:", error.errors); // Log multiple errors if present
+    console.error("Multiple errors occurred:", error.errors); // Log multiple errors if available
   } else {
     console.error("An error occurred:", error.message, error.stack); // Log a single error
   }
 }
 
 /**
- * Retry mechanism to handle intermittent failures in operations.
- * @param {function} operation - The operation to retry.
- * @param {number} retries - The number of retry attempts.
- * @param {number} delay - The delay between retries.
- */
-async function retryOperation(operation, retries = 3, delay = 2000) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await operation(); // Try the operation
-    } catch (error) {
-      if (attempt === retries) throw error; // Throw error after max retries
-      console.log(`Retrying operation... Attempt ${attempt}`);
-      await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
-      delay = Math.min(delay * 2, 10000); // Increase delay with a cap at 10 seconds
-    }
-  }
-}
-
-/**
- * Initializes the Puppeteer browser instance.
- * Runs in headless mode (no GUI) and sets up security options.
+ * Initializes a Puppeteer browser instance.
+ *
+ * This function launches the browser in headless mode and sets required configurations.
+ * The browser is reused across multiple scraping tasks to optimize resource usage.
  */
 async function initBrowser() {
   if (!browser) {
     browser = await puppeteer.launch({
-      headless: true, // Run in headless mode without a GUI.
-      defaultViewport: null, // Use the default viewport size.
-      args: ["--no-sandbox", "--disable-setuid-sandbox"], // Security arguments for running in certain environments.
-      protocolTimeout: 600000, // Set a long timeout to avoid premature disconnections.
+      headless: true, // Run in headless mode (no browser GUI)
+      defaultViewport: null, // Use the default viewport size
+      args: ["--no-sandbox", "--disable-setuid-sandbox"], // Security settings for Puppeteer
+      protocolTimeout: 600000, // Set a long timeout to avoid premature disconnections
     });
   }
 }
 
 /**
  * Closes the Puppeteer browser instance.
+ * 
+ * This ensures that all browser resources are cleaned up once scraping tasks are done.
  */
 async function closeBrowser() {
   if (browser) {
     console.log("Closing browser...");
-    await browser.close(); // Close the browser
-    browser = null; // Reset the browser variable to ensure it can be re-initialized
+    await browser.close(); // Close the browser instance
+    browser = null; // Reset the browser variable to allow reinitialization later
     console.log("Browser closed.");
   }
 }
 
 /**
- * Performs web scraping for Jobindex using Puppeteer.
+ * Scrape job listings from Jobindex using Puppeteer.
+ *
+ * This function opens a new browser tab and scrapes Jobindex for job postings. 
+ * The results are then stored in the database.
  */
 async function jobIndexScraping() {
   const page = await browser.newPage(); // Open a new browser page for Jobindex
@@ -201,21 +216,23 @@ async function jobIndexScraping() {
     "Accept-Language": "da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7", // Set HTTP headers for Danish language
   });
 
-  // Check environment variables for the scraping condition
-  if (
-    !process.env.ADVERTS_SCRAPE ||
-    process.env.ADVERTS_SCRAPE === "all" ||
-    process.env.ADVERTS_SCRAPE === "jobindex"
-  ) {
-    let scraper = new jobindexClass(); // Initialize the Jobindex scraper
-    await runScraper(scraper, page, "JobIndex"); // Run the scraper with retry logic
-    scraper.printDatabaseResult(); // Print the database results
+  try {
+    let scraper = new jobindexClass(); // Create a new instance of the Jobindex scraper class
+    await runScraper(scraper, page, "JobIndex"); // Run the scraper with database connection and retry logic
+    scraper.printDatabaseResult(); // Print the scraper results to the database
     jobEndTime = performance.now(); // Capture Jobindex scraper end time
+  } catch (error) {
+    console.error("Jobindex scraping failed:", error); // Log any errors during the Jobindex scraping process
+  } finally {
+    await page.close(); // Ensure the page is closed after scraping
   }
 }
 
 /**
- * Performs web scraping for Careerjet using Puppeteer.
+ * Scrape job listings from Careerjet using Puppeteer.
+ *
+ * This function opens a new browser tab and scrapes Careerjet for job postings.
+ * The results are then stored in the database.
  */
 async function careerjetScraping() {
   const page = await browser.newPage(); // Open a new browser page for Careerjet
@@ -223,43 +240,70 @@ async function careerjetScraping() {
     "Accept-Language": "da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7", // Set HTTP headers for Danish language
   });
 
-  // Check environment variables for the scraping condition
-  if (
-    !process.env.ADVERTS_SCRAPE ||
-    process.env.ADVERTS_SCRAPE === "all" ||
-    process.env.ADVERTS_SCRAPE === "careerjet"
-  ) {
-    let scraper = new careerjetClass(); // Initialize the Careerjet scraper
-    await runScraper(scraper, page, "CareerJet"); // Run the scraper with retry logic
-    scraper.printDatabaseResult(); // Print the database results
+  try {
+    let scraper = new careerjetClass(); // Create a new instance of the Careerjet scraper class
+    await runScraper(scraper, page, "CareerJet"); // Run the scraper with database connection and retry logic
+    scraper.printDatabaseResult(); // Print the scraper results to the database
     careerEndTime = performance.now(); // Capture Careerjet scraper end time
+  } catch (error) {
+    console.error("Careerjet scraping failed:", error); // Log any errors during the Careerjet scraping process
+  } finally {
+    await page.close(); // Ensure the page is closed after scraping
+  }
+}
+
+/**
+ * Retry mechanism for operations such as database connections or scraping tasks.
+ * 
+ * This function retries an asynchronous operation a specified number of times using exponential backoff.
+ *
+ * @param {function} operation - The asynchronous operation to retry.
+ * @param {number} retries - The number of retry attempts (default: 3).
+ * @param {number} delay - The delay between retries in milliseconds (default: 2000).
+ * @returns {Promise<any>} - The result of the operation if successful, or throws an error after exhausting retries.
+ */
+async function retryOperation(operation, retries = 3, delay = 2000) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await operation(); // Attempt to perform the operation
+    } catch (error) {
+      attempt++;
+      if (attempt === retries) throw error; // If max retries reached, throw the error
+      console.log(`Retrying operation... Attempt ${attempt} of ${retries}`);
+      await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
+      delay *= 2; // Exponential backoff: increase the delay on each retry
+    }
   }
 }
 
 /**
  * Orchestrates the sequence of operations for a scraper process.
+ * 
+ * This function manages database connections, scraping, and retries for a given scraper.
+ *
  * @param {object} scraper - The scraper instance to run.
  * @param {object} page - The Puppeteer page object for the scraper to use.
- * @param {string} scraperName - The name of the scraper (for logging).
+ * @param {string} scraperName - The name of the scraper (for logging purposes).
  */
 async function runScraper(scraper, page, scraperName) {
   try {
-    await retryOperation(() => scraper.connectDatabase()); // Connect to the database with retry
+    await retryOperation(() => scraper.connectDatabase()); // Connect to the database with retry logic
     await retryOperation(() => scraper.initializeDatabase()); // Initialize the database
     await retryOperation(() =>
       scraper.beginScraping(page, browser, 1, 3, scraperName)
-    ); // Start the web scraping process
+    ); // Begin the scraping process
   } catch (error) {
-    console.log("Critical error during scraping process: " + error); // Log any critical errors
-  } finally {
-    if (page) await page.close(); // Ensure the page is closed after scraping
+    console.log("Critical error during scraping process: " + error); // Log critical errors
   }
 }
 
 // Main function execution
-main().then(() => {
+main().then(
+  () => {
     console.log("Process finished successfully.");
-    // Let Node.js exit naturally if all resources are cleaned up
-  }, (error) => {
+  },
+  (error) => {
     console.error("Process finished with errors:", error);
-  });
+  }
+);

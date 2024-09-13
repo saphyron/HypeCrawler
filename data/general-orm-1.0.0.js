@@ -1,5 +1,6 @@
 // Load the MySQL module from npm to interact with MySQL databases.
 const MYSQL = require("mysql");
+const crypto = require("crypto");
 
 // Define the database connection parameters.
 const DB_CONFIG = {
@@ -11,11 +12,16 @@ const DB_CONFIG = {
 };
 
 const DB_CONFIG_NEW = {
-  host: 'localhost',
+  host: "localhost",
   port: process.env.MYSQL_PORT,
-  user: 'root',
-  password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T',
-  database: 'Merged_Database_Test'
+  user: "root",
+  password: "4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T",
+  database: "Merged_Database_Test",
+};
+
+// Compute hash for the body content
+function computeBodyHash(body) {
+  return crypto.createHash("sha1").update(body).digest("hex");
 }
 
 let CONNECTION; // Variable to hold the database connection object.
@@ -204,10 +210,12 @@ class ORM {
    * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
    */
   static async InsertAnnonce(newRecord) {
+    // When inserting a new record, compute the hash
+    const bodyHash = computeBodyHash(newRecord.body);
     return new Promise((resolve, reject) => {
       let query =
-        `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage) ` +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage, body_hash) ` +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
       // Execute the query with values from the newRecord object
       CONNECTION.query(
@@ -221,6 +229,7 @@ class ORM {
           newRecord.url,
           newRecord.cvr,
           newRecord.homepage,
+          computeBodyHash(newRecord.body), // new body hash
         ],
         function (error, result) {
           if (error) reject("Error at ORM.InsertAnnonce() → " + error); // Reject on query error

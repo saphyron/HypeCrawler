@@ -1,11 +1,11 @@
 const fs = require('fs');
-const mysql = require('mysql'); // Replacing ORM with mysql for direct MySQL connection
+const mysql = require('mysql');
 const path = require('path');
-const cliProgress = require('cli-progress'); // Progress bar library
+const cliProgress = require('cli-progress');
 
 // Create a pool of connections
 const pool = mysql.createPool({
-    connectionLimit: 10, // Set to 10 or any suitable value
+    connectionLimit: 10, // Adjust as needed
     host: 'localhost',
     user: 'root',
     password: '4b6YA5Uq2zmB%t5u2*e5jT!u4c$lfw6T',
@@ -22,13 +22,37 @@ async function getConnection() {
     });
 }
 
+// Cache to store existing checksums
+let checksumCache = new Set();
+
+// Function to populate the checksum cache
+async function populateChecksumCache() {
+    try {
+        const connection = await getConnection();
+        const query = 'SELECT checksum FROM annonce'; // Adjust table/column name as needed
+
+        const results = await new Promise((resolve, reject) => {
+            connection.query(query, (error, results) => {
+                if (error) return reject(error);
+                resolve(results);
+            });
+        });
+
+        results.forEach(row => checksumCache.add(row.checksum));
+        console.log(`Checksum cache populated with ${checksumCache.size} records.`);
+        connection.release();
+    } catch (error) {
+        console.error(`Error populating checksum cache: ${error}`);
+    }
+}
+
 // Function to sanitize strings by removing problematic characters and trimming
 function sanitizeString(input) {
     try {
         return input ? input.replace(/[\uFFFD\u200B-\u200D\uFEFF]/g, '').trim() : null;
     } catch (e) {
         console.error(`Error sanitizing string: ${e.message}. Returning the original input.`);
-        return input ? input.trim() : null; // Return the input if sanitization fails
+        return input ? input.trim() : null;
     }
 }
 
@@ -44,7 +68,10 @@ const rowProgressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_
 let startTime;
 let totalRowsProcessed = 0;
 let totalFilesProcessed = 0;
+const BATCH_SIZE = 500;
+let rowBuffer = [];
 
+// Function to upload JSON data to the database in batches with transactions
 async function uploadJSONToDatabase(jsonData, fileIndex, totalFiles, filePath) {
     let successTotalCounter = 0;
     let existingTotalCounter = 0;
@@ -55,19 +82,17 @@ async function uploadJSONToDatabase(jsonData, fileIndex, totalFiles, filePath) {
     rowProgressBar.start(totalRows, 0);
 
     try {
-        const connection = await getConnection(); // Get the connection from the pool
+        const connection = await getConnection();
+        await connection.beginTransaction(); // Start a transaction
 
         for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
             const row = jsonData[rowIndex];
             try {
-                const checksum = row.checksum || null; // Use lowercase `checksum` to match the JSON key
+                const checksum = row.checksum || null;
 
-                // Check if the checksum already exists in the database
-                const exists = await checkChecksumExists(connection, checksum);
-
-                if (exists) {
+                // Check if the checksum exists in the cache
+                if (checksumCache.has(checksum)) {
                     existingTotalCounter++;
-                    // Update row progress bar even if row exists
                     rowProgressBar.update(rowIndex + 1);
                     continue; // Skip insertion for existing records
                 }
@@ -85,7 +110,6 @@ async function uploadJSONToDatabase(jsonData, fileIndex, totalFiles, filePath) {
                 // Convert the timestamp to MySQL compatible format
                 let timestamp = row.timestamp ? new Date(row.timestamp).toISOString().slice(0, 19).replace('T', ' ') : null;
 
-                // Map JSON data to database columns with sanitization
                 const newRecord = {
                     title: removeZeroWidth(sanitizeString(row.title)),
                     body: removeZeroWidth(sanitizeString(row.body)),
@@ -97,62 +121,60 @@ async function uploadJSONToDatabase(jsonData, fileIndex, totalFiles, filePath) {
                     homepage: removeZeroWidth(sanitizeString(row.homepage)),
                 };
 
-                // Insert the new record into the database
-                await insertAnnonceManually(connection, newRecord);
+                // Add the new record to the buffer
+                rowBuffer.push(newRecord);
+
+                if (rowBuffer.length >= BATCH_SIZE) {
+                    await insertBatch(connection, rowBuffer);
+                    rowBuffer = [];
+                }
+
                 successTotalCounter++;
             } catch (error) {
                 errorTotalCounter++;
                 console.error(`Error inserting record: ${error}`);
             }
 
-            // Update row progress bar
             rowProgressBar.update(rowIndex + 1);
-
             totalRowsProcessed++;
         }
 
+        // Insert any remaining rows in the buffer
+        if (rowBuffer.length > 0) {
+            await insertBatch(connection, rowBuffer);
+            rowBuffer = [];
+        }
+
+        // Commit the transaction after batch inserts
+        await connection.commit();
         console.log(`Finished processing file: ${filePath}`);
         rowProgressBar.stop();
 
-        // Calculate elapsed time and estimate remaining time
-        const elapsedTime = (new Date() - startTime) / 1000; // Elapsed time in seconds
+        const elapsedTime = (new Date() - startTime) / 1000;
         const estimatedTimeRemaining = (elapsedTime / totalFilesProcessed) * (totalFiles - totalFilesProcessed);
-
         console.log(`Elapsed Time: ${elapsedTime.toFixed(2)}s`);
         console.log(`Estimated Time Remaining: ${(estimatedTimeRemaining / 60).toFixed(2)} minutes`);
 
-        // Release the connection back to the pool after processing
-        connection.release();
+        connection.release(); // Release the connection back to the pool
 
     } catch (error) {
         console.error(`Database connection error: ${error}`);
+        // If an error occurs, rollback the transaction
+        if (connection) await connection.rollback();
     }
 }
 
-// Ensure you're releasing the connection after each operation
-async function insertAnnonceManually(connection, record) {
+// Function to insert a batch of records into the database
+async function insertBatch(connection, records) {
     return new Promise((resolve, reject) => {
-        const query = `INSERT INTO annonce (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-        connection.query(query, [record.title, record.body, record.regionId, record.timestamp, record.checksum, record.url, record.cvr, record.homepage],
-            (error, result) => {
-                if (error) {
-                    return reject(error);
-                }
-                resolve(result);
-            });
-    });
-}
+        const query = `INSERT INTO annonce (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage) VALUES ?`;
+        const values = records.map(record => [
+            record.title, record.body, record.regionId, record.timestamp, record.checksum, record.url, record.cvr, record.homepage
+        ]);
 
-// Function to check if the checksum already exists in the database
-function checkChecksumExists(connection, checksum) {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT COUNT(1) AS count FROM annonce WHERE CHECKSUM = ?';
-        connection.query(query, [checksum], (error, results) => {
-            if (error) {
-                return reject(error);
-            }
-            resolve(results[0].count > 0);
+        connection.query(query, [values], (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
         });
     });
 }
@@ -161,9 +183,7 @@ function checkChecksumExists(connection, checksum) {
 function loadJSONFile(filePath) {
     return new Promise((resolve, reject) => {
         fs.readFile(filePath, 'utf8', (err, data) => {
-            if (err) {
-                return reject(err);
-            }
+            if (err) return reject(err);
             try {
                 const jsonData = JSON.parse(data);
                 resolve(jsonData);
@@ -182,12 +202,9 @@ async function processJSONFilesInFolder(folderPath) {
 
         console.log(`Total files to process: ${totalFiles}`);
 
-        // Initialize file progress bar
         fileProgressBar.start(totalFiles, 0);
-
         startTime = new Date();
 
-        // Process files sequentially
         for (let fileIndex = 0; fileIndex < jsonFiles.length; fileIndex++) {
             const file = jsonFiles[fileIndex];
             const filePath = path.join(folderPath, file);
@@ -197,8 +214,6 @@ async function processJSONFilesInFolder(folderPath) {
             await uploadJSONToDatabase(jsonData, fileIndex + 1, totalFiles, filePath);
 
             totalFilesProcessed++;
-
-            // Update file progress bar
             fileProgressBar.update(totalFilesProcessed);
         }
 
@@ -212,8 +227,9 @@ async function processJSONFilesInFolder(folderPath) {
 
 // Main function to read all JSON files in the folder and process them
 async function main() {
-    const folderPath = 'E:\\Data\\JSON Files'; // Path to your folder containing JSON files
+    const folderPath = 'E:\\Data\\JSON Files';
 
+    await populateChecksumCache(); // Populate the checksum cache before processing files
     await processJSONFilesInFolder(folderPath);
 }
 
