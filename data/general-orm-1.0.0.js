@@ -42,28 +42,33 @@ class ORM {
    * Closes the database connection cleanly.
    * @returns {Promise<void>} - A promise that resolves when the connection is closed.
    */
-  static disconnectDatabase() {
+  static async disconnectDatabase() {
     return new Promise((resolve, reject) => {
-      // Stop the keep-alive process if it's running
       if (ORM.keepDataConnectionAliveHandle) {
         clearInterval(ORM.keepDataConnectionAliveHandle);
         ORM.keepDataConnectionAliveHandle = undefined;
       }
-
-      // Check if the connection is still open
+  
       if (CONNECTION && CONNECTION.state !== "disconnected") {
+        // Use destroy to forcefully close lingering connections
         CONNECTION.end((err) => {
           if (err) {
-            reject(`Disconnect database error: ${err}`); // Reject the promise if there's an error closing the connection
+            console.log('Error while ending connection:', err);
+            CONNECTION.destroy(); // Force destroy if the end fails
+            return reject(err);
           } else {
-            resolve(); // Resolve the promise if the connection is closed successfully
+            console.log('Connection successfully ended.');
+            resolve();
           }
         });
       } else {
-        resolve(); // Resolve immediately if the connection is already closed or wasn't established
+        resolve(); // Connection already closed
       }
+      console.log('Connection state before closing:', CONNECTION.state);
+
     });
   }
+  
 
   /**
    * Establishes a connection to the database with error handling and reconnection logic.
@@ -98,9 +103,13 @@ class ORM {
       CONNECTION.on("error", function (err) {
         console.log("db error", err);
         if (err.code === "PROTOCOL_CONNECTION_LOST") {
-          ORM.connectDatabase().then(resolve).catch(reject); // Automatically reconnect on connection loss
+          // Ensure the previous connection is fully ended
+          if (CONNECTION) {
+            CONNECTION.end(); // or use destroy() if necessary
+          }
+          ORM.connectDatabase().then(resolve).catch(reject); // Automatically reconnect
         } else {
-          reject(err); // Reject the promise for other errors
+          reject(err); // Reject for other errors
         }
       });
     });

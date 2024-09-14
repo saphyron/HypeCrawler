@@ -505,7 +505,7 @@ class JocscraperTemplate {
 
             return { titleList: titles, urlList: urls, companyUrls: company };
         } catch (error) {
-            console.error('Error at tryPathVariationOnPage() →', error);
+            console.error('Error at tryPathVariationOnPage() → No Valid Path Found');
             throw error;
         }
     }

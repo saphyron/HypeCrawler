@@ -10,6 +10,11 @@ const path = require("path"); // Path module for handling file paths
 const possible_duplicates = require("./data/duplicates_Checker"); // Duplicates checker module
 const orm = require("../HypeCrawler/data/general-orm-1.0.0"); // ORM module for database operations
 
+// Add the unhandled rejection listener at the top
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
 // Variables to capture end times for different tasks
 let jobEndTime = null;
 let careerEndTime = null;
@@ -31,7 +36,7 @@ const DB_CONFIG_NEW = {
  * Main function to orchestrate scraping, CSV conversion, duplicate checking,
  * and database disconnection.
  *
- * This function runs the Jobindex and Careerjet scrapers in parallel, checks for duplicates, 
+ * This function runs the Jobindex and Careerjet scrapers in parallel, checks for duplicates,
  * and converts the scraped data into a CSV file. It also handles error checking and resource cleanup.
  */
 async function main() {
@@ -71,9 +76,6 @@ async function main() {
         "One or more scrapers failed. Skipping CSV conversion and duplicates check."
       );
     }
-
-    await closeBrowser(); // Close the browser after the scraping is complete
-    await disconnectAllDatabases(); // Ensure the database is disconnected
   } catch (error) {
     handleErrors(error); // Handle errors during the entire process
   } finally {
@@ -86,9 +88,13 @@ async function main() {
  *
  * This ensures that the database connection is properly closed after all tasks are done.
  */
+// Assuming you're using a connection pool
 async function disconnectAllDatabases() {
   try {
     await orm.disconnectDatabase(); // Disconnect from the database using ORM
+    if (orm.pool) {
+      await orm.pool.end(); // End the connection pool if applicable
+    }
     console.log("Successfully disconnected from the database.");
   } catch (error) {
     console.error("Error disconnecting from the database:", error);
@@ -145,7 +151,7 @@ async function logAllTimings(totalStartTime) {
  * Run the CSV conversion and duplicate checking process sequentially.
  *
  * This function is only called after the scrapers have successfully run.
- * 
+ *
  * @param {number} queryNumber - The query number for the CSV conversion process.
  */
 async function runCSVConversionAndDuplicateCheck(queryNumber) {
@@ -192,14 +198,17 @@ async function initBrowser() {
 
 /**
  * Closes the Puppeteer browser instance.
- * 
+ *
  * This ensures that all browser resources are cleaned up once scraping tasks are done.
  */
 async function closeBrowser() {
   if (browser) {
+    console.log("Closing all pages...");
+    const pages = await browser.pages();
+    await Promise.all(pages.map((page) => page.close()));
     console.log("Closing browser...");
-    await browser.close(); // Close the browser instance
-    browser = null; // Reset the browser variable to allow reinitialization later
+    await browser.close();
+    browser = null;
     console.log("Browser closed.");
   }
 }
@@ -207,7 +216,7 @@ async function closeBrowser() {
 /**
  * Scrape job listings from Jobindex using Puppeteer.
  *
- * This function opens a new browser tab and scrapes Jobindex for job postings. 
+ * This function opens a new browser tab and scrapes Jobindex for job postings.
  * The results are then stored in the database.
  */
 async function jobIndexScraping() {
@@ -254,7 +263,7 @@ async function careerjetScraping() {
 
 /**
  * Retry mechanism for operations such as database connections or scraping tasks.
- * 
+ *
  * This function retries an asynchronous operation a specified number of times using exponential backoff.
  *
  * @param {function} operation - The asynchronous operation to retry.
@@ -279,7 +288,7 @@ async function retryOperation(operation, retries = 3, delay = 2000) {
 
 /**
  * Orchestrates the sequence of operations for a scraper process.
- * 
+ *
  * This function manages database connections, scraping, and retries for a given scraper.
  *
  * @param {object} scraper - The scraper instance to run.
@@ -302,8 +311,10 @@ async function runScraper(scraper, page, scraperName) {
 main().then(
   () => {
     console.log("Process finished successfully.");
+    process.exit(0);
   },
   (error) => {
     console.error("Process finished with errors:", error);
+    process.exit(1); // Exit with error code
   }
 );
