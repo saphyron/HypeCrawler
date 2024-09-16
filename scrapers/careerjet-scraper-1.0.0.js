@@ -64,69 +64,59 @@ class CareerjetScraper extends ScraperInterface {
     async scrapePage(page, title, url, companyUrl, index, pageNum, scraperName) {
         let formattedUrl = url;
         let cvr;
-        //console.log("Scraping page: " + formattedUrl);
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
-
+    
         try {
             await page.goto(formattedUrl, {
                 timeout: this.PAGE_TIMEOUT
             })
-                .catch((error) => {
-                    throw new Error("page.goto(): " + error);
-                });
-            // Attempt to extract the inner text of the page's body, handling any errors that occur.
-            let bodyHTML = undefined
-
-            // Deprecated code that is kept just in case.
-            /*await Promise.race([
-                page.evaluate(() => document.body.outerHTML),
-                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
-            ])
-                .then((value) => {
-                    if (typeof value === "string") {
-                        bodyHTML = value
-                    } else {
-                        throw new Error("newPage.evaluate() TIMEOUT")
-                    }
-                })
-                .catch((error) => {
-                    throw new Error("newPage.evaluate() ERROR: " + error)
-                });*/
-
-            // Test to see if I only get Inner value from html body.
+            .catch((error) => {
+                throw new Error("page.goto(): " + error);
+            });
+    
+            let bodyHTML = undefined;
             await Promise.race([
                 page.evaluate(() => document.body.innerText),
-                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
+                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
             ])
-                .then((value) => {
-                    if (typeof value === "string") {
-                        bodyHTML = value;
-                    } else {
-                        throw new Error("newPage.evaluate() TIMEOUT");
-                    }
-                })
-                .catch((error) => {
-                    throw new Error("newPage.evaluate() ERROR: " + error);
-                });
-
+            .then((value) => {
+                if (typeof value === "string") {
+                    bodyHTML = value;
+                } else {
+                    throw new Error("newPage.evaluate() TIMEOUT");
+                }
+            })
+            .catch((error) => {
+                throw new Error("newPage.evaluate() ERROR: " + error);
+            });
+    
             // Insert or update the job listing in the database.
             await this.insertAnnonce(title, bodyHTML, formattedUrl, cvr, scraperName)
-                .catch((error) => {
-                    throw new Error("insertAnnonce(" + formattedUrl + "): " + error)
-                });
-
+            .catch((error) => {
+                throw new Error("insertAnnonce(" + formattedUrl + "): " + error)
+            });
         } catch (error) {
-            errorResult = error;
+            if (error.message.includes('net::ERR_CERT_DATE_INVALID')) {
+                console.error(`SSL certificate error at ${url}: ${error.message}`);
+                console.log("Inserting the record with an empty body due to SSL issue.");
+    
+                // Insert with empty body due to SSL issue
+                console.log(`Attempting to insert with empty body for URL: ${url}`);
+                await this.insertAnnonce(title, "", url, null, scraperName);
+            } else {
+                errorResult = error;
+            }
         }
-
+    
         if (errorResult) {
             this.errorTotalCounter++;
             console.log("Error at scrapePage(" + formattedUrl + ") → " + errorResult);
         }
-
+    
         console.timeEnd("runTime page number " + pageNum + " annonce " + index);
     }
+    
 
     /**
      * Determines the total number of pages available for job listings.

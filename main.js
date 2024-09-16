@@ -28,20 +28,20 @@ async function main() {
 
         // (optional, remove comments if function is needed)
         //await uploadCSVToDatabase.uploadJSONToDatabase();
-        
+
         // Log the start time for Jobindex scraping
         var jobStartTime = performance.now(); 
-        await jobIndexScraping(page); // Run Jobindex scraping task
+        //await jobIndexScraping(page); // Run Jobindex scraping task
         var jobEndTime = performance.now(); // Log the end time for Jobindex scraping
 
         // Log the start time for Careerjet scraping
         var careerStartTime = performance.now(); 
-        await careerjetScraping(page2); // Run Careerjet scraping task
+        //await careerjetScraping(page2); // Run Careerjet scraping task
         var careerEndTime = performance.now(); // Log the end time for Careerjet scraping
 
         // Log the start time for CSV conversion
         var csvStartTime = performance.now(); 
-        await csvConverter.exportToCSV(2); // Convert the scraped data to CSV
+        //await csvConverter.exportToCSV(2); // Convert the scraped data to CSV
         var csvEndTime = performance.now(); // Log the end time for CSV conversion
 
         // Log the start time for the duplicates checker

@@ -48,27 +48,25 @@ class ORM {
         clearInterval(ORM.keepDataConnectionAliveHandle);
         ORM.keepDataConnectionAliveHandle = undefined;
       }
-  
+
       if (CONNECTION && CONNECTION.state !== "disconnected") {
         // Use destroy to forcefully close lingering connections
         CONNECTION.end((err) => {
           if (err) {
-            console.log('Error while ending connection:', err);
+            console.log("Error while ending connection:", err);
             CONNECTION.destroy(); // Force destroy if the end fails
             return reject(err);
           } else {
-            console.log('Connection successfully ended.');
+            console.log("Connection successfully ended.");
             resolve();
           }
         });
       } else {
         resolve(); // Connection already closed
       }
-      console.log('Connection state before closing:', CONNECTION.state);
-
+      console.log("Connection state before closing:", CONNECTION.state);
     });
   }
-  
 
   /**
    * Establishes a connection to the database with error handling and reconnection logic.
@@ -115,158 +113,253 @@ class ORM {
     });
   }
 
-  /**
-   * Creates the 'annonce' table if it does not exist in the database.
-   * @returns {Promise<void>} - A promise that resolves when the table is created or confirmed to exist.
-   */
-  static CreateAnnonceTable() {
-    return new Promise((resolve, reject) => {
-      const query =
-        `CREATE TABLE IF NOT EXISTS ${ANNONCE_TABLE_NAME} (` +
-        "ID INTEGER AUTO_INCREMENT PRIMARY KEY, " +
-        "TITLE TEXT, " +
-        "BODY MEDIUMBLOB, " +
-        "region_id INTEGER, " +
-        "TIMESTAMP DATETIME, " +
-        "CHECKSUM varchar(40), " +
-        "URL TEXT, " +
-        "CVR TEXT, " +
-        "Homepage TEXT, " +
-        "Possible_Duplicate bit, " +
-        "FOREIGN KEY(region_id) REFERENCES region(region_id))";
+/**
+ * Creates the 'annonce' table if it does not exist in the database.
+ * @returns {Promise<void>} - A promise that resolves when the table is created or confirmed to exist.
+ */
+static async CreateAnnonceTable() {
+  const query = `
+    CREATE TABLE IF NOT EXISTS ${ANNONCE_TABLE_NAME} (
+      ID INTEGER AUTO_INCREMENT PRIMARY KEY,
+      TITLE TEXT,
+      BODY MEDIUMBLOB,
+      region_id INTEGER,
+      TIMESTAMP DATETIME,
+      CHECKSUM VARCHAR(40),
+      URL TEXT,
+      CVR VARCHAR(16),
+      Homepage TEXT,
+      Possible_Duplicate BIT,
+      FOREIGN KEY (region_id) REFERENCES region(region_id)
+    );
+  `;
 
-      CONNECTION.query(query, function (error, result) {
-        if (error) reject("Error at ORM.CreateAnnonceTable() → " + error); // Reject if there's an error creating the table
-        console.log("SUCCESS!"); // Log success message
-        resolve(result); // Resolve the promise with the result
+  try {
+    const result = await new Promise((resolve, reject) => {
+      CONNECTION.query(query, (error, result) => {
+        if (error) return reject(new Error(`Error at ORM.CreateAnnonceTable() → ${error.message}`));
+        resolve(result); // Resolve on success
       });
     });
+    console.log("Annonce table creation successful!");
+    return result;
+  } catch (error) {
+    console.error("Error at ORM.CreateAnnonceTable() →", error);
+    throw error;
   }
+}
 
-  /**
-   * Creates the 'region' table if it does not exist in the database.
-   * @returns {Promise<void>} - A promise that resolves when the table is created or confirmed to exist.
-   */
-  static CreateRegionTable() {
-    return new Promise((resolve, reject) => {
-      const query =
-        `CREATE TABLE IF NOT EXISTS ${REGION_TABLE_NAME} (` +
-        "region_id INTEGER AUTO_INCREMENT PRIMARY KEY, " +
-        "NAME VARCHAR(255) UNIQUE" +
-        ");";
 
-      CONNECTION.query(query, function (error, result) {
-        if (error) reject("Error at ORM.CreateRegionTable() → " + error); // Reject if there's an error creating the table
-        console.log("SUCCESS!"); // Log success message
-        resolve(result); // Resolve the promise with the result
+/**
+ * Creates the 'region' table if it does not exist in the database.
+ * @returns {Promise<void>} - A promise that resolves when the table is created or confirmed to exist.
+ */
+static async CreateRegionTable() {
+  const query = `
+    CREATE TABLE IF NOT EXISTS ${REGION_TABLE_NAME} (
+      region_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+      NAME VARCHAR(255) UNIQUE
+    );
+  `;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      CONNECTION.query(query, (error, result) => {
+        if (error) return reject(new Error(`Error at ORM.CreateRegionTable() → ${error}`));
+        resolve(result); // Resolve on success
       });
     });
+    console.log("Region table creation successful!");
+    return result;
+  } catch (error) {
+    console.error("Error at ORM.CreateRegionTable() →", error);
+    throw error;
+  }
+}
+
+
+/**
+ * Checks if a checksum is already present in the local cache or the database.
+ * Caches both found and not-found checksums to reduce redundant database queries.
+ * 
+ * @param {String} incomingChecksum - The checksum to check for.
+ * @returns {Promise<boolean>} - A promise that resolves to 'true' if the checksum exists, otherwise 'false'.
+ */
+static async FindChecksum(incomingChecksum) {
+  // Check if the checksum is in the cache, including negative results
+  if (incomingChecksum in CHECKSUM_CACHE) {
+    return CHECKSUM_CACHE[incomingChecksum]; // Resolve from cache (true or false)
   }
 
-  /**
-   * Checks if a checksum is already present in the local cache or the database.
-   * @param {String} incomingChecksum - The checksum to check for.
-   * @returns {Promise<boolean>} - A promise that resolves to 'true' if the checksum exists, otherwise 'false'.
-   */
-  static FindChecksum(incomingChecksum) {
-    return new Promise((resolve, reject) => {
-      // First, check the checksum cache
-      if (CHECKSUM_CACHE[incomingChecksum]) {
-        return resolve(true); // Resolve as 'true' if the checksum is found in the cache
+  // Query the database if not in the cache
+  const query = `SELECT 1 FROM ${ANNONCE_TABLE_NAME} WHERE checksum = ? LIMIT 1`;
+
+  return new Promise((resolve, reject) => {
+    CONNECTION.query(query, [incomingChecksum], (error, results) => {
+      if (error) {
+        return reject("Error at ORM.FindChecksum() → " + error); // Reject on query error
       }
 
-      // If not in the cache, query the database
-      const query = `SELECT 1 FROM ${ANNONCE_TABLE_NAME} WHERE checksum = ? LIMIT 1`;
+      const checksumExists = results.length > 0;
 
-      CONNECTION.query(query, [incomingChecksum], function (error, results) {
-        if (error) {
-          return reject("Error at ORM.FindChecksum() → " + error); // Reject on query error
-        }
+      // Cache both the presence and absence of the checksum
+      CHECKSUM_CACHE[incomingChecksum] = checksumExists;
 
-        if (results.length > 0) {
-          CHECKSUM_CACHE[incomingChecksum] = incomingChecksum; // Cache the checksum
-          return resolve(true); // Resolve as 'true' if the checksum exists in the database
-        } else {
-          return resolve(false); // Resolve as 'false' if the checksum doesn't exist
-        }
-      });
+      resolve(checksumExists); // Resolve with the result (true/false)
     });
-  }
+  });
+}
 
-  /**
-   * Retrieves a region's ID from the database based on its name.
-   * @param {String} incomingRegionName - The name of the region to find.
-   * @returns {Promise<number>} - A promise that resolves to the region ID, or null if not found.
-   */
-  static FindRegionID(incomingRegionName) {
-    return new Promise((resolve, reject) => {
-      const query =
-        "SELECT region_id " +
-        `FROM ${REGION_TABLE_NAME} ` +
-        "WHERE name = ? " +
-        "LIMIT 1";
 
-      CONNECTION.query(query, [incomingRegionName], function (error, result) {
-        if (error) reject("Error at ORM.FindRegionID() → " + error); // Reject on query error
-        resolve(result); // Resolve the promise with the result of the query
-      });
+/**
+ * Retrieves a region's ID from the database based on its name.
+ * @param {String} incomingRegionName - The name of the region to find.
+ * @returns {Promise<number|null>} - A promise that resolves to the region ID, or null if not found.
+ */
+static FindRegionID(incomingRegionName) {
+  return new Promise((resolve, reject) => {
+    const query = `SELECT region_id FROM ${REGION_TABLE_NAME} WHERE name = ? LIMIT 1`;
+
+    CONNECTION.query(query, [incomingRegionName], (error, results) => {
+      if (error) {
+        console.error("Error at ORM.FindRegionID() → ", error); // Log error
+        return reject("Error at ORM.FindRegionID() → " + error); // Early return on error
+      }
+
+      if (results.length > 0) {
+        resolve(results[0].region_id); // Return the region_id if found
+      } else {
+        resolve(null); // Return null if no result is found
+      }
     });
-  }
+  });
+}
 
-  /**
-   * Inserts a new announcement record into the 'annonce' table.
-   * @param {Annonce} newRecord - The announcement record to insert.
-   * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
-   */
-  static async InsertAnnonce(newRecord) {
-    // When inserting a new record, compute the hash
-    const bodyHash = computeBodyHash(newRecord.body);
-    return new Promise((resolve, reject) => {
-      let query =
-        `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage, body_hash) ` +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+/**
+ * Inserts a new announcement record into the 'annonce' table.
+ * If the body is empty (e.g., due to an SSL error), it will insert the record with an empty body and set the body_hash to NULL.
+ * @param {Annonce} newRecord - The announcement record to insert.
+ * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
+ */
+static async InsertAnnonce(newRecord) {
+  return new Promise((resolve, reject) => {
+      // If the body is empty (like in cases of SSL issues), log a warning
+      let bodyHash = null;
+      if (!newRecord.body || newRecord.body.trim() === "") {
+          console.warn("Inserting record with an empty body for URL:", newRecord.url);
+      } else {
+          bodyHash = computeBodyHash(newRecord.body); // Only compute the hash if body is not empty
+      }
+
+      // Prepare the SQL query
+      const query = `
+          INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} 
+          (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage, body_hash) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       // Execute the query with values from the newRecord object
       CONNECTION.query(
-        query,
-        [
-          newRecord.titel,
-          newRecord.body,
-          newRecord.regionId,
-          newRecord.timestamp,
-          newRecord.checksum,
-          newRecord.url,
-          newRecord.cvr,
-          newRecord.homepage,
-          computeBodyHash(newRecord.body), // new body hash
-        ],
-        function (error, result) {
-          if (error) reject("Error at ORM.InsertAnnonce() → " + error); // Reject on query error
-          // Update cache with the new checksum
-          CHECKSUM_CACHE[newRecord.checksum] = newRecord.checksum;
-          console.log("1 record inserted!"); // Log success message
-          resolve(result); // Resolve the promise with the result
+          query,
+          [
+              newRecord.titel,         // Job title
+              newRecord.body || "",    // Use empty string if body is null or undefined
+              newRecord.regionId,      // Region ID
+              newRecord.timestamp,     // Timestamp
+              newRecord.checksum,      // SHA1 checksum of the URL
+              newRecord.url,           // Job listing URL
+              newRecord.cvr,           // CVR number (optional, could be null)
+              newRecord.homepage,      // Homepage (source of the ad)
+              bodyHash                 // Computed hash of the body, or null if body is empty
+          ],
+          function (error, result) {
+              if (error) {
+                  console.error("Error inserting annonce:", error);
+                  return reject("Error at ORM.InsertAnnonce() → " + error);
+              }
+
+              // Update the checksum cache
+              CHECKSUM_CACHE[newRecord.checksum] = newRecord.checksum;
+
+              console.log(`1 record inserted for URL: ${newRecord.url}`); // Log success message with URL
+              resolve(result); // Resolve the promise with the result
+          }
+      );
+  });
+}
+
+
+
+  /**
+   * Inserts a new region into the 'region' table with a unique name.
+   * First, checks if the region already exists, and logs the result if it does.
+   *
+   * @param {String} newRegion - The name of the region to add.
+   * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
+   */
+  static InsertRegion(newRegion) {
+    return new Promise((resolve, reject) => {
+      // First, check if the region already exists
+      let checkQuery = `SELECT region_id, NAME FROM ${REGION_TABLE_NAME} WHERE NAME = ? LIMIT 1`;
+
+      CONNECTION.query(
+        checkQuery,
+        [newRegion.name],
+        function (checkError, checkResult) {
+          if (checkError) {
+            return reject(
+              "Error checking region existence at ORM.InsertRegion() → " +
+                checkError
+            );
+          }
+
+          // If region exists, log the existing region and its ID
+          if (checkResult.length > 0) {
+            console.log(
+              `Region '${checkResult[0].NAME}' already exists with ID: ${checkResult[0].region_id}`
+            );
+            resolve(checkResult[0]); // Resolve with the existing region info
+          } else {
+            // If region doesn't exist, insert it
+            let insertQuery = `INSERT INTO ${REGION_TABLE_NAME} (NAME) VALUES (?)`;
+            CONNECTION.query(
+              insertQuery,
+              [newRegion.name],
+              function (insertError, insertResult) {
+                if (insertError) {
+                  return reject("Error at ORM.InsertRegion() → " + insertError);
+                }
+
+                console.log(
+                  `Inserted new region '${newRegion.name}' with ID: ${insertResult.insertId}`
+                );
+                resolve(insertResult); // Resolve with the insertion result
+              }
+            );
+          }
         }
       );
     });
   }
 
   /**
-   * Inserts a new region into the 'region' table with a unique name.
-   * @param {String} newRegion - The name of the region to add.
-   * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
-   */
-  static InsertRegion(newRegion) {
-    return new Promise((resolve, reject) => {
-      let query = `INSERT IGNORE INTO ${REGION_TABLE_NAME} (NAME) VALUES (?)`;
-      // Execute the query with the name of the new region
-      CONNECTION.query(query, [newRegion.name], function (error, result) {
-        if (error) reject("Error at ORM.InsertRegion() → " + error); // Reject on query error
-        console.log("1 record inserted!"); // Log success message
-        resolve(result); // Resolve the promise with the result
-      });
+ * Retrieves all regions from the 'region' table.
+ * @returns {Promise<Array>} - A promise that resolves with an array of regions.
+ */
+static getAllRegions() {
+  return new Promise((resolve, reject) => {
+    const query = `SELECT * FROM ${REGION_TABLE_NAME}`;
+
+    CONNECTION.query(query, (error, results) => {
+      if (error) {
+        return reject("Error at ORM.getAllRegions() → " + error); // Reject if there's an error with the query
+      }
+
+      resolve(results); // Resolve with the results from the query
     });
-  }
+  });
+}
+
 }
 
 // Export the ORM class for use in other modules.

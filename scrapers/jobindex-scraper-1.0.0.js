@@ -83,9 +83,7 @@ class JobindexScraper extends ScraperInterface {
             console.log("Attempting to find the total number of pages using CSS selector...");
             const pageRefs = await page.evaluate(() => {
                 const selector = "div.jix_pagination.jix_pagination_wide ul.pagination li.page-item a";
-                //console.log("CSS Selector:", selector);
                 const elements = document.querySelectorAll(selector);
-                //console.log("CSS Selector results:", elements);
                 if (elements.length === 0) {
                     return null;
                 }
@@ -93,17 +91,6 @@ class JobindexScraper extends ScraperInterface {
                 console.log("Last page element:", lastPageElement);
                 return lastPageElement ? lastPageElement.textContent : null;
             });
-
-            /*if (!pageRefs) {
-                throw new Error("No elements found with the given XPath.");
-            }
-            console.log("Found the pagination element:", pageRefs);
-            // Extracting num of pages string
-            const textNum = pageRefs;
-            console.log("textNum: " + textNum);
-
-            // Return number of pages
-            numPages = parseInt(textNum, 10);*/
 
             if (!pageRefs) {
                 console.log("No pagination elements found. Assuming there is only 1 page.");
@@ -135,128 +122,72 @@ class JobindexScraper extends ScraperInterface {
      * @returns {Promise<void>} Completes when the scraping and any data insertion are done.
      */
     async scrapePage(page, title, url, companyURL, index, pageNum, scraperName) {
-        //let newPage = undefined;
         let errorResult = undefined;
         console.time("runTime page number " + pageNum + " annonce " + index);
-
+    
         try {
             // Validate the URL
             if (!url || !url.startsWith("http")) {
                 throw new Error("Invalid URL: " + url);
             }
-
-            //console.log("Navigating to URL:", url);
+    
             await page.goto(url, {
                 timeout: this.PAGE_TIMEOUT
             });
-
-            // Filter the object and extract body as raw text.
-            let bodyHTML = undefined
-            /*await Promise.race([
-                page.evaluate(() => document.body.outerHTML),
-                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
-            ])
-                .then((value) => {
-                    if (typeof value === "string") {
-                        bodyHTML = value
-                    } else {
-                        throw new Error("newPage.evaluate() TIMEOUT")
-                    }
-                })
-                .catch((error) => {
-                    throw new Error("newPage.evaluate() ERROR: " + error)
-                });*/
-            // Extract page content
-            /*let bodyHTML = await Promise.race([
-                page.evaluate(() => document.body.outerHTML),
-                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
-            ])
-                .catch((error) => {
-                    throw new Error("newPage.evaluate() ERROR: " + error);
-                });*/
-            //Test to see if i get value instead of entire html body
+    
+            let bodyHTML = undefined;
             await Promise.race([
                 page.evaluate(() => document.body.innerText),
-                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
+                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
             ])
-                .then((value) => {
-                    if (typeof value === "string") {
-                        bodyHTML = value;
-                    } else {
-                        throw new Error("newPage.evaluate() TIMEOUT");
-                    }
-                })
-                .catch((error) => {
-                    throw new Error("newPage.evaluate() ERROR: " + error);
-                });
-
-            let cvr = undefined;
-
-            if (companyURL !== undefined) {
-                if (!companyURL.startsWith("http")) {
-                    throw new Error("Invalid Company URL: " + companyURL);
+            .then((value) => {
+                if (typeof value === "string") {
+                    bodyHTML = value;
+                } else {
+                    throw new Error("newPage.evaluate() TIMEOUT");
                 }
-
-                //console.log("Navigating to Company URL:", companyURL);
-
+            })
+            .catch((error) => {
+                throw new Error("newPage.evaluate() ERROR: " + error);
+            });
+    
+            let cvr = undefined;
+            if (companyURL !== undefined && companyURL.startsWith("http")) {
                 await page.goto(companyURL, {
                     timeout: this.PAGE_TIMEOUT
                 });
-
-                /*let companyHTML = undefined
-                await Promise.race([
-                    page.evaluate(() => document.body.outerHTML),
-                    page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT }) // Ensure a valid selector is used
-                ])
-                    .then(() => {
-                        if (typeof value === "string") {
-                            companyHTML = value
-                        } else {
-                            throw new Error("CompanyDataScrape.evaluate() TIMEOUT")
-                        }
-                    })
-                    .catch((error) => {
-                        throw new Error("CompanyDataScrape.evaluate() ERROR: " + error)
-                    });*/
-
-                let companyHTML = await Promise.race([
-                    page.evaluate(() => document.body.outerHTML),
-                    page.waitForSelector('body', { timeout: 60000 }) //temporarily removed this part after timeout: this.PAGE_TIMEOUT
-                ])
-                    .catch((error) => {
-                        throw new Error("CompanyDataScrape.evaluate() ERROR: " + error);
-                    });
-
-                /*let cvrRegexp = /DK([0-9]{8})/g
-                cvr = cvrRegexp.exec(companyHTML)
-                cvr = cvr[1]; // Extract cvr in first capture group.*/
+    
+                let companyHTML = await page.evaluate(() => document.body.outerHTML);
                 let cvrRegexp = /DK([0-9]{8})/g;
                 let match = cvrRegexp.exec(companyHTML);
                 if (match) {
                     cvr = match[1];
-                } else {
-                    console.warn("CVR not found in company HTML.");
                 }
-
             }
-
-            // Insert or update annonce to database:
-            await this.insertAnnonce(title, bodyHTML, url, cvr, scraperName)
-                .catch((error) => {
-                    throw new Error("insertAnnonce(" + url + "): " + error)
-                })
-
+    
+            console.log(`Attempting to insert with body length: ${bodyHTML.length}`);
+            await this.insertAnnonce(title, bodyHTML, url, cvr, scraperName);
         } catch (error) {
-            errorResult = error;
+            if (error.message.includes('net::ERR_CERT_DATE_INVALID')) {
+                console.error(`SSL certificate error at ${url}: ${error.message}`);
+                console.log("Inserting the record with an empty body due to SSL issue.");
+    
+                // Insert with empty body due to SSL issue
+                console.log(`Attempting to insert with empty body for URL: ${url}`);
+                await this.insertAnnonce(title, "", url, null, scraperName);
+            } else {
+                errorResult = error;
+            }
         }
-
+    
         if (errorResult) {
             this.errorTotalCounter++;
             console.log("Error at scrapePage(" + url + ") → " + errorResult);
         }
-
+    
         console.timeEnd("runTime page number " + pageNum + " annonce " + index);
     }
+    
 
 }
 // Export the JobindexScraper class for use in other modules.
