@@ -1,4 +1,4 @@
-const ORM = require("../data/general-orm-1.0.0");
+const ORM = require("../database/databaseConnector");
 //const ORM = require('../data/general-orm-1.0.1-pool');
 const sha1 = require("sha1");
 const annonceModel = require("../model/annonce");
@@ -6,6 +6,7 @@ const regionModel = require("../model/region");
 
 // Constants:
 const ADVERTS_PER_PAGE = 20;
+const regionCache = new Map();
 
 // Counters:
 
@@ -82,58 +83,48 @@ class JocscraperTemplate {
     this.PAGE_LIMIT = pageLimit;
     this.PAGE_POOL = new Pagepool(browser, poolLimit);
 
-    try {
-      for (let [key, value] of this.REGION_NAMES) {
-        let currentRegionObject = await ORM.FindRegionID(key.toString());
-
-        if (currentRegionObject === null) {
-          console.log(`Region '${key}' not found in the database.`);
-          continue; // Skip to the next region if the region is not found
+    for (let [regionName, regionPath] of this.REGION_NAMES) {
+      try {
+        if (!regionCache.has(regionName)) {
+          const regionObject = await ORM.FindRegionID(regionName.toString());
+          if (!regionObject || regionObject.length === 0) {
+            console.log(`Region '${regionName}' not found in the database.`);
+            continue;
+          }
+          regionCache.set(regionName, regionObject[0].region_id);
         }
 
-        currentRegionID = currentRegionObject[0].region_id;
+        currentRegionID = regionCache.get(regionName);
+        console.log(`BEGINNING SCRAPING IN REGION: ${regionName}`);
 
-        console.log(`BEGINNING SCRAPING IN REGION: ${key}`);
-        const REGION_PAGE_SELECTOR = `${this.TARGET_WEBSITE}${value}`;
-        console.log("REGION_PAGE_SELECTOR: " + REGION_PAGE_SELECTOR);
+        const regionUrl = `${this.TARGET_WEBSITE}${regionPath}`;
+        await page.goto(regionUrl, { timeout: this.PAGE_TIMEOUT });
 
-        await page
-          .goto(REGION_PAGE_SELECTOR, {
-            timeout: this.PAGE_TIMEOUT,
-          })
-          .catch((error) => {
-            throw new Error("Error at beginScraping → page.goto(): " + error);
-          });
-
-        const NUM_PAGES = await this.getNumPages(page, ADVERTS_PER_PAGE);
-        console.log(NUM_PAGES + " PAGES");
-
-        if (NUM_PAGES === 0) {
+        const numPages = await this.getNumPages(page, ADVERTS_PER_PAGE);
+        if (numPages === 0) {
           console.log(
-            `No pages found for region ${key}. Skipping to the next region.`
+            `No pages found for region ${regionName}. Skipping to next region.`
           );
-          continue; // Skip to the next region if no pages are found
+          continue;
         }
 
         for (
           let pageNumber = 0;
-          pageNumber < NUM_PAGES;
+          pageNumber < numPages;
           pageNumber += this.PAGE_LIMIT
         ) {
           await this.scrapeRegion(
             page,
             browser,
-            REGION_PAGE_SELECTOR,
+            regionUrl,
             pageNumber,
             pageNumber + this.PAGE_LIMIT,
             scraperName
-          ).catch((error) => {
-            console.log("Error at scrapeRegion → " + error);
-          });
+          );
         }
+      } catch (error) {
+        console.log(`Error in region ${regionName}: ${error.message}`);
       }
-    } catch (error) {
-      console.log("Error at beginScraping → " + error);
     }
   }
 
@@ -166,8 +157,6 @@ class JocscraperTemplate {
     scraperName
   ) {
     try {
-      console.log("BEGINNING SCRAPING IN REGION:", REGION_PAGE_SELECTOR);
-
       for (let index = fromPage; index < toPage; index++) {
         const PAGE_SELECTOR = `${REGION_PAGE_SELECTOR}${this.getPageExtension(
           index
@@ -198,7 +187,6 @@ class JocscraperTemplate {
       return `Error in scrapeRegion: ${error}`;
     }
   }
-
 
   async getCurrentPageURLTitles(page, PAGE_SELECTOR) {
     const maxRetries = 3; // Maximum number of retries
@@ -287,82 +275,31 @@ class JocscraperTemplate {
    * @returns {Promise<{titleList: Array, urlList: Array}>}
    */
 
-  async tryPathVariationOnPage(
-    page,
-    titleClass,
-    titleAttributes,
-    urlClass,
-    urlAttributes,
-    companyClass,
-    companyAttributes
-  ) {
+  async tryPathVariationOnPage(page, titleClass, titleAttributes, urlClass, urlAttributes, companyClass, companyAttributes) {
+    const titleSelector = `.${titleClass} ${titleAttributes}`;
+    const urlSelector = `.${urlClass} ${urlAttributes}`;
+    const companySelector = `.${companyClass} ${companyAttributes}`;
+  
     try {
-      // Initialize arrays to store valid titles and URLs
-      let titles = [];
-      let urls = [];
-      let company = [];
-
-      // Define the selectors
-      let titleSelector = `.${titleClass} ${titleAttributes}`;
-      let urlSelector = `.${urlClass} ${urlAttributes}`;
-      let companySelector = `.${companyClass} ${companyAttributes}`;
-
-      const baseUrl = page.url();
-      //console.log("baseUrl: " + baseUrl);
-
-      await page.goto(baseUrl, {
-        waitUntil: "networkidle2",
-        timeout: 60000,
-      });
-
-      // Retry element extraction up to 3 times
-      const maxRetries = 3;
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          // Extract elements
-          let titleElements = await page.$$eval(titleSelector, (elements) =>
-            elements.map((el) => el.textContent.trim())
-          );
-          let urlElements = await page.$$eval(urlSelector, (elements) =>
-            elements.map((el) => el.href.trim())
-          );
-          let companyElements = await page.$$eval(companySelector, (elements) =>
-            elements.map((el) => el.href.trim())
-          );
-
-          // Process the elements
-          if (titleElements.length > 0 && urlElements.length > 0) {
-            titles = titleElements;
-            urls = urlElements;
-            if (companyElements) {
-              company = companyElements;
-            }
-            break; // Exit the loop if extraction is successful
-          } else {
-            console.log(
-              `Attempt ${attempt} failed to extract all elements. Retrying...`
-            );
-          }
-        } catch (error) {
-          console.log(`Attempt ${attempt} failed → ${error}`);
-          if (attempt === maxRetries) {
-            throw new Error(
-              `Failed to extract elements after ${maxRetries} attempts → ${error}`
-            );
-          }
-        }
-      }
-
-      if (titles.length === 0 || urls.length === 0) {
+      await page.goto(page.url(), { waitUntil: "networkidle2", timeout: this.PAGE_TIMEOUT });
+  
+      const [titles, urls, companies] = await Promise.all([
+        page.$$eval(titleSelector, elements => elements.map(el => el.textContent.trim())),
+        page.$$eval(urlSelector, elements => elements.map(el => el.href.trim())),
+        companyClass ? page.$$eval(companySelector, elements => elements.map(el => el.href.trim())) : []
+      ]);
+  
+      if (titles.length && urls.length) {
+        return { titleList: titles, urlList: urls, companyUrls: companies };
+      } else {
         throw new Error("No valid path found!");
       }
-
-      return { titleList: titles, urlList: urls, companyUrls: company };
     } catch (error) {
-      console.error("Error at tryPathVariationOnPage() → No Valid Path Found");
+      console.error(`Error in tryPathVariationOnPage for ${titleClass}: ${error.message}`);
       throw error;
     }
   }
+  
 
   /**
    * Iterates through provided titles and urls.

@@ -2,7 +2,7 @@
   "name": "hypecrawler",
   "version": "1.0.0",
   "description": "Final AP-grade project",
-  "main": "main.js",
+  "main": "main_parallel.js",
   "dependencies": {
     "cli-progress": "^3.12.0",
     "csv-parser": "^3.0.0",
@@ -24,7 +24,8 @@
   "scripts": {
     "test": "jest",
     "docs": "node node_modules/jsdoc/jsdoc.js -c conf.json",
-    "start": "node main.js",
+    "sequential": "node main_sequential.js",
+    "parallel": "node main_parallel.js",
     "build": "webpack"
   },
   "repository": {

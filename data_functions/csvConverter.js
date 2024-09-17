@@ -1,6 +1,6 @@
 const fs = require("fs").promises; // Use non-blocking file operations
 const path = require("path");
-const orm = require("./general-orm-1.0.0");
+const orm = require("../database/databaseConnector");
 const { parse } = require("json2csv");
 
 async function exportToCSV(queryNumber) {

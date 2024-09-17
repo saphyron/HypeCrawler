@@ -1,14 +1,14 @@
 // Import required modules
 let puppeteer = require("puppeteer"); // Puppeteer for web scraping
-let jobindexClass = require("./scrapers/jobindex-scraper-1.0.0"); // Jobindex scraper class
-let careerjetClass = require("./scrapers/careerjet-scraper-1.0.0"); // Careerjet scraper class
-let csvConverter = require("./data/CSV_Converter"); // CSV converter module
-let uploadCSVToDatabase = require("./data/database_uploader"); // Database uploader module
+let jobindexClass = require("./scrapers/jobindexScraper"); // Jobindex scraper class
+let careerjetClass = require("./scrapers/careerjetScraper"); // Careerjet scraper class
+let csvConverter = require("./data_functions/csvConverter"); // CSV converter module
+let uploadCSVToDatabase = require("./data_functions/databaseUploader"); // Database uploader module
 const { performance } = require("perf_hooks"); // Performance module for measuring execution time
 let browser; // Declare browser globally to reuse across multiple scraping sessions
 const path = require("path"); // Path module for handling file paths
-const possible_duplicates = require("./data/duplicates_Checker"); // Duplicates checker module
-const orm = require("../HypeCrawler/data/general-orm-1.0.0"); // ORM module for database operations
+const possible_duplicates = require("./data_functions/duplicatesChecker"); // Duplicates checker module
+const orm = require("./database/databaseConnector"); // ORM module for database operations
 
 // Add the unhandled rejection listener at the top
 process.on("unhandledRejection", (reason, promise) => {

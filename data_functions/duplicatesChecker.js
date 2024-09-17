@@ -1,5 +1,5 @@
 // Import the ORM module for database operations
-const orm = require("./general-orm-1.0.0");
+const orm = require("../database/databaseConnector");
 
 /**
  * Function to check for duplicates and update the possible_duplicate column.

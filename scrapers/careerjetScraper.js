@@ -1,5 +1,5 @@
 // Import the ScraperInterface module from the local file 'jobscraper-interface-1.0.0'
-let ScraperInterface = require('./jobscraper-interface-1.0.0');
+let ScraperInterface = require('./scraperInterface');
 
 // TODO:Fix careerjet error when no jobs in a region. It should continue with next region instead of stopping fully.
 
@@ -65,57 +65,89 @@ class CareerjetScraper extends ScraperInterface {
         let formattedUrl = url;
         let cvr;
         let errorResult = undefined;
+        let retries = 3; // Number of retries allowed for HTTP/2
+        let http1Retries = 2; // Number of retries allowed for HTTP/1.1
+        let retryDelay = 2000; // Initial delay between retries (in ms)
+        let backoffFactor = 2; // Backoff multiplier for retries
+        let useHttp1 = false; // Flag to force HTTP/1.1 if HTTP/2 fails
+    
         console.time("runTime page number " + pageNum + " annonce " + index);
     
-        try {
-            await page.goto(formattedUrl, {
-                timeout: this.PAGE_TIMEOUT
-            })
-            .catch((error) => {
-                throw new Error("page.goto(): " + error);
-            });
-            // Attempt to extract the inner text of the page's body, handling any errors that occur.
-            let bodyHTML = undefined;
-            await Promise.race([
-                page.evaluate(() => document.body.innerText),
-                page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
-            ])
-            .then((value) => {
-                if (typeof value === "string") {
-                    bodyHTML = value;
-                } else {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                // Force HTTP/1.1 only if previous attempts failed due to HTTP/2 errors
+                if (useHttp1 && attempt > retries) {
+                    console.log(`Retrying with HTTP/1.1, attempt ${attempt - retries} of ${http1Retries}`);
+                    await page.setExtraHTTPHeaders({
+                        'Upgrade-Insecure-Requests': '1'
+                    });
+                }
+    
+                await page.goto(formattedUrl, {
+                    timeout: this.PAGE_TIMEOUT
+                });
+    
+                let bodyHTML = await Promise.race([
+                    page.evaluate(() => document.body.innerText),
+                    page.waitForSelector('body', { timeout: this.PAGE_TIMEOUT })
+                ]);
+    
+                if (typeof bodyHTML !== "string") {
                     throw new Error("newPage.evaluate() TIMEOUT");
                 }
-            })
-            .catch((error) => {
-                throw new Error("newPage.evaluate() ERROR: " + error);
-            });
     
-            // Insert or update the job listing in the database.
-            await this.insertAnnonce(title, bodyHTML, formattedUrl, cvr, scraperName)
-            .catch((error) => {
-                throw new Error("insertAnnonce(" + formattedUrl + "): " + error)
-            });
-        } catch (error) {
-            if (error.message.includes('net::ERR_CERT_DATE_INVALID')) {
-                console.error(`SSL certificate error at ${url}: ${error.message}`);
-                console.log("Inserting the record with an empty body due to SSL issue.");
+                await this.insertAnnonce(title, bodyHTML, formattedUrl, cvr, scraperName);
+                break; // Exit loop on success
     
-                // Insert with empty body due to SSL issue
-                console.log(`Attempting to insert with empty body for URL: ${url}`);
-                await this.insertAnnonce(title, "", url, null, scraperName);
-            } else {
-                errorResult = error;
+            } catch (error) {
+                if (error.message.includes('net::ERR_HTTP2_PROTOCOL_ERROR') || error.message.includes('net::ERR_HTTP2_INADEQUATE_TRANSPORT_SECURITY')) {
+                    console.error(`HTTP/2 error at ${formattedUrl}: ${error.message}`);
+    
+                    if (!useHttp1) {
+                        console.log("Retrying with HTTP/1.1...");
+                        useHttp1 = true; // Force HTTP/1.1 for the next attempt
+                    } else if (attempt <= retries + http1Retries) {
+                        console.log(`Retrying in ${retryDelay / 1000} seconds...`);
+                        await new Promise(resolve => setTimeout(resolve, retryDelay)); // Wait before retrying
+                        retryDelay *= backoffFactor; // Exponential backoff
+                    } else {
+                        console.error(`Failed after ${retries + http1Retries} attempts: ${error.message}`);
+                        errorResult = error;
+                    }
+                } else if (error.message.includes('net::ERR_CONNECTION_CLOSED')) {
+                    console.error(`Connection closed error at ${formattedUrl}: ${error.message}`);
+    
+                    if (attempt < retries + http1Retries) {
+                        console.log(`Retrying in ${retryDelay / 1000} seconds...`);
+                        await new Promise(resolve => setTimeout(resolve, retryDelay)); // Wait before retrying
+                        retryDelay *= backoffFactor; // Exponential backoff
+                    } else {
+                        console.error(`Failed after ${retries + http1Retries} attempts: ${error.message}`);
+                        errorResult = error;
+                    }
+                } else if (error.message.includes("net::ERR_CERT_DATE_INVALID")) {
+                    console.error(`SSL certificate error at ${formattedUrl}: ${error.message}`);
+                    console.log("Inserting the record with an empty body due to SSL issue.");
+    
+                    // Insert with empty body due to SSL issue
+                    await this.insertAnnonce(title, "", formattedUrl, null, scraperName);
+                    break; // Exit loop after handling SSL issue
+                } else {
+                    errorResult = error;
+                    break; // Exit loop for other types of errors
+                }
             }
         }
     
         if (errorResult) {
             this.errorTotalCounter++;
-            console.log("Error at scrapePage(" + formattedUrl + ") → " + errorResult);
+            console.log(`Error at scrapePage(${formattedUrl}) → ${errorResult}`);
         }
     
         console.timeEnd("runTime page number " + pageNum + " annonce " + index);
     }
+    
+    
     
 
     /**

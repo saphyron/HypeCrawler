@@ -2,12 +2,12 @@
 let puppeteer = require('puppeteer'); // Puppeteer for web scraping
 let jobindexClass = require('./scrapers/jobindex-scraper-1.0.0'); // Jobindex scraper class
 let careerjetClass = require('./scrapers/careerjet-scraper-1.0.0'); // Careerjet scraper class
-let csvConverter = require('./data/CSV_Converter'); // CSV converter module
-let uploadCSVToDatabase = require('./data/database_uploader'); // Database uploader module
+let csvConverter = require('./data_functions/csvConverter'); // CSV converter module
+let uploadCSVToDatabase = require('./data_functions/database_uploader'); // Database uploader module
 const { performance } = require('perf_hooks'); // Performance module for measuring execution time
 let browser;  // Declare browser outside to reuse across multiple scraping sessions
 const path = require('path'); // Path module for handling file paths
-const possible_duplicates = require('./data/duplicates_Checker'); // Duplicates checker module
+const possible_duplicates = require('./data_functions/duplicates_Checker'); // Duplicates checker module
 
 /**
  * Main function to run the scrapers, convert data to CSV, upload CSV to the database, and check for duplicates.
