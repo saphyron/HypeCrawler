@@ -74,7 +74,7 @@ class CareerjetScraper extends ScraperInterface {
             .catch((error) => {
                 throw new Error("page.goto(): " + error);
             });
-    
+            // Attempt to extract the inner text of the page's body, handling any errors that occur.
             let bodyHTML = undefined;
             await Promise.race([
                 page.evaluate(() => document.body.innerText),

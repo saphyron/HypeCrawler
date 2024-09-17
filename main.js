@@ -41,7 +41,7 @@ async function main() {
 
         // Log the start time for CSV conversion
         var csvStartTime = performance.now(); 
-        //await csvConverter.exportToCSV(2); // Convert the scraped data to CSV
+        await csvConverter.exportToCSV(2); // Convert the scraped data to CSV
         var csvEndTime = performance.now(); // Log the end time for CSV conversion
 
         // Log the start time for the duplicates checker

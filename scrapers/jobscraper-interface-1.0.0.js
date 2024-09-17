@@ -91,6 +91,8 @@ class JocscraperTemplate {
           continue; // Skip to the next region if the region is not found
         }
 
+        currentRegionID = currentRegionObject[0].region_id;
+
         console.log(`BEGINNING SCRAPING IN REGION: ${key}`);
         const REGION_PAGE_SELECTOR = `${this.TARGET_WEBSITE}${value}`;
         console.log("REGION_PAGE_SELECTOR: " + REGION_PAGE_SELECTOR);
