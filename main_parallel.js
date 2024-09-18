@@ -318,3 +318,5 @@ main().then(
     process.exit(1); // Exit with error code
   }
 );
+
+module.exports = { main };
