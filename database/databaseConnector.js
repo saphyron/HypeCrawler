@@ -233,14 +233,8 @@ class ORM {
 
       // Execute the query with the provided region name.
       CONNECTION.query(query, [incomingRegionName], function (error, result) {
-        if (error) {
-          reject("Error at ORM.FindRegionID() → " + error); // Reject on query error.
-        }
-        if (result.length > 0) {
-          resolve(result[0].region_id); // Resolve with the region ID.
-        } else {
-          resolve(null); // Region not found.
-        }
+        if (error) reject("Error at ORM.FindRegionID() → " + error); // Reject on query error
+        resolve(result); // Resolve the promise with the result of the query
       });
     });
   }

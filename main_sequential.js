@@ -21,7 +21,7 @@ let browser; // Declare browser variable to reuse across multiple scraping sessi
  *
  * It also logs the execution time for each task and closes the browser when done.
  */
-async function main() {
+async function main_sequential() {
     try {
         // Initialize the browser once to be reused across functions
         await initBrowser();
@@ -200,10 +200,10 @@ async function retryOperation(operation, retries = 3, delay = 2000, maxWait = 30
 }
 
 // Run the main function
-main().then((result) => {
+main_sequential().then((result) => {
     console.log("Successful termination: " + result);
 }).catch((error) => {
     console.log("Failed termination: " + error);
 });
 
-module.exports = { main };
+module.exports = { main_sequential };

@@ -39,7 +39,7 @@ const DB_CONFIG_NEW = {
  * This function runs the Jobindex and Careerjet scrapers in parallel, checks for duplicates,
  * and converts the scraped data into a CSV file. It also handles error checking and resource cleanup.
  */
-async function main() {
+async function main_parallel() {
   try {
     // Initialize the Puppeteer browser
     await initBrowser();
@@ -308,7 +308,7 @@ async function runScraper(scraper, page, scraperName) {
 }
 
 // Main function execution
-main().then(
+main_parallel().then(
   () => {
     console.log("Process finished successfully.");
     process.exit(0);
@@ -319,4 +319,4 @@ main().then(
   }
 );
 
-module.exports = { main };
+module.exports = { main_parallel };
