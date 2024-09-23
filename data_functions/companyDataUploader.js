@@ -1,205 +1,166 @@
-const axios = require("axios");
-const path = require("path");
 const fs = require("fs");
-const crypto = require("crypto"); // For generating checksums
-const cliProgress = require("cli-progress");
+const path = require("path");
+const orm = require("../database/databaseConnector");
+const cliProgress = require("cli-progress"); // Import cli-progress
+const util = require('util');
 
-// Define the directory path for JSON files
 const dirPath = path.join("E:", "Data", "JSON Files", "CompanyData");
 
-// Helper function to generate a checksum for an object
-function generateChecksum(obj) {
-  return crypto.createHash("md5").update(JSON.stringify(obj)).digest("hex");
-}
+async function uploadData(connection) {
+  console.log("Connected to the database.");
 
-// Helper function to find the next available batch number
-function getNextBatchNumber() {
-  const files = fs.readdirSync(dirPath);
-  const batchNumbers = files
-    .filter((file) => path.extname(file) === ".json")
-    .map((file) => parseInt(path.basename(file, ".json").split("_").pop(), 10))
-    .filter((num) => !isNaN(num));
-
-  return batchNumbers.length > 0 ? Math.max(...batchNumbers) + 1 : 0;
-}
-
-// Function to cache old data
-async function cacheOldData() {
-  const progressBar = new cliProgress.SingleBar(
-    {
-      format:
-        "Caching old data | {bar} | {percentage}% | {value}/{total} | ETA: {eta_formatted}",
-    },
-    cliProgress.Presets.shades_classic
-  );
-
-  let files = fs
+  const files = fs
     .readdirSync(dirPath)
-    .filter((file) => path.extname(file) === ".json");
-  const checksums = new Set();
+    .filter((file) => /^companyData_batch_\d+\.json$/.test(file));
 
+  console.log(`Found ${files.length} JSON files.`);
+
+  let existingCVRNumbers = new Set();
+  const fetchCVRQuery = `SELECT cvrNummer FROM companyData`;
+
+  // Use util.promisify to make connection.query return a promise
+  const queryAsync = util.promisify(connection.query).bind(connection);
+
+  try {
+    const cvrResults = await queryAsync(fetchCVRQuery);
+    if (cvrResults) {
+      cvrResults.forEach(row => existingCVRNumbers.add(row.cvrNummer));
+      console.log(`Cached ${existingCVRNumbers.size} existing CVR numbers from the database.`);
+    } else {
+      console.warn("No existing CVR numbers found or unexpected response structure.");
+    }
+  } catch (error) {
+    console.error("Error fetching existing CVR numbers:", error);
+  }
+
+  let uploadedCount = 0;
+  let skippedCount = 0;
+  let failedCount = 0;
+
+  const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
   progressBar.start(files.length, 0);
 
   for (const file of files) {
     const filePath = path.join(dirPath, file);
-    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    data.forEach((item) => checksums.add(generateChecksum(item)));
+    let data;
+
+    try {
+      data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch (error) {
+      console.error(`Error parsing JSON in file ${filePath}:`, error);
+      failedCount++;
+      progressBar.increment(); // Increment progress for failed file
+      continue; // Skip to the next file
+    }
+
+    for (const item of data) {
+      const vrVirksomhed = item._source?.Vrvirksomhed;
+
+      if (!vrVirksomhed) {
+        console.warn("Vrvirksomhed not found for item:", item);
+        continue; // Skip this item if Vrvirksomhed is missing
+      }
+
+      const id = item._id;
+      const cvrNummer = vrVirksomhed.cvrNummer;
+
+      //console.log("ID:", id, "CVR Number:", cvrNummer);
+
+      // Check if the CVR number exists in the cached set
+      if (existingCVRNumbers.has(cvrNummer)) {
+        //console.log(`Skipping existing CVR Number: ${cvrNummer}`);
+        skippedCount++;
+        continue; // Skip to the next item if it already exists
+      }
+
+      // Prepare fields
+      const kommuneNavn = vrVirksomhed?.beliggenhedsadresse && vrVirksomhed.beliggenhedsadresse.length > 0 
+        ? vrVirksomhed.beliggenhedsadresse.reduce((latest, address) => {
+            if (address.kommune && latest.kommune) {
+              return new Date(address.kommune.sidstOpdateret) > new Date(latest.kommune.sidstOpdateret) ? address : latest;
+            }
+            return latest; 
+          }).kommune?.kommuneNavn || null
+        : null;
+
+      const navn = vrVirksomhed?.navne && vrVirksomhed.navne.length > 0 
+        ? vrVirksomhed.navne.reduce((latest, navn) => {
+            if (navn && latest) {
+              return new Date(navn.sidstOpdateret) > new Date(latest.sidstOpdateret) ? navn : latest;
+            }
+            return latest; 
+          }).navn || null
+        : null;
+
+      const virksomhedsform = vrVirksomhed?.virksomhedsform[0]?.langBeskrivelse || null;
+
+      const query = `INSERT INTO companyData (id, cvrNummer, kommuneNavn, navn, langBeskrivelse) VALUES (?, ?, ?, ?, ?)`;
+
+      //console.log(`Inserting: ID=${id}, CVR Number=${cvrNummer}, Kommune Navn=${kommuneNavn}, Navn=${navn}, Virksomhedsform=${virksomhedsform}`);
+
+      // Use async/await for the query execution
+      try {
+        await queryAsync(query, [id, cvrNummer, kommuneNavn, navn, virksomhedsform]);
+        //console.log(`Inserted CVR Number: ${cvrNummer}`);
+        uploadedCount++;
+      } catch (error) {
+        console.error("Error inserting data:", error);
+        failedCount++;
+      }
+    }
+
     progressBar.increment();
   }
 
   progressBar.stop();
-  return checksums;
+  console.log(`Data upload completed. Summary:`);
+  console.log(`Total uploaded: ${uploadedCount}`);
+  console.log(`Skipped (existing CVR): ${skippedCount}`);
+  console.log(`Failed to upload: ${failedCount}`);
+
+  connection.end(err => {
+    if (err) console.error("Error ending connection:", err);
+    console.log("Connection successfully ended.");
+  });
 }
 
-// Function to fetch and process data in batches
-async function fetchAndProcessData(oldDataChecksums) {
-  const totalRecordsEstimate = 2200000; // 2.2 million records estimate
-  let recordsProcessed = 0;
-  const progressBar = new cliProgress.SingleBar(
-    {
-      format:
-        "Processing new data | {bar} | {percentage}% | {value}/{total} | ETA: {eta_formatted}",
-    },
-    cliProgress.Presets.shades_classic
-  );
 
-  // Load credentials from config.json
-  const configPath = path.join(__dirname, "../configCompany.json");
-  const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  const auth = Buffer.from(`${config.username}:${config.password}`).toString(
-    "base64"
-  );
+async function createCompanyDataTable(connection) {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS companyData (
+      id BIGINT,
+      cvrNummer BIGINT NOT NULL,
+      kommuneNavn VARCHAR(255),
+      navn VARCHAR(255),
+      langBeskrivelse VARCHAR(255),
+      sidstOpdateret TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `;
 
-  const scrollTime = "1m"; // Scroll timeout
-  const batchSize = 3000; // Size of each batch
-  const initialSearchUrl = `http://distribution.virk.dk/cvr-permanent/virksomhed/_search?scroll=${scrollTime}`;
-  const scrollUrl = "http://distribution.virk.dk/_search/scroll";
-
-  let scrollId = null;
-  let hasMoreData = true;
-  let batchNumber = getNextBatchNumber(); // Determine the next batch number
-
-  // Start progress bar with total estimate of 2.2 million
-  progressBar.start(totalRecordsEstimate, 0, { totalFormatted: "2.2m" });
-
-  while (hasMoreData) {
-    let response;
-    try {
-      if (scrollId) {
-        response = await axios.post(
-          scrollUrl,
-          {
-            scroll: scrollTime,
-            scroll_id: scrollId,
-          },
-          {
-            headers: {
-              Authorization: `Basic ${auth}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      } else {
-        response = await axios.post(
-          initialSearchUrl,
-          {
-            size: batchSize,
-            _source: [
-              "Vrvirksomhed.cvrNummer",
-              "Vrvirksomhed.regnummer",
-              "Vrvirksomhed.sidstOpdateret",
-              "Vrvirksomhed.navne",
-              "Vrvirksomhed.beliggenhedsadresse",
-              "Vrvirksomhed.virksomhedsform",
-              "Vrvirksomhed.livsforloeb",
-              "Vrvirksomhed.status",
-              "Vrvirksomhed.virksomhedMetadata",
-              "Vrvirksomhed.stiftelsesDato",
-              "Vrvirksomhed.virkningsDato",
-              "Vrvirksomhed.sammensatStatus",
-            ],
-            query: {
-              match_all: {},
-            },
-          },
-          {
-            headers: {
-              Authorization: `Basic ${auth}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        scrollId = response.data._scroll_id;
-      }
-
-      const { hits } = response.data;
-
-      if (hits && hits.hits.length > 0) {
-        const batch = hits.hits;
-        recordsProcessed += batch.length;
-
-        progressBar.increment(batch.length);
-
-        await compareAndSaveData(batch, oldDataChecksums); // Compare and save the batch
-
-        if (hits.hits.length < batchSize) {
-          hasMoreData = false;
-        }
-      } else {
-        hasMoreData = false;
-      }
-    } catch (error) {
-      console.error(
-        "Error fetching data from API:",
-        error.response ? error.response.data : error.message
-      );
-      hasMoreData = false;
-    }
+  try {
+    await queryAsync(createTableQuery); // Await table creation query
+    console.log("Table 'companyData' created or already exists.");
+  } catch (error) {
+    console.error("Error creating table:", error);
   }
-
-  progressBar.stop();
-}
-
-// Function to compare fetched data with old data and save new items
-async function compareAndSaveData(batch, oldDataChecksums) {
-  const newDataFound = [];
-
-  for (const item of batch) {
-    const itemChecksum = generateChecksum(item);
-
-    if (!oldDataChecksums.has(itemChecksum)) {
-      newDataFound.push(item); // Add new item to newDataFound
-    }
-  }
-
-  if (newDataFound.length > 0) {
-    console.log(`Found ${newDataFound.length} new items.`); // Log how many new items were found
-    saveDataToFile(newDataFound); // Save the new items to file
-  }
-}
-
-// Function to save data to a file
-function saveDataToFile(data) {
-  const batchNumber = getNextBatchNumber(); // Ensure you have this function
-  const filePath = path.join(dirPath, `companyData_batch_${batchNumber}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  console.log(`Data saved to ${filePath}`);
 }
 
 // Main function to execute the process
 async function main() {
-  const oldDataChecksums = await cacheOldData(); // Cache old data checksums
-  await fetchAndProcessData(oldDataChecksums); // Fetch and process new data
-  console.log("Process completed.");
+  let connection;
+  try {
+    connection = await orm.connectDatabase(); // Establish connection once
+    await createCompanyDataTable(connection);
+    await uploadData(connection);
+    console.log("Process completed.");
+  } catch (error) {
+    console.error("An error occurred:", error);
+  } finally {
+    if (connection) {
+      await orm.disconnectDatabase(); // Ensure to disconnect
+      console.log("Connection closed.");
+    }
+  }
 }
 
-main().then(
-  () => {
-    console.log("Process finished successfully.");
-    process.exit(0);
-  },
-  (error) => {
-    console.error("Process finished with errors:", error);
-    process.exit(1); // Exit with error code
-  }
-);
+module.exports = { main };
