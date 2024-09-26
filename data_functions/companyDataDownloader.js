@@ -1,6 +1,7 @@
 const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
+const fsPromises = require("fs/promises"); // Import fs/promises
 const crypto = require("crypto"); // For generating checksums
 const cliProgress = require("cli-progress");
 const orm = require("../database/databaseConnector");
@@ -21,7 +22,7 @@ const bannedWords = [
   "Opløst efter spaltning",
   "Slettet",
   "Tvangsopløst",
-  "Konkurs"
+  "Konkurs",
 ].map((word) => word.toUpperCase()); // Convert to uppercase
 
 // Helper function to generate a checksum for an object
@@ -41,25 +42,21 @@ function getNextBatchNumber() {
 }
 
 // Function to cache old data
-async function cacheOldData() {
-  const progressBar = new cliProgress.SingleBar(
-    {
-      format:
-        "Caching old data | {bar} | {percentage}% | {value}/{total} | ETA: {eta_formatted}",
-    },
-    cliProgress.Presets.shades_classic
+async function cacheOldData(multiBar) {
+  const files = (await fsPromises.readdir(dirPath)).filter(
+    (file) => path.extname(file) === ".json"
   );
-
-  let files = fs
-    .readdirSync(dirPath)
-    .filter((file) => path.extname(file) === ".json");
   const checksums = new Set();
 
-  progressBar.start(files.length, 0);
+  // Create a progress bar for caching
+  const progressBar = multiBar.create(files.length, 0, {
+    name: "Caching old data",
+    message: "",
+  });
 
   for (const file of files) {
     const filePath = path.join(dirPath, file);
-    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const data = JSON.parse(await fsPromises.readFile(filePath, "utf8"));
     data.forEach((item) => checksums.add(generateChecksum(item)));
     progressBar.increment();
   }
@@ -70,20 +67,29 @@ async function cacheOldData() {
 
 // Function to check if any banned word is found in 'Vrvirksomhed.sammensatStatus' or 'Vrvirksomhed.virksomhedsstatus'
 function containsBannedStatus(sammensatStatus, virksomhedsstatus) {
+  // Helper to check if any banned word is present in a given status string
+  const hasBannedWord = (status) => {
+    return bannedWords.some((bannedWord) => {
+      const regex = new RegExp(`\\b${bannedWord}\\b`, "i"); // Use word boundaries to ensure exact match
+      return regex.test(status);
+    });
+  };
+
   // Check 'Vrvirksomhed.sammensatStatus'
   if (sammensatStatus) {
-    const status = sammensatStatus.toUpperCase(); // Ensure case-insensitive match
-    if (bannedWords.some(bannedWord => status.includes(bannedWord))) {
-      return true; // A banned word was found in 'sammensatStatus', exclude this item
+    // Ensure case-insensitive match and handle concatenated statuses by introducing spaces
+    const status = sammensatStatus.replace(/([A-Z])/g, " $1").toUpperCase();
+    if (hasBannedWord(status)) {
+      return true; // A banned word was found in 'sammensatStatus'
     }
   }
 
   // Check 'Vrvirksomhed.virksomhedsstatus'
   if (Array.isArray(virksomhedsstatus)) {
-    for (const statusEntry of virksomhedsstatus) {
-      const status = statusEntry.status.toUpperCase(); // Ensure case-insensitive match
-      if (bannedWords.some(bannedWord => status.includes(bannedWord))) {
-        return true; // A banned word was found in 'virksomhedsstatus', exclude this item
+    for (let status of virksomhedsstatus) {
+      const currentStatus = status.status.toUpperCase();
+      if (bannedWords.includes(currentStatus)) {
+        return true; // Found a banned status
       }
     }
   }
@@ -91,20 +97,18 @@ function containsBannedStatus(sammensatStatus, virksomhedsstatus) {
   return false; // No banned words were found in either field
 }
 
-
 // Function to fetch and process data in batches
-async function fetchAndProcessData(oldDataChecksums) {
+async function fetchAndProcessData(oldDataChecksums, multiBar) {
   const totalRecordsEstimate = 2200000; // 2.2 million records estimate
   let recordsProcessed = 0;
-  const progressBar = new cliProgress.SingleBar(
-    {
-      format:
-        "Processing new data | {bar} | {percentage}% | {value}/{total} | ETA: {eta_formatted}",
-    },
-    cliProgress.Presets.shades_classic
-  );
 
-  // Load credentials from config.json
+  // Create a progress bar for downloading
+  const progressBar = multiBar.create(totalRecordsEstimate, 0, {
+    name: "Processing new data",
+    message: "",
+  });
+
+  // Load credentials from configCompany.json
   const configPath = path.join(__dirname, "../configCompany.json");
   const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
   const auth = Buffer.from(`${config.username}:${config.password}`).toString(
@@ -119,9 +123,6 @@ async function fetchAndProcessData(oldDataChecksums) {
   let scrollId = null;
   let hasMoreData = true;
   let batchNumber = getNextBatchNumber(); // Determine the next batch number
-
-  // Start progress bar with total estimate of 2.2 million
-  progressBar.start(totalRecordsEstimate, 0, { totalFormatted: "2.2m" });
 
   while (hasMoreData) {
     let response;
@@ -163,7 +164,6 @@ async function fetchAndProcessData(oldDataChecksums) {
             query: {
               bool: {
                 must: [{ match_all: {} }],
-                
               },
             },
           },
@@ -185,7 +185,7 @@ async function fetchAndProcessData(oldDataChecksums) {
 
         progressBar.increment(batch.length);
 
-        await compareAndSaveData(batch, oldDataChecksums); // Compare and save the batch
+        await compareAndSaveData(batch, oldDataChecksums, progressBar); // Compare and save the batch
 
         if (hits.hits.length < batchSize) {
           hasMoreData = false;
@@ -206,14 +206,15 @@ async function fetchAndProcessData(oldDataChecksums) {
 }
 
 // Function to compare fetched data with old data and save new items
-async function compareAndSaveData(batch, oldDataChecksums) {
+async function compareAndSaveData(batch, oldDataChecksums, progressBar) {
   const newDataFound = [];
 
   for (const item of batch) {
     const itemChecksum = generateChecksum(item);
 
     // Extract 'sammensatStatus' and 'virksomhedsstatus' from item
-    const sammensatStatus = item._source?.Vrvirksomhed?.virksomhedMetadata?.sammensatStatus; // Updated line
+    const sammensatStatus =
+      item._source?.Vrvirksomhed?.virksomhedMetadata?.sammensatStatus;
     const virksomhedsstatus = item._source?.Vrvirksomhed?.virksomhedsstatus;
 
     // Skip items that contain banned statuses in either 'sammensatStatus' or 'virksomhedsstatus'
@@ -227,28 +228,130 @@ async function compareAndSaveData(batch, oldDataChecksums) {
   }
 
   if (newDataFound.length > 0) {
-    console.log(`Found ${newDataFound.length} new items.`); // Log how many new items were found
-    saveDataToFile(newDataFound); // Save the new items to file
+    await saveDataToFile(newDataFound); // Save the new items to file
+
+    // Update the progress bar's message
+    progressBar.update(progressBar.value, {
+      message: `Found ${newDataFound.length} new items.`,
+    });
+
+    // Optionally, clear the message after a delay
+    setTimeout(() => {
+      progressBar.update(progressBar.value, { message: "" });
+    }, 5000); // Clear message after 5 seconds
   }
 }
 
-
-
 // Function to save data to a file
-function saveDataToFile(data) {
-  const batchNumber = getNextBatchNumber(); // Ensure you have this function
+async function saveDataToFile(data) {
+  const batchNumber = getNextBatchNumber();
   const filePath = path.join(dirPath, `companyData_batch_${batchNumber}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  console.log(`Data saved to ${filePath}`);
+  await fsPromises.writeFile(filePath, JSON.stringify(data, null, 2));
+  // Removed console.log to prevent interference with the progress bar
+}
+
+// Function to merge and reorganize files in a memory-efficient way
+async function mergeAndReorganizeFiles(multiBar) {
+  const files = (await fsPromises.readdir(dirPath)).filter(
+    (file) => path.extname(file) === ".json"
+  );
+
+  // Total number of files to process
+  const totalFiles = files.length;
+
+  // Create a progress bar for merging
+  const progressBar = multiBar.create(totalFiles, 0, {
+    name: "Merging files",
+    message: "",
+  });
+
+  let batchNumber = 0; // For naming the output files
+  let objectsInCurrentOutputFile = 0;
+  let currentOutputData = [];
+
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    const data = JSON.parse(await fsPromises.readFile(filePath, "utf8"));
+
+    for (const item of data) {
+      currentOutputData.push(item);
+      objectsInCurrentOutputFile++;
+
+      // If we've reached 10,000 objects, write to a new file
+      if (objectsInCurrentOutputFile >= 10000) {
+        const newFileName = `companyData_merged_batch_${batchNumber}.json`;
+        const newFilePath = path.join(dirPath, newFileName);
+        await fsPromises.writeFile(
+          newFilePath,
+          JSON.stringify(currentOutputData, null, 2)
+        );
+
+        // Reset for next batch
+        batchNumber++;
+        currentOutputData = [];
+        objectsInCurrentOutputFile = 0;
+      }
+    }
+
+    progressBar.increment();
+  }
+
+  // After processing all files, write any remaining data
+  if (currentOutputData.length > 0) {
+    const newFileName = `companyData_merged_batch_${batchNumber}.json`;
+    const newFilePath = path.join(dirPath, newFileName);
+    await fsPromises.writeFile(
+      newFilePath,
+      JSON.stringify(currentOutputData, null, 2)
+    );
+    batchNumber++;
+  }
+
+  progressBar.stop();
+
+  // Delete old files
+  const deleteProgressBar = multiBar.create(totalFiles, 0, {
+    name: "Deleting old files",
+    message: "",
+  });
+
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    await fsPromises.unlink(filePath);
+    deleteProgressBar.increment();
+  }
+
+  deleteProgressBar.stop();
+
+  console.log(
+    `Reorganized data into ${batchNumber} files with up to 10,000 records each.`
+  );
 }
 
 // Main function to execute the process
 async function main() {
-  const oldDataChecksums = await cacheOldData(); // Cache old data checksums
-  await fetchAndProcessData(oldDataChecksums); // Fetch and process new data
+  // Create a MultiBar instance
+  const multiBar = new cliProgress.MultiBar(
+    {
+      clearOnComplete: false,
+      hideCursor: true,
+      format:
+        "{bar} | {percentage}% | {value}/{total} | ETA: {eta_formatted} | {name} | {message}",
+    },
+    cliProgress.Presets.shades_classic
+  );
+
+  const oldDataChecksums = await cacheOldData(multiBar); // Cache old data checksums
+  await fetchAndProcessData(oldDataChecksums, multiBar); // Fetch and process new data
+
+  // Now, merge and reorganize files in a memory-efficient way
+  await mergeAndReorganizeFiles(multiBar);
+
+  multiBar.stop(); // Stop the MultiBar after all progress bars are done
   console.log("Process completed.");
 }
 
+/* Uncomment to run the main function if needed
 main().then(
   () => {
     console.log("Process finished successfully.");
@@ -259,3 +362,6 @@ main().then(
     process.exit(1); // Exit with error code
   }
 );
+*/
+
+module.exports = { main };
