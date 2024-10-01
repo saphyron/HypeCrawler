@@ -17,7 +17,10 @@ async function uploadData(connection) {
   console.log(`Found ${files.length} JSON files.`);
 
   let existingCVRNumbers = new Set();
+  let existingIDs = new Set(); // Add this line
+
   const fetchCVRQuery = `SELECT cvrNummer FROM companyData`;
+  const fetchIDQuery = `SELECT id FROM companyData`; // Add this line
 
   // Use util.promisify to make connection.query return a promise
   const queryAsync = util.promisify(connection.query).bind(connection);
@@ -34,8 +37,21 @@ async function uploadData(connection) {
         "No existing CVR numbers found or unexpected response structure."
       );
     }
+
+    // Fetch existing IDs
+    const idResults = await queryAsync(fetchIDQuery); // Add this block
+    if (idResults) {
+      idResults.forEach((row) => existingIDs.add(row.id));
+      console.log(
+        `Cached ${existingIDs.size} existing IDs from the database.`
+      );
+    } else {
+      console.warn(
+        "No existing IDs found or unexpected response structure."
+      );
+    }
   } catch (error) {
-    console.error("Error fetching existing CVR numbers:", error);
+    console.error("Error fetching existing CVR numbers or IDs:", error);
   }
 
   let uploadedCount = 0;
@@ -95,7 +111,7 @@ async function uploadData(connection) {
       // Check if the CVR number exists in the cached set
       if (existingCVRNumbers.has(cvrNummer)) {
         skippedCount++;
-        continue; // Skip to the next item if it already exists
+        continue; // Skip to the next item if the CVR number already exists
       }
 
       // Prepare fields
@@ -152,9 +168,51 @@ async function uploadData(connection) {
         vrVirksomhed?.virksomhedMetadata?.nyesteKontaktoplysninger || [];
       const url = extractUrl(kontaktOplysninger) || null;
 
+      // Check if the ID exists in the cached set
+      if (existingIDs.has(id)) {
+        // Perform an UPDATE operation
+        const updateQuery = `
+          UPDATE companyData
+          SET cvrNummer = ?, kommuneNavn = ?, navn = ?, langBeskrivelse = ?, antalAnsatte = ?, creationDate = ?, antalAarsvaerk = ?, url = ?, brancheTekst = ?, brancheCode = ?
+          WHERE id = ?
+        `;
+
+        try {
+          await queryAsync(updateQuery, [
+            cvrNummer,
+            kommuneNavn,
+            navn,
+            virksomhedsform,
+            ansatte,
+            creationDate,
+            antalAarsvaerk,
+            url,
+            brancheTekst,
+            brancheCode,
+            id, // WHERE clause parameter
+          ]);
+          uploadedCount++;
+
+          // Update the existing CVR numbers and IDs
+          existingCVRNumbers.add(cvrNummer);
+          existingIDs.add(id);
+        } catch (error) {
+          failedCount++;
+          // Update the progress bar message
+          progressBar.update(progressBar.value, {
+            message: `Error updating data for ID ${id}: ${error.message}`,
+          });
+          // Optionally clear the message after a delay
+          setTimeout(() => {
+            progressBar.update(progressBar.value, { message: "" });
+          }, 5000);
+        }
+        continue; // Proceed to the next item
+      }
+
+      // If both CVR and ID are new, perform an INSERT
       const query = `INSERT INTO companyData (id, cvrNummer, kommuneNavn, navn, langBeskrivelse, antalAnsatte, creationDate, antalAarsvaerk, url, brancheTekst, brancheCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-      // Use async/await for the query execution
       try {
         await queryAsync(query, [
           id,
@@ -170,6 +228,10 @@ async function uploadData(connection) {
           brancheCode,
         ]);
         uploadedCount++;
+
+        // Update the existing CVR numbers and IDs
+        existingCVRNumbers.add(cvrNummer);
+        existingIDs.add(id);
       } catch (error) {
         failedCount++;
         // Update the progress bar message
@@ -222,7 +284,6 @@ function extractUrl(contactDetails) {
   return null;
 }
 
-
 async function createCompanyDataTable(connection) {
   // Use util.promisify to make connection.query return a promise
   const queryAsync = util.promisify(connection.query).bind(connection);
@@ -240,7 +301,8 @@ async function createCompanyDataTable(connection) {
       url varchar(255),
       brancheTekst varchar(255),
       brancheCode varchar(255),
-      sidstOpdateret TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      sidstOpdateret TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id) -- Add this line to set 'id' as the primary key
     )
   `;
 

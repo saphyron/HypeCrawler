@@ -144,7 +144,7 @@ class ORM {
         "TIMESTAMP DATETIME, " +
         "CHECKSUM varchar(40), " +
         "URL TEXT, " +
-        "CVR varchar(16), " +
+        "CVR BIGINT(20), " +
         "Homepage TEXT, " +
         "Possible_Duplicate bit, " +
         "FOREIGN KEY(region_id) REFERENCES region(region_id))";

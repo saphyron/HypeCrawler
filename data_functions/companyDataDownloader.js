@@ -268,6 +268,7 @@ async function mergeAndReorganizeFiles(multiBar) {
   let batchNumber = 0; // For naming the output files
   let objectsInCurrentOutputFile = 0;
   let currentOutputData = [];
+  const mergedFiles = []; // To keep track of newly created merged files
 
   for (const file of files) {
     const filePath = path.join(dirPath, file);
@@ -285,6 +286,9 @@ async function mergeAndReorganizeFiles(multiBar) {
           newFilePath,
           JSON.stringify(currentOutputData, null, 2)
         );
+
+        // Track the new merged file
+        mergedFiles.push(newFileName);
 
         // Reset for next batch
         batchNumber++;
@@ -304,21 +308,27 @@ async function mergeAndReorganizeFiles(multiBar) {
       newFilePath,
       JSON.stringify(currentOutputData, null, 2)
     );
+
+    // Track the new merged file
+    mergedFiles.push(newFileName);
     batchNumber++;
   }
 
   progressBar.stop();
 
-  // Delete old files
+  // Delete only old files that are not part of the new merged data
   const deleteProgressBar = multiBar.create(totalFiles, 0, {
     name: "Deleting old files",
     message: "",
   });
 
   for (const file of files) {
-    const filePath = path.join(dirPath, file);
-    await fsPromises.unlink(filePath);
-    deleteProgressBar.increment();
+    // Check if the file is not one of the newly created merged files
+    if (!mergedFiles.includes(file)) {
+      const filePath = path.join(dirPath, file);
+      await fsPromises.unlink(filePath);
+      deleteProgressBar.increment();
+    }
   }
 
   deleteProgressBar.stop();
@@ -327,6 +337,7 @@ async function mergeAndReorganizeFiles(multiBar) {
     `Reorganized data into ${batchNumber} files with up to 10,000 records each.`
   );
 }
+
 
 // Main function to execute the process
 async function main() {
