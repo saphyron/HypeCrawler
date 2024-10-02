@@ -205,13 +205,14 @@ async function closeBrowser() {
   if (browser) {
     console.log("Closing all pages...");
     const pages = await browser.pages();
-    await Promise.all(pages.map((page) => page.close()));
+    await Promise.all(pages.map(page => page.close().catch(err => console.log(`Error closing page: ${err.message}`))));
     console.log("Closing browser...");
     await browser.close();
     browser = null;
     console.log("Browser closed.");
   }
 }
+
 
 /**
  * Scrape job listings from Jobindex using Puppeteer.
@@ -293,7 +294,7 @@ async function retryOperation(operation, retries = 3, delay = 2000) {
  *
  * @param {object} scraper - The scraper instance to run.
  * @param {object} page - The Puppeteer page object for the scraper to use.
- * @param {string} scraperName - The name of the scraper (for logging purposes).
+ * @param {string} scraperName - The name of the scraper.
  */
 async function runScraper(scraper, page, scraperName) {
   try {
