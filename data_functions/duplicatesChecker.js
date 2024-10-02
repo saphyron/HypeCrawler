@@ -1,6 +1,10 @@
 // Import the ORM module for database operations
 const orm = require("../database/databaseConnector");
 
+
+// TODO: Rename File so it makes sense with future changes
+// TODO: Update file to handle checks vs body where key words exists.
+
 /**
  * Function to check for duplicates and update the possible_duplicate column.
  * This function connects to the database, identifies potential duplicates in the `annonce` table
