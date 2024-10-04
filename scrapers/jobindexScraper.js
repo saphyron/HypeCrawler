@@ -20,6 +20,7 @@ const REGION_NAMES = new Map([
   // Any regions below this are Temporary search criterias
   // Aim is to have extended functionality in future that allows for custom search criterias
   //['cyber', '/jobsoegning?maxdate=20240731&mindate=20240101&jobage=archive&q=it-sikkerhed+%27cyber+security%27'],
+  //['ESG', 'https://www.jobindex.dk/jobsoegning?maxdate=20240630&mindate=20240101&jobage=archive&q=ESG'],
 ]);
 
 // Define different configurations for locating job details in the scraped HTML using XPath classes and attributes.

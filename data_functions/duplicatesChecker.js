@@ -4,6 +4,7 @@ const orm = require("../database/databaseConnector");
 
 // TODO: Rename File so it makes sense with future changes
 // TODO: Update file to handle checks vs body where key words exists.
+// TODO: Update file to update binding table after each scrape.
 
 /**
  * Function to check for duplicates and update the possible_duplicate column.

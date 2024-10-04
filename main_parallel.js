@@ -3,10 +3,8 @@ let puppeteer = require("puppeteer"); // Puppeteer for web scraping
 let jobindexClass = require("./scrapers/jobindexScraper"); // Jobindex scraper class
 let careerjetClass = require("./scrapers/careerjetScraper"); // Careerjet scraper class
 let csvConverter = require("./data_functions/csvConverter"); // CSV converter module
-let uploadCSVToDatabase = require("./data_functions/databaseUploader"); // Database uploader module
 const { performance } = require("perf_hooks"); // Performance module for measuring execution time
 let browser; // Declare browser globally to reuse across multiple scraping sessions
-const path = require("path"); // Path module for handling file paths
 const possible_duplicates = require("./data_functions/duplicatesChecker"); // Duplicates checker module
 const orm = require("./database/databaseConnector"); // ORM module for database operations
 
@@ -309,7 +307,7 @@ async function runScraper(scraper, page, scraperName) {
 }
 
 // Main function execution
-main_parallel().then(
+/*main_parallel().then(
   () => {
     console.log("Process finished successfully.");
     process.exit(0);
@@ -318,6 +316,6 @@ main_parallel().then(
     console.error("Process finished with errors:", error);
     process.exit(1); // Exit with error code
   }
-);
+);*/
 
 module.exports = { main_parallel };
