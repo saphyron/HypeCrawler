@@ -70,3 +70,6 @@ depricated_code.js
 
 # criticaldata
 configCompany.json
+
+# Log files
+error.log

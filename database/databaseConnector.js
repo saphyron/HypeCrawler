@@ -68,14 +68,12 @@ class ORM {
             CONNECTION.destroy(); // Force destroy if the 'end' fails.
             return reject(err);
           } else {
-            console.log("Connection successfully ended.");
             resolve();
           }
         });
       } else {
         resolve(); // Connection already closed.
       }
-      console.log("Connection state before closing:", CONNECTION.state);
     });
   }
 
@@ -147,6 +145,9 @@ class ORM {
         "CVR BIGINT(20), " +
         "Homepage TEXT, " +
         "Possible_Duplicate bit, " +
+        "body_hash varchar(64), " +
+        "body_text mediumtext, " +
+        "companyUrlFromAnnonce varchar(255), " +
         "FOREIGN KEY(region_id) REFERENCES region(region_id))";
 
       // Execute the query to create the table.
@@ -154,7 +155,6 @@ class ORM {
         if (error) {
           reject("Error at ORM.CreateAnnonceTable() → " + error); // Reject if there's an error creating the table.
         }
-        console.log("SUCCESS!"); // Log success message.
         resolve(result); // Resolve the promise with the result.
       });
     });
@@ -178,7 +178,6 @@ class ORM {
         if (error) {
           reject("Error at ORM.CreateRegionTable() → " + error); // Reject if there's an error creating the table.
         }
-        console.log("SUCCESS!"); // Log success message.
         resolve(result); // Resolve the promise with the result.
       });
     });
@@ -257,6 +256,7 @@ class ORM {
     return new Promise((resolve, reject) => {
       // Initialize bodyHash as null.
       let bodyHash = null;
+
       if (!newRecord.body || newRecord.body.trim() === "") {
         // If the body is empty (like in cases of SSL issues), log a warning.
         console.warn(
@@ -266,11 +266,11 @@ class ORM {
       } else {
         bodyHash = computeBodyHash(newRecord.body); // Only compute the hash if body is not empty.
       }
-
+      //console.log(newRecord);
       // Prepare the SQL query.
       let query =
-        `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage, body_hash) ` +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage, body_hash, body_text, companyUrlFromAnnonce) ` +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, null, ?)";
 
       // Execute the query with values from the newRecord object.
       CONNECTION.query(
@@ -285,6 +285,7 @@ class ORM {
           newRecord.cvr, // CVR number (optional, could be null).
           newRecord.homepage, // Homepage (source of the ad).
           bodyHash, // Computed hash of the body, or null if body is empty.
+          newRecord.companyUrlFromAnnonce, // CompanyURL
         ],
         function (error, result) {
           if (error) {
@@ -294,10 +295,6 @@ class ORM {
 
           // Update the checksum cache to reflect that this checksum now exists.
           CHECKSUM_CACHE[newRecord.checksum] = true;
-
-          console.log(
-            `1 record inserted with Region_ID ${newRecord.regionId} for URL: ${newRecord.url}`
-          ); // Log success message with URL.
           resolve(result); // Resolve the promise with the result.
         }
       );
@@ -330,9 +327,6 @@ class ORM {
 
           // If region exists, log the existing region and its ID.
           if (checkResult.length > 0) {
-            console.log(
-              `Region '${checkResult[0].NAME}' already exists with ID: ${checkResult[0].region_id}`
-            );
             resolve(checkResult[0]); // Resolve with the existing region info.
           } else {
             // If region doesn't exist, insert it.

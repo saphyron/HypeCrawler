@@ -170,7 +170,7 @@ class JobindexScraper extends ScraperInterface {
         if (typeof bodyHTML !== "string") {
           throw new Error("newPage.evaluate() TIMEOUT");
         }
-
+        let companyUrlFromAnnonce = companyURL;
         let cvr = undefined;
         if (companyURL !== undefined) {
           if (!companyURL.startsWith("http")) {
@@ -194,7 +194,7 @@ class JobindexScraper extends ScraperInterface {
         console.log(
           `Attempting to insert with body length: ${bodyHTML.length}`
         );
-        await this.insertAnnonce(title, bodyHTML, url, cvr, scraperName);
+        await this.insertAnnonce(title, bodyHTML, url, cvr, scraperName, companyUrlFromAnnonce);
         break; // Exit loop on success
       } catch (error) {
         if (
@@ -240,7 +240,7 @@ class JobindexScraper extends ScraperInterface {
           );
 
           // Insert with empty body due to SSL issue
-          await this.insertAnnonce(title, "", url, null, scraperName);
+          await this.insertAnnonce(title, "", url, null, scraperName, companyUrlFromAnnonce);
           break; // Exit loop after handling SSL issue
         } else {
           errorResult = error;

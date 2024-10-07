@@ -7,6 +7,7 @@ const { performance } = require("perf_hooks"); // Performance module for measuri
 let browser; // Declare browser globally to reuse across multiple scraping sessions
 const possible_duplicates = require("./data_functions/duplicatesChecker"); // Duplicates checker module
 const orm = require("./database/databaseConnector"); // ORM module for database operations
+const bindingTableUpdater = require("./data_functions/bindingTableUpdater")
 
 // Add the unhandled rejection listener at the top
 process.on("unhandledRejection", (reason, promise) => {
@@ -21,6 +22,8 @@ let duplicatesEndTime = null;
 let totalEndTime = null;
 let duplicatesStartTime = null;
 let csvStartTime = null;
+let bindingUpdateEndTime = null;
+let bindingUpdateStartTime = null;
 
 const DB_CONFIG_NEW = {
   host: "localhost",
@@ -44,7 +47,7 @@ async function main_parallel() {
 
     // Start a timer to track the total execution time of the whole process
     const totalStartTime = performance.now();
-
+    
     // Run both scrapers (Jobindex and Careerjet) in parallel
     const [jobindexResult, careerjetResult] = await Promise.allSettled([
       jobIndexScraping(),
@@ -64,7 +67,7 @@ async function main_parallel() {
       jobindexResult.status === "fulfilled" &&
       careerjetResult.status === "fulfilled"
     ) {
-      await runCSVConversionAndDuplicateCheck(2); // Run CSV conversion and duplicate checking
+      await runDataFunctions(2); // Run CSV conversion and duplicate checking
       totalEndTime = performance.now(); // Mark the end time of the total process
 
       // Log the execution times of all major tasks
@@ -141,6 +144,11 @@ async function logAllTimings(totalStartTime) {
       " seconds"
   );
   console.log(
+    "Binding Updater/Inserter's execution time: " +
+      (bindingUpdateEndTime - bindingUpdateStartTime) / 1000 +
+      " seconds"
+  );
+  console.log(
     "Total Execute time: " + (totalEndTime - totalStartTime) / 1000 + " seconds"
   );
 }
@@ -152,7 +160,7 @@ async function logAllTimings(totalStartTime) {
  *
  * @param {number} queryNumber - The query number for the CSV conversion process.
  */
-async function runCSVConversionAndDuplicateCheck(queryNumber) {
+async function runDataFunctions(queryNumber) {
   // CSV Conversion
   csvStartTime = performance.now();
   await csvConverter.exportToCSV(queryNumber); // Convert scraped data to CSV format
@@ -162,6 +170,15 @@ async function runCSVConversionAndDuplicateCheck(queryNumber) {
   duplicatesStartTime = performance.now();
   await possible_duplicates.checkForDuplicates(); // Check for duplicates in the database
   duplicatesEndTime = performance.now();
+
+  // Binding Table Updater
+  bindingUpdateStartTime = performance.now();
+  try {
+    await bindingTableUpdater.updateBindingTable(); // Update the binding table
+  } catch (error) {
+    console.error("Binding table updater failed, proceeding with other tasks.");
+  }
+  bindingUpdateEndTime = performance.now();
 }
 
 /**
@@ -203,14 +220,19 @@ async function closeBrowser() {
   if (browser) {
     console.log("Closing all pages...");
     const pages = await browser.pages();
-    await Promise.all(pages.map(page => page.close().catch(err => console.log(`Error closing page: ${err.message}`))));
+    await Promise.all(
+      pages.map((page) =>
+        page
+          .close()
+          .catch((err) => console.log(`Error closing page: ${err.message}`))
+      )
+    );
     console.log("Closing browser...");
     await browser.close();
     browser = null;
     console.log("Browser closed.");
   }
 }
-
 
 /**
  * Scrape job listings from Jobindex using Puppeteer.

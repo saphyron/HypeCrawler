@@ -96,7 +96,7 @@ class CareerjetScraper extends ScraperInterface {
                     throw new Error("newPage.evaluate() TIMEOUT");
                 }
     
-                await this.insertAnnonce(title, bodyHTML, formattedUrl, cvr, scraperName);
+                await this.insertAnnonce(title, bodyHTML, formattedUrl, cvr, scraperName, null);
                 break; // Exit loop on success
     
             } catch (error) {
@@ -130,7 +130,7 @@ class CareerjetScraper extends ScraperInterface {
                     console.log("Inserting the record with an empty body due to SSL issue.");
     
                     // Insert with empty body due to SSL issue
-                    await this.insertAnnonce(title, "", formattedUrl, null, scraperName);
+                    await this.insertAnnonce(title, "", formattedUrl, null, scraperName, null);
                     break; // Exit loop after handling SSL issue
                 } else {
                     errorResult = error;

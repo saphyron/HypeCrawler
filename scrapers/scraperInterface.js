@@ -320,7 +320,6 @@ class JocscraperTemplate {
       let resolveCounter = 0,
         rejectCounter = 0;
       let result = "";
-
       // utility method to limit the amount of simultaneous running pages.
       let settlePromise = (index) => {
         this.PAGE_POOL.releasePage(titleUrlList.PAGE_URLS[index]);
@@ -361,7 +360,8 @@ class JocscraperTemplate {
                     titleUrlList.PAGE_COMPANY_URLS[index],
                     index + 1,
                     pageNum,
-                    scraperName
+                    scraperName,
+                    titleUrlList.PAGE_COMPANY_URLS[index]
                   );
                 })
                 .then(() => {
@@ -389,7 +389,7 @@ class JocscraperTemplate {
     });
   }
 
-  async scrapePage(page, title, url, index, pageNum, scraperName) {
+  async scrapePage(page, title, url, index, pageNum, scraperName, companyUrlFromAnnonce) {
     throw new Error("Missing scrapePage implementation");
   }
 
@@ -455,8 +455,8 @@ class JocscraperTemplate {
    *
    * @returns {Promise<any>}
    */
-  insertAnnonce(annonceTitle, rawHTMLText, annonceURL, cvr, scraperName) {
-    //console.log("Inserting Annonce:", { annonceTitle, annonceURL, cvr, scraperName });
+  insertAnnonce(annonceTitle, rawHTMLText, annonceURL, cvr, scraperName, companyUrlFromAnnonce) {
+    //console.log("Inserting Annonce:", { annonceTitle, annonceURL, cvr, scraperName, companyUrlFromAnnonce });
     return new Promise((resolve, reject) => {
       let sha1Checksum = sha1(`${annonceURL}`);
       ORM.FindChecksum(sha1Checksum)
@@ -470,7 +470,11 @@ class JocscraperTemplate {
               sha1Checksum,
               annonceURL,
               cvr,
-              scraperName
+              scraperName,
+              null,
+              null,
+              null,
+              companyUrlFromAnnonce
             ).catch((error) => {
               console.error("Error creating Annonce model: " + error);
               throw new Error("Error creating Annonce model: " + error);
@@ -479,6 +483,7 @@ class JocscraperTemplate {
           resolve();
         })
         .then((newAnnonceModel) => {
+          //console.log(newAnnonceModel);
           if (newAnnonceModel)
             return ORM.InsertAnnonce(newAnnonceModel).catch((error) => {
               console.error("Error inserting Annonce into database: " + error);
@@ -521,7 +526,11 @@ class JocscraperTemplate {
     checksum,
     url,
     cvr,
-    scraperName
+    scraperName,
+    possible_duplicate,
+    body_hash,
+    body_text,
+    companyUrlFromAnnonce
   ) {
     return new Promise((resolve, reject) => {
       try {
@@ -552,7 +561,11 @@ class JocscraperTemplate {
             checksum.toString(),
             url,
             cvr,
-            scraperName
+            scraperName,
+            possible_duplicate,
+            body_hash,
+            body_text,
+            companyUrlFromAnnonce
           )
         );
       } catch (error) {
