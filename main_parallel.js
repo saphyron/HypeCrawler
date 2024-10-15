@@ -8,6 +8,7 @@ let browser; // Declare browser globally to reuse across multiple scraping sessi
 const possible_duplicates = require("./data_functions/duplicatesChecker"); // Duplicates checker module
 const orm = require("./database/databaseConnector"); // ORM module for database operations
 const bindingTableUpdater = require("./data_functions/bindingTableUpdater")
+const archieveScraperClass = require("./utils/jobindexArchiveScraper");
 
 // Add the unhandled rejection listener at the top
 process.on("unhandledRejection", (reason, promise) => {
@@ -47,7 +48,8 @@ async function main_parallel() {
 
     // Start a timer to track the total execution time of the whole process
     const totalStartTime = performance.now();
-    
+    // Uncomment scraper below if you have need of custom archive scraping.
+    //await archieveScraper();
     // Run both scrapers (Jobindex and Careerjet) in parallel
     const [jobindexResult, careerjetResult] = await Promise.allSettled([
       jobIndexScraping(),
@@ -251,6 +253,29 @@ async function jobIndexScraping() {
     await runScraper(scraper, page, "JobIndex"); // Run the scraper with database connection and retry logic
     scraper.printDatabaseResult(); // Print the scraper results to the database
     jobEndTime = performance.now(); // Capture Jobindex scraper end time
+  } catch (error) {
+    console.error("Jobindex scraping failed:", error); // Log any errors during the Jobindex scraping process
+  } finally {
+    await page.close(); // Ensure the page is closed after scraping
+  }
+}
+
+/**
+ * Scrape job listings from Jobindex using Puppeteer.
+ *
+ * This function opens a new browser tab and scrapes Jobindex for job postings.
+ * The results are then stored in the database.
+ */
+async function archieveScraper() {
+  const page = await browser.newPage(); // Open a new browser page for Jobindex
+  await page.setExtraHTTPHeaders({
+    "Accept-Language": "da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7", // Set HTTP headers for Danish language
+  });
+
+  try {
+    let scraper = new archieveScraperClass(); // Create a new instance of the Jobindex scraper class
+    await runScraper(scraper, page, "JobIndex"); // Run the scraper with database connection and retry logic
+    scraper.printDatabaseResult(); // Print the scraper results to the database
   } catch (error) {
     console.error("Jobindex scraping failed:", error); // Log any errors during the Jobindex scraping process
   } finally {

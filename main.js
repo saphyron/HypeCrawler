@@ -1,5 +1,4 @@
 const parallel = require("./main_parallel");
-// const sequential = require("./main_sequential");
 
 
 async function main() {

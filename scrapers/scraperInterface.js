@@ -171,6 +171,7 @@ class JocscraperTemplate {
             page,
             PAGE_SELECTOR
           );
+          
           await this.scrapePageList(
             browser,
             pageURLsAndTitles,
@@ -238,10 +239,10 @@ class JocscraperTemplate {
         titles.push(...candidateObj.titleList);
         urls.push(...candidateObj.urlList);
 
-        // Stop if we find valid titles and URLs
+        /*// Stop if we find valid titles and URLs
         if (titles.length > 0 && urls.length > 0) {
           break;
-        }
+        }*/
       } catch (error) {
         console.error(`Error trying path variation ${counter}: `);
       }

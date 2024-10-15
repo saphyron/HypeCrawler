@@ -1,23 +1,23 @@
 // Import the ScraperInterface module from a local file.
-let ScraperInterface = require("./scraperInterface");
+let ScraperInterface = require("../scrapers/scraperInterface");
 
 // Define the base URL of the job indexing site to scrape.
 const TARGET_WEBSITE = "https://www.jobindex.dk";
 // Define a mapping from region names to their specific search URL paths.
 const REGION_NAMES = new Map([
-  ["nordsjaelland", "/jobsoegning/nordsjaelland?jobage=1"],
-  ["region-sjaelland", "/jobsoegning/region-sjaelland?jobage=1"],
-  ["fyn", "/jobsoegning/fyn?jobage=1"],
-  ["region-nordjylland", "/jobsoegning/region-nordjylland?jobage=1"],
-  ["sydjylland", "/jobsoegning/sydjylland?jobage=1"],
-  ["bornholm", "/jobsoegning/bornholm?jobage=1"],
-  ["skaane", "/jobsoegning/skaane?jobage=1"],
-  ["groenland", "/jobsoegning/groenland?jobage=1"],
-  ["udlandet", "/jobsoegning/udlandet?jobage=1"],
-  ["faeroeerne", "/jobsoegning/faeroeerne?jobage=1"],
-  ["region-midtjylland", "/jobsoegning/region-midtjylland?jobage=1"],
-  ["storkoebenhavn", "/jobsoegning/storkoebenhavn?jobage=1"],
-  ]);
+  [
+    "ESG",
+    "/jobsoegning?maxdate=20240630&mindate=20240101&jobage=archive&q=ESG",
+  ],
+  [
+    "ESG2",
+    "/jobsoegning?maxdate=20191120&mindate=20180101&jobage=archive&q=ESG",
+  ],
+  // Any regions below this are Temporary search criterias
+  // Aim is to have extended functionality in future that allows for custom search criterias
+  //['cyber', '/jobsoegning?maxdate=20240731&mindate=20240101&jobage=archive&q=it-sikkerhed+%27cyber+security%27'],
+  //['ESG', 'https://www.jobindex.dk/jobsoegning?maxdate=20240630&mindate=20240101&jobage=archive&q=ESG'],
+]);
 
 // Define different configurations for locating job details in the scraped HTML using XPath classes and attributes.
 const PATH_VARIATIONS = [
@@ -50,7 +50,7 @@ const PAGE_TIMEOUT = 60000;
  * Class for scraping job listings from Jobindex.dk.
  * Implements methods from ScraperInterface to customize for specific site structure.
  */
-class JobindexScraper extends ScraperInterface {
+class JobindexArchiveScraper extends ScraperInterface {
   /**
    * Initializes the scraper with website-specific settings.
    */
@@ -88,15 +88,33 @@ class JobindexScraper extends ScraperInterface {
         "Attempting to find the total number of pages using CSS selector..."
       );
       const pageRefs = await page.evaluate(() => {
-        const selector =
-          "div.jix_pagination.jix_pagination_wide ul.pagination li.page-item a";
-        const elements = document.querySelectorAll(selector);
-        if (elements.length === 0) {
-          return null;
+        // Select the element using a concise CSS selector
+        const element = document.querySelector(
+          "h1.jobsearch-header.color-current.mb-0.h2"
+        );
+
+        if (element) {
+          // Get the text content of the element
+          const text = element.textContent.trim();
+          // Use a regular expression to extract the number
+          const match = text.match(/[\d.]+/);
+          if (match) {
+            // Remove any thousand separators and convert to a number
+            const numberString = match[0].replace(/\./g, "");
+            const number = parseInt(numberString, 10);
+            console.log('Total jobs: ', number);
+            const resultsPerPage = 20;
+            const pages = Math.ceil(number / resultsPerPage)
+            console.log('Total pages: ', pages);
+            return pages;
+          } else {
+            console.log("No number found in the text.");
+          }
+        } else {
+          console.log("Element not found.");
         }
-        const lastPageElement = elements[elements.length - 2]; // Second to last element
-        console.log("Last page element:", lastPageElement);
-        return lastPageElement ? lastPageElement.textContent : null;
+        console.log(pageRefs);
+        return null;
       });
 
       if (!pageRefs) {
@@ -139,6 +157,8 @@ class JobindexScraper extends ScraperInterface {
     let useHttp1 = false; // Flag to force HTTP/1.1 if HTTP/2 fails
 
     console.time("runTime page number " + pageNum + " annonce " + index);
+
+    // TODO: Fix when old data does not load body
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -190,7 +210,14 @@ class JobindexScraper extends ScraperInterface {
         console.log(
           `Attempting to insert with body length: ${bodyHTML.length}`
         );
-        await this.insertAnnonce(title, bodyHTML, url, cvr, scraperName, companyUrlFromAnnonce);
+        await this.insertAnnonce(
+          title,
+          bodyHTML,
+          url,
+          cvr,
+          scraperName,
+          companyUrlFromAnnonce
+        );
         break; // Exit loop on success
       } catch (error) {
         if (
@@ -236,7 +263,14 @@ class JobindexScraper extends ScraperInterface {
           );
 
           // Insert with empty body due to SSL issue
-          await this.insertAnnonce(title, "", url, null, scraperName, companyUrlFromAnnonce);
+          await this.insertAnnonce(
+            title,
+            "",
+            url,
+            null,
+            scraperName,
+            companyUrlFromAnnonce
+          );
           break; // Exit loop after handling SSL issue
         } else {
           errorResult = error;
@@ -254,4 +288,4 @@ class JobindexScraper extends ScraperInterface {
   }
 }
 // Export the JobindexScraper class for use in other modules.
-module.exports = JobindexScraper;
+module.exports = JobindexArchiveScraper;
