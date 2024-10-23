@@ -1,8 +1,25 @@
-const fs = require("fs").promises; // Use non-blocking file operations
-const path = require("path");
-const orm = require("../database/databaseConnector");
-const { parse } = require("json2csv");
+/**
+ * @file csvConverter.js
+ * @description Exports data from the database to a CSV file based on a selected query.
+ * It connects to the database, executes a query, processes the results, and writes them to a CSV file.
+ */
 
+const fs = require("fs").promises; // Use non-blocking file operations
+const path = require("path"); // Path module for handling file paths
+const orm = require("../database/databaseConnector"); // ORM for database operations
+const { parse } = require("json2csv"); // Library for converting JSON to CSV format
+
+/**
+ * Exports data to a CSV file based on the provided query number.
+ * Establishes a database connection, executes the query, processes the results,
+ * and writes the data to a CSV file in the specified directory.
+ *
+ * @async
+ * @function exportToCSV
+ * @param {number} queryNumber - The number representing the SQL query to execute.
+ * @returns {Promise<void>}
+ * @throws Will throw an error if the export process fails.
+ */
 async function exportToCSV(queryNumber) {
   console.log("Starting exportToCSV function");
   let connection;
@@ -29,9 +46,10 @@ async function exportToCSV(queryNumber) {
     const nextDay = String(tomorrow.getDate()).padStart(2, "0");
     const nextDate = `${nextYear}-${nextMonth}-${nextDay}`;
 
+    // Retrieve the SQL query based on the query number
     const query = sqlQueries(queryNumber, formattedDate, nextDate);
 
-    // Execute query and process results with async/await
+    // Execute the query and process results with async/await
     const [results, fields] = await executeQuery(connection, query);
 
     if (!results.length) {
@@ -39,6 +57,7 @@ async function exportToCSV(queryNumber) {
       return;
     }
 
+    // Transform the results into JSON format suitable for CSV conversion
     const jsonData = results.map((row) =>
       fields.reduce((jsonObject, field) => {
         let value = row[field.name];
@@ -69,17 +88,31 @@ async function exportToCSV(queryNumber) {
     console.log("Writing CSV file:", outputPath);
 
     // Write CSV asynchronously
-    const csvContent = parse(jsonData);
+    const csvContent = parse(jsonData); // Convert JSON data to CSV format
     await fs.writeFile(outputPath, csvContent, "utf8");
     console.log("CSV file written successfully");
   } catch (error) {
     console.error("Error during exportToCSV:", error);
     throw error;
   } finally {
-    if (connection) await orm.disconnectDatabase();
+    if (connection) {
+      // Close the database connection
+      await orm.disconnectDatabase();
+    }
   }
 }
 
+/**
+ * Retrieves the SQL query based on the provided query number.
+ * Throws an error if an invalid query number is provided.
+ *
+ * @function sqlQueries
+ * @param {number} queryNumber - The number representing the SQL query to retrieve.
+ * @param {string} formattedDate - The current date formatted as 'YYYY-MM-DD'.
+ * @param {string} nextDate - The next date formatted as 'YYYY-MM-DD'.
+ * @returns {string} - The SQL query string.
+ * @throws Will throw an error if an invalid query number is provided.
+ */
 function sqlQueries(queryNumber, formattedDate, nextDate) {
   const queries = {
     1: `
@@ -112,6 +145,15 @@ function sqlQueries(queryNumber, formattedDate, nextDate) {
   return queries[queryNumber];
 }
 
+/**
+ * Executes the provided SQL query using the given database connection.
+ *
+ * @function executeQuery
+ * @param {object} connection - The database connection object.
+ * @param {string} query - The SQL query string to execute.
+ * @returns {Promise<Array>} - A promise that resolves to an array containing the results and fields.
+ * @throws Will reject if the query execution fails.
+ */
 function executeQuery(connection, query) {
   return new Promise((resolve, reject) => {
     connection.query(query, (err, results, fields) => {
@@ -121,4 +163,5 @@ function executeQuery(connection, query) {
   });
 }
 
+// Export the exportToCSV function for use in other modules
 module.exports = { exportToCSV };

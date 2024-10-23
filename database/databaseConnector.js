@@ -1,4 +1,9 @@
-// Load the MySQL module from npm to interact with MySQL databases.
+/**
+ * @file databaseConnector.js
+ * @description Provides ORM functionalities for connecting to and interacting with a MySQL database,
+ * including managing database connections, performing CRUD operations, and caching results to optimize performance.
+ */
+
 const MYSQL = require("mysql"); // MySQL module for database operations.
 const crypto = require("crypto"); // Crypto module for hashing functions.
 
@@ -22,10 +27,12 @@ const DB_CONFIG_NEW = {
   database: "Merged_Database_Test", // Name of the new database to connect to.
 };
 
-// Function to compute a SHA-1 hash for the body content.
-// This is used for data integrity and detecting duplicates.
+// Note: Consider moving sensitive data like passwords to environment variables for better security practices.
+
 /**
  * Computes a SHA-1 hash of the provided body content.
+ * This is used for data integrity and detecting duplicates.
+ *
  * @param {string} body - The content to hash.
  * @returns {string} - The SHA-1 hash of the content.
  */
@@ -44,11 +51,12 @@ const CHECKSUM_CACHE = {}; // Cache to store checksums to avoid redundant databa
 const BODY_CHECKSUM_CACHE = {}; // Cache specifically for body checksums, used for data integrity.
 
 /**
- * Class providing ORM (Object-Relational Mapping) functionalities to map object models to a database schema.
+ * Class providing ORM (Object-Relational Mapping) functionalities to interact with the database.
  */
 class ORM {
   /**
    * Closes the database connection cleanly.
+   *
    * @returns {Promise<void>} - A promise that resolves when the connection is closed.
    */
   static async disconnectDatabase() {
@@ -79,6 +87,8 @@ class ORM {
 
   /**
    * Establishes a connection to the database with error handling and reconnection logic.
+   * Automatically reconnects if the connection is lost.
+   *
    * @returns {Promise<MYSQL.Connection>} - A promise that resolves with the database connection object.
    */
   static connectDatabase() {
@@ -128,6 +138,7 @@ class ORM {
 
   /**
    * Creates the 'annonce' table if it does not exist in the database.
+   *
    * @returns {Promise<void>} - A promise that resolves when the table is created or confirmed to exist.
    */
   static CreateAnnonceTable() {
@@ -161,6 +172,7 @@ class ORM {
 
   /**
    * Creates the 'region' table if it does not exist in the database.
+   *
    * @returns {Promise<void>} - A promise that resolves when the table is created or confirmed to exist.
    */
   static async CreateRegionTable() {
@@ -186,8 +198,8 @@ class ORM {
    * Checks if a checksum is already present in the local cache or the database.
    * Caches both found and not-found checksums to reduce redundant database queries.
    *
-   * @param {String} incomingChecksum - The checksum to check for.
-   * @returns {Promise<boolean>} - A promise that resolves to 'true' if the checksum exists, otherwise 'false'.
+   * @param {string} incomingChecksum - The checksum to check for.
+   * @returns {Promise<boolean>} - A promise that resolves to `true` if the checksum exists, otherwise `false`.
    */
   static async FindChecksum(incomingChecksum) {
     // Check if the checksum is in the cache, including negative results.
@@ -239,7 +251,8 @@ class ORM {
 
   /**
    * Inserts a new announcement record into the 'annonce' table.
-   * If the body is empty (e.g., due to an SSL error), it will insert the record with an empty body and set the body_hash to NULL.
+   * If the body is empty (e.g., due to an SSL error), it will insert the record with an empty body and set the `body_hash` to `NULL`.
+   *
    * @param {Object} newRecord - The announcement record to insert.
    * @param {string} newRecord.titel - The title of the announcement.
    * @param {string} [newRecord.body] - The body content of the announcement.
@@ -249,6 +262,7 @@ class ORM {
    * @param {string} newRecord.url - The URL of the announcement.
    * @param {string} [newRecord.cvr] - The CVR number (optional).
    * @param {string} newRecord.homepage - The source homepage of the announcement.
+   * @param {string} [newRecord.companyUrlFromAnnonce] - The company URL extracted from the announcement (optional).
    * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
    */
   static async InsertAnnonce(newRecord) {
@@ -284,7 +298,7 @@ class ORM {
           newRecord.cvr, // CVR number (optional, could be null).
           newRecord.homepage, // Homepage (source of the ad).
           bodyHash, // Computed hash of the body, or null if body is empty.
-          newRecord.companyUrlFromAnnonce, // CompanyURL
+          newRecord.companyUrlFromAnnonce, // Company URL.
         ],
         function (error, result) {
           if (error) {
