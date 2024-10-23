@@ -146,7 +146,6 @@ class ORM {
         "Homepage TEXT, " +
         "Possible_Duplicate bit, " +
         "body_hash varchar(64), " +
-        "body_text mediumtext, " +
         "companyUrlFromAnnonce varchar(255), " +
         "FOREIGN KEY(region_id) REFERENCES region(region_id))";
 
@@ -269,8 +268,8 @@ class ORM {
       //console.log(newRecord);
       // Prepare the SQL query.
       let query =
-        `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage, body_hash, body_text, companyUrlFromAnnonce) ` +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, null, ?)";
+        `INSERT IGNORE INTO ${ANNONCE_TABLE_NAME} (TITLE, BODY, REGION_ID, TIMESTAMP, CHECKSUM, URL, CVR, Homepage, body_hash, companyUrlFromAnnonce) ` +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
       // Execute the query with values from the newRecord object.
       CONNECTION.query(

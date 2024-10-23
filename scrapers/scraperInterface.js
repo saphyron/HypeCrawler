@@ -474,7 +474,6 @@ class JocscraperTemplate {
               scraperName,
               null,
               null,
-              null,
               companyUrlFromAnnonce
             ).catch((error) => {
               console.error("Error creating Annonce model: " + error);

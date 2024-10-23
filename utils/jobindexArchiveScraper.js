@@ -5,14 +5,26 @@ let ScraperInterface = require("../scrapers/scraperInterface");
 const TARGET_WEBSITE = "https://www.jobindex.dk";
 // Define a mapping from region names to their specific search URL paths.
 const REGION_NAMES = new Map([
-  [
+  /*[
     "ESG",
     "/jobsoegning?maxdate=20240630&mindate=20240101&jobage=archive&q=ESG",
   ],
   [
     "ESG2",
     "/jobsoegning?maxdate=20191120&mindate=20180101&jobage=archive&q=ESG",
-  ],
+  ],*/
+  ["nordsjaelland", "/jobsoegning/nordsjaelland?jobage=6"],
+  ["region-sjaelland", "/jobsoegning/region-sjaelland?jobage=6"],
+  ["fyn", "/jobsoegning/fyn?jobage=6"],
+  ["region-nordjylland", "/jobsoegning/region-nordjylland?jobage=6"],
+  ["sydjylland", "/jobsoegning/sydjylland?jobage=6"],
+  ["bornholm", "/jobsoegning/bornholm?jobage=6"],
+  ["skaane", "/jobsoegning/skaane?jobage=6"],
+  ["groenland", "/jobsoegning/groenland?jobage=6"],
+  ["udlandet", "/jobsoegning/udlandet?jobage=6"],
+  ["faeroeerne", "/jobsoegning/faeroeerne?jobage=6"],
+  ["region-midtjylland", "/jobsoegning/region-midtjylland?jobage=6"],
+  ["storkoebenhavn", "/jobsoegning/storkoebenhavn?jobage=6"],
   // Any regions below this are Temporary search criterias
   // Aim is to have extended functionality in future that allows for custom search criterias
   //['cyber', '/jobsoegning?maxdate=20240731&mindate=20240101&jobage=archive&q=it-sikkerhed+%27cyber+security%27'],
