@@ -1,4 +1,32 @@
-/**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: scrapers/jobindexScraper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: scrapers/jobindexScraper.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * @file jobindexScraper.js
  * @description Scraper class for extracting job listings from Jobindex.dk.
  * This class extends the ScraperInterface and implements methods specific to scraping Jobindex.
@@ -81,7 +109,7 @@ class JobindexScraper extends ScraperInterface {
    */
   getPageExtension(pageNo) {
     // Jobindex pages start from 1, so we increment the zero-based pageNo
-    return `&page=${pageNo + 1}`;
+    return `&amp;page=${pageNo + 1}`;
   }
 
   /**
@@ -90,7 +118,7 @@ class JobindexScraper extends ScraperInterface {
    *
    * @async
    * @param {object} page - The Puppeteer page object.
-   * @returns {Promise<number>} - The total number of pages to scrape.
+   * @returns {Promise&lt;number>} - The total number of pages to scrape.
    * @throws Will throw an error if it fails to determine the number of pages.
    */
   async getNumPages(page) {
@@ -149,7 +177,7 @@ class JobindexScraper extends ScraperInterface {
    * @param {number} index - The index of the job listing on the current page.
    * @param {number} pageNum - The current page number.
    * @param {string} scraperName - The name of the scraper ("Jobindex").
-   * @returns {Promise<void>}
+   * @returns {Promise&lt;void>}
    */
   async scrapePage(page, title, url, companyURL, index, pageNum, scraperName) {
     let errorResult = undefined; // Variable to store any errors encountered
@@ -163,10 +191,10 @@ class JobindexScraper extends ScraperInterface {
     console.time("runTime page number " + pageNum + " annonce " + index);
 
     // Loop to implement retry logic
-    for (let attempt = 1; attempt <= retries; attempt++) {
+    for (let attempt = 1; attempt &lt;= retries; attempt++) {
       try {
         // If previous attempts failed due to HTTP/2 errors, force HTTP/1.1
-        if (useHttp1 && attempt > retries) {
+        if (useHttp1 &amp;&amp; attempt > retries) {
           console.log(
             `Retrying with HTTP/1.1, attempt ${
               attempt - retries
@@ -244,7 +272,7 @@ class JobindexScraper extends ScraperInterface {
           if (!useHttp1) {
             console.log("Retrying with HTTP/1.1...");
             useHttp1 = true; // Set flag to force HTTP/1.1 on next attempt
-          } else if (attempt <= retries + http1Retries) {
+          } else if (attempt &lt;= retries + http1Retries) {
             console.log(`Retrying in ${retryDelay / 1000} seconds...`);
             await new Promise((resolve) => setTimeout(resolve, retryDelay)); // Wait before retrying
             retryDelay *= backoffFactor; // Apply exponential backoff
@@ -259,7 +287,7 @@ class JobindexScraper extends ScraperInterface {
         } else if (error.message.includes("net::ERR_CONNECTION_CLOSED")) {
           console.error(`Connection closed error at ${url}: ${error.message}`);
 
-          if (attempt < retries + http1Retries) {
+          if (attempt &lt; retries + http1Retries) {
             console.log(`Retrying in ${retryDelay / 1000} seconds...`);
             await new Promise((resolve) => setTimeout(resolve, retryDelay)); // Wait before retrying
             retryDelay *= backoffFactor; // Apply exponential backoff
@@ -308,3 +336,26 @@ class JobindexScraper extends ScraperInterface {
 
 // Export the JobindexScraper class for use in other modules
 module.exports = JobindexScraper;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Annonce.html">Annonce</a></li><li><a href="CareerjetScraper.html">CareerjetScraper</a></li><li><a href="JobindexArchiveScraper.html">JobindexArchiveScraper</a></li><li><a href="JobindexScraper.html">JobindexScraper</a></li><li><a href="JocscraperTemplate.html">JocscraperTemplate</a></li><li><a href="ORM.html">ORM</a></li><li><a href="Pagepool.html">Pagepool</a></li><li><a href="Region.html">Region</a></li></ul><h3>Global</h3><ul><li><a href="global.html#archieveScraper">archieveScraper</a></li><li><a href="global.html#careerjetScraping">careerjetScraping</a></li><li><a href="global.html#checkForDuplicates">checkForDuplicates</a></li><li><a href="global.html#checkIfExists">checkIfExists</a></li><li><a href="global.html#cleanup">cleanup</a></li><li><a href="global.html#closeBrowser">closeBrowser</a></li><li><a href="global.html#computeBodyHash">computeBodyHash</a></li><li><a href="global.html#countTotalLines">countTotalLines</a></li><li><a href="global.html#disconnectAllDatabases">disconnectAllDatabases</a></li><li><a href="global.html#executeQuery">executeQuery</a></li><li><a href="global.html#exportToCSV">exportToCSV</a></li><li><a href="global.html#handleErrors">handleErrors</a></li><li><a href="global.html#initBrowser">initBrowser</a></li><li><a href="global.html#insertData">insertData</a></li><li><a href="global.html#isDuplicateInFile">isDuplicateInFile</a></li><li><a href="global.html#jobIndexScraping">jobIndexScraping</a></li><li><a href="global.html#logAllTimings">logAllTimings</a></li><li><a href="global.html#logFailure">logFailure</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#main_parallel">main_parallel</a></li><li><a href="global.html#processJsonFile">processJsonFile</a></li><li><a href="global.html#retryOperation">retryOperation</a></li><li><a href="global.html#runDataFunctions">runDataFunctions</a></li><li><a href="global.html#runScraper">runScraper</a></li><li><a href="global.html#splitLargeJSONArray">splitLargeJSONArray</a></li><li><a href="global.html#sqlQueries">sqlQueries</a></li><li><a href="global.html#updateBindingTable">updateBindingTable</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Oct 24 2024 15:08:34 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

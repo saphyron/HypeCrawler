@@ -1,4 +1,32 @@
-/**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: scrapers/careerjetScraper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: scrapers/careerjetScraper.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * @file careerjetScraper.js
  * @description Scraper class for extracting job listings from Careerjet.dk.
  * This class extends the ScraperInterface and implements methods specific to scraping Careerjet.
@@ -12,12 +40,12 @@ const TARGET_WEBSITE = 'https://www.careerjet.dk';
 
 // A map of region names to their corresponding URL paths on Careerjet
 const REGION_NAMES = new Map([
-    ['bornholm', '/jobs?s=&l=Bornholm&nw=1&p='], // URL path for Bornholm region
-    ['storkoebenhavn', '/jobs?s=&l=Storkøbenhavn&nw=1&p='], // URL path for Storkøbenhavn region
-    ['region-sjaelland', '/jobs?s=&l=Sjælland&nw=1&p='], // URL path for Sjælland region
-    ['region-nordjylland', '/jobs?s=&l=Nordjylland&nw=1&p='], // URL path for Nordjylland region
-    ['region-midtjylland', '/jobs?s=&l=Midtjylland&nw=1&p='], // URL path for Midtjylland region
-    ['sydjylland', '/jobs?s=&l=Syddanmark&nw=1&p='], // URL path for Syddanmark region
+    ['bornholm', '/jobs?s=&amp;l=Bornholm&amp;nw=1&amp;p='], // URL path for Bornholm region
+    ['storkoebenhavn', '/jobs?s=&amp;l=Storkøbenhavn&amp;nw=1&amp;p='], // URL path for Storkøbenhavn region
+    ['region-sjaelland', '/jobs?s=&amp;l=Sjælland&amp;nw=1&amp;p='], // URL path for Sjælland region
+    ['region-nordjylland', '/jobs?s=&amp;l=Nordjylland&amp;nw=1&amp;p='], // URL path for Nordjylland region
+    ['region-midtjylland', '/jobs?s=&amp;l=Midtjylland&amp;nw=1&amp;p='], // URL path for Midtjylland region
+    ['sydjylland', '/jobs?s=&amp;l=Syddanmark&amp;nw=1&amp;p='], // URL path for Syddanmark region
 ]);
 
 // Configuration for different path variations used in scraping
@@ -73,7 +101,7 @@ class CareerjetScraper extends ScraperInterface {
      * @param {number} index - The index of the job listing on the current page.
      * @param {number} pageNum - The current page number.
      * @param {string} scraperName - The name of the scraper ("CareerJet").
-     * @returns {Promise<void>}
+     * @returns {Promise&lt;void>}
      */
     async scrapePage(page, title, url, companyUrl, index, pageNum, scraperName) {
         let formattedUrl = url; // URL to navigate to
@@ -89,10 +117,10 @@ class CareerjetScraper extends ScraperInterface {
         console.time("runTime page number " + pageNum + " annonce " + index);
     
         // Loop to implement retry logic
-        for (let attempt = 1; attempt <= retries + http1Retries; attempt++) {
+        for (let attempt = 1; attempt &lt;= retries + http1Retries; attempt++) {
             try {
                 // If previous attempts failed due to HTTP/2 errors, force HTTP/1.1
-                if (useHttp1 && attempt > retries) {
+                if (useHttp1 &amp;&amp; attempt > retries) {
                     console.log(`Retrying with HTTP/1.1, attempt ${attempt - retries} of ${http1Retries}`);
                     await page.setExtraHTTPHeaders({
                         'Upgrade-Insecure-Requests': '1'
@@ -127,7 +155,7 @@ class CareerjetScraper extends ScraperInterface {
                     if (!useHttp1) {
                         console.log("Retrying with HTTP/1.1...");
                         useHttp1 = true; // Set flag to force HTTP/1.1 on next attempt
-                    } else if (attempt <= retries + http1Retries) {
+                    } else if (attempt &lt;= retries + http1Retries) {
                         console.log(`Retrying in ${retryDelay / 1000} seconds...`);
                         await new Promise(resolve => setTimeout(resolve, retryDelay)); // Wait before retrying
                         retryDelay *= backoffFactor; // Apply exponential backoff
@@ -138,7 +166,7 @@ class CareerjetScraper extends ScraperInterface {
                 } else if (error.message.includes('net::ERR_CONNECTION_CLOSED')) {
                     console.error(`Connection closed error at ${formattedUrl}: ${error.message}`);
     
-                    if (attempt < retries + http1Retries) {
+                    if (attempt &lt; retries + http1Retries) {
                         console.log(`Retrying in ${retryDelay / 1000} seconds...`);
                         await new Promise(resolve => setTimeout(resolve, retryDelay)); // Wait before retrying
                         retryDelay *= backoffFactor; // Apply exponential backoff
@@ -178,7 +206,7 @@ class CareerjetScraper extends ScraperInterface {
      * @async
      * @param {object} page - The Puppeteer page object.
      * @param {number} listLength - The number of job listings per page (not used here).
-     * @returns {Promise<number>} - The maximum number of pages to scrape.
+     * @returns {Promise&lt;number>} - The maximum number of pages to scrape.
      */
     async getNumPages(page, listLength) {
         try {
@@ -241,3 +269,26 @@ class CareerjetScraper extends ScraperInterface {
 
 // Export the CareerjetScraper class for use in other modules
 module.exports = CareerjetScraper;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Annonce.html">Annonce</a></li><li><a href="CareerjetScraper.html">CareerjetScraper</a></li><li><a href="JobindexArchiveScraper.html">JobindexArchiveScraper</a></li><li><a href="JobindexScraper.html">JobindexScraper</a></li><li><a href="JocscraperTemplate.html">JocscraperTemplate</a></li><li><a href="ORM.html">ORM</a></li><li><a href="Pagepool.html">Pagepool</a></li><li><a href="Region.html">Region</a></li></ul><h3>Global</h3><ul><li><a href="global.html#archieveScraper">archieveScraper</a></li><li><a href="global.html#careerjetScraping">careerjetScraping</a></li><li><a href="global.html#checkForDuplicates">checkForDuplicates</a></li><li><a href="global.html#checkIfExists">checkIfExists</a></li><li><a href="global.html#cleanup">cleanup</a></li><li><a href="global.html#closeBrowser">closeBrowser</a></li><li><a href="global.html#computeBodyHash">computeBodyHash</a></li><li><a href="global.html#countTotalLines">countTotalLines</a></li><li><a href="global.html#disconnectAllDatabases">disconnectAllDatabases</a></li><li><a href="global.html#executeQuery">executeQuery</a></li><li><a href="global.html#exportToCSV">exportToCSV</a></li><li><a href="global.html#handleErrors">handleErrors</a></li><li><a href="global.html#initBrowser">initBrowser</a></li><li><a href="global.html#insertData">insertData</a></li><li><a href="global.html#isDuplicateInFile">isDuplicateInFile</a></li><li><a href="global.html#jobIndexScraping">jobIndexScraping</a></li><li><a href="global.html#logAllTimings">logAllTimings</a></li><li><a href="global.html#logFailure">logFailure</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#main_parallel">main_parallel</a></li><li><a href="global.html#processJsonFile">processJsonFile</a></li><li><a href="global.html#retryOperation">retryOperation</a></li><li><a href="global.html#runDataFunctions">runDataFunctions</a></li><li><a href="global.html#runScraper">runScraper</a></li><li><a href="global.html#splitLargeJSONArray">splitLargeJSONArray</a></li><li><a href="global.html#sqlQueries">sqlQueries</a></li><li><a href="global.html#updateBindingTable">updateBindingTable</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Oct 24 2024 15:08:34 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: data_functions/duplicatesChecker.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: data_functions/duplicatesChecker.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file duplicatesChecker.js
+ * @description Checks the 'annonce' table for potential duplicate entries based on title, body hash, and timestamp.
+ * Updates the 'possible_duplicate' column for records identified as duplicates.
+ */
+
+ // Import the ORM module for database operations
+ const orm = require("../database/databaseConnector");
+
+ /**
+  * Checks for potential duplicate records in the 'annonce' table and updates the 'possible_duplicate' flag.
+  * Duplicates are identified based on matching title, body_hash, and date of the timestamp.
+  *
+  * @async
+  * @function checkForDuplicates
+  * @returns {Promise&lt;void>}
+  * @throws Will throw an error if database operations fail.
+  */
+ async function checkForDuplicates() {
+   let connection; // Variable to hold the database connection
+ 
+   try {
+     // Establish a database connection
+     connection = await orm.connectDatabase();
+ 
+     // SQL query to find potential duplicates from today based on title, body_hash, and date
+     const query1 = `
+             SELECT id, title, body_hash, DATE(timestamp) AS date_group, COUNT(*) as count
+             FROM annonce
+             WHERE timestamp BETWEEN CURDATE() AND CURDATE() + INTERVAL 1 DAY
+             AND body_hash IS NOT NULL
+             GROUP BY title, body_hash, DATE(timestamp)
+             HAVING count > 1;
+         `;
+ 
+     // SQL query to find potential duplicates across all dates based on title, body_hash, and date
+     const query2 = `
+             SELECT id, title, body_hash, DATE(timestamp) AS date_group, COUNT(*) as count
+             FROM annonce
+             WHERE body_hash IS NOT NULL
+             GROUP BY title, body_hash, DATE(timestamp)
+             HAVING count > 1;
+     `;
+ 
+     // Execute the query to find duplicates using query1
+     const results = await new Promise((resolve, reject) => {
+       connection.query(query1, (error, results) => {
+         if (error) {
+           return reject("Error querying for duplicates: " + error);
+         }
+         resolve(results);
+       });
+     });
+ 
+     // Check if any duplicates were found
+     if (results.length > 0) {
+       console.log(`Found ${results.length} potential duplicate(s).`);
+ 
+       // Loop through the results to update the possible_duplicate column
+       for (const row of results) {
+         // SQL query to update the possible_duplicate column for all matching records
+         const updateQuery = `
+           UPDATE annonce
+           SET possible_duplicate = 1
+           WHERE title = ?
+             AND body_hash = ?
+             AND DATE(timestamp) = ?;
+         `;
+ 
+         // Execute the update query
+         const updateResult = await new Promise((resolve, reject) => {
+           connection.query(
+             updateQuery,
+             [row.title, row.body_hash, row.date_group], // Match the title, body_hash, and date
+             (updateError, result) => {
+               if (updateError) {
+                 return reject(
+                   "Error updating possible_duplicate: " + updateError
+                 );
+               }
+               resolve(result);
+             }
+           );
+         });
+ 
+         // Log the outcome of the update operation
+         if (updateResult.affectedRows > 0) {
+           console.log(
+             `Marked ${updateResult.affectedRows} records as possible duplicates for title '${row.title}' on ${row.date_group}.`
+           );
+         } else {
+           console.log(
+             `Record(s) for title '${row.title}' on ${row.date_group} were not updated.`
+           );
+         }
+       }
+     } else {
+       console.log("No duplicates found.");
+     }
+   } catch (error) {
+     console.error(`Error: ${error}`);
+   } finally {
+     if (connection) {
+       // Close the database connection
+       await orm.disconnectDatabase();
+     }
+   }
+ }
+ 
+ // Export the checkForDuplicates function as a module to be used elsewhere
+ module.exports = { checkForDuplicates };
+ </code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Annonce.html">Annonce</a></li><li><a href="CareerjetScraper.html">CareerjetScraper</a></li><li><a href="JobindexArchiveScraper.html">JobindexArchiveScraper</a></li><li><a href="JobindexScraper.html">JobindexScraper</a></li><li><a href="JocscraperTemplate.html">JocscraperTemplate</a></li><li><a href="ORM.html">ORM</a></li><li><a href="Pagepool.html">Pagepool</a></li><li><a href="Region.html">Region</a></li></ul><h3>Global</h3><ul><li><a href="global.html#archieveScraper">archieveScraper</a></li><li><a href="global.html#careerjetScraping">careerjetScraping</a></li><li><a href="global.html#checkForDuplicates">checkForDuplicates</a></li><li><a href="global.html#checkIfExists">checkIfExists</a></li><li><a href="global.html#cleanup">cleanup</a></li><li><a href="global.html#closeBrowser">closeBrowser</a></li><li><a href="global.html#computeBodyHash">computeBodyHash</a></li><li><a href="global.html#countTotalLines">countTotalLines</a></li><li><a href="global.html#disconnectAllDatabases">disconnectAllDatabases</a></li><li><a href="global.html#executeQuery">executeQuery</a></li><li><a href="global.html#exportToCSV">exportToCSV</a></li><li><a href="global.html#handleErrors">handleErrors</a></li><li><a href="global.html#initBrowser">initBrowser</a></li><li><a href="global.html#insertData">insertData</a></li><li><a href="global.html#isDuplicateInFile">isDuplicateInFile</a></li><li><a href="global.html#jobIndexScraping">jobIndexScraping</a></li><li><a href="global.html#logAllTimings">logAllTimings</a></li><li><a href="global.html#logFailure">logFailure</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#main_parallel">main_parallel</a></li><li><a href="global.html#processJsonFile">processJsonFile</a></li><li><a href="global.html#retryOperation">retryOperation</a></li><li><a href="global.html#runDataFunctions">runDataFunctions</a></li><li><a href="global.html#runScraper">runScraper</a></li><li><a href="global.html#splitLargeJSONArray">splitLargeJSONArray</a></li><li><a href="global.html#sqlQueries">sqlQueries</a></li><li><a href="global.html#updateBindingTable">updateBindingTable</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Oct 24 2024 15:08:34 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
