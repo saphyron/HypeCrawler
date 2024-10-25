@@ -2,32 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Home</title>
+    <title>Home - Documentation</title>
 
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
     <!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
 </head>
-
 <body>
 
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Annonce.html">Annonce</a></li><li><a href="CareerjetScraper.html">CareerjetScraper</a><ul class='methods'><li data-type='method'><a href="CareerjetScraper.html#getNumPages">getNumPages</a></li><li data-type='method'><a href="CareerjetScraper.html#getPageExtension">getPageExtension</a></li><li data-type='method'><a href="CareerjetScraper.html#scrapePage">scrapePage</a></li></ul></li><li><a href="JobindexArchiveScraper.html">JobindexArchiveScraper</a><ul class='methods'><li data-type='method'><a href="JobindexArchiveScraper.html#getNumPages">getNumPages</a></li><li data-type='method'><a href="JobindexArchiveScraper.html#getPageExtension">getPageExtension</a></li><li data-type='method'><a href="JobindexArchiveScraper.html#scrapePage">scrapePage</a></li></ul></li><li><a href="JobindexScraper.html">JobindexScraper</a><ul class='methods'><li data-type='method'><a href="JobindexScraper.html#getNumPages">getNumPages</a></li><li data-type='method'><a href="JobindexScraper.html#getPageExtension">getPageExtension</a></li><li data-type='method'><a href="JobindexScraper.html#scrapePage">scrapePage</a></li></ul></li><li><a href="JocscraperTemplate.html">JocscraperTemplate</a><ul class='methods'><li data-type='method'><a href="JocscraperTemplate.html#beginScraping">beginScraping</a></li><li data-type='method'><a href="JocscraperTemplate.html#connectDatabase">connectDatabase</a></li><li data-type='method'><a href="JocscraperTemplate.html#createAnnonceModel">createAnnonceModel</a></li><li data-type='method'><a href="JocscraperTemplate.html#disconnectDatabase">disconnectDatabase</a></li><li data-type='method'><a href="JocscraperTemplate.html#getCurrentPageURLTitles">getCurrentPageURLTitles</a></li><li data-type='method'><a href="JocscraperTemplate.html#getNumPages">getNumPages</a></li><li data-type='method'><a href="JocscraperTemplate.html#getPageExtension">getPageExtension</a></li><li data-type='method'><a href="JocscraperTemplate.html#initializeDatabase">initializeDatabase</a></li><li data-type='method'><a href="JocscraperTemplate.html#insertAnnonce">insertAnnonce</a></li><li data-type='method'><a href="JocscraperTemplate.html#printDatabaseResult">printDatabaseResult</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapePage">scrapePage</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapePageList">scrapePageList</a></li><li data-type='method'><a href="JocscraperTemplate.html#scrapeRegion">scrapeRegion</a></li><li data-type='method'><a href="JocscraperTemplate.html#tryPathVariationOnPage">tryPathVariationOnPage</a></li></ul></li><li><a href="ORM.html">ORM</a><ul class='methods'><li data-type='method'><a href="ORM.html#.CreateAnnonceTable">CreateAnnonceTable</a></li><li data-type='method'><a href="ORM.html#.CreateRegionTable">CreateRegionTable</a></li><li data-type='method'><a href="ORM.html#.FindChecksum">FindChecksum</a></li><li data-type='method'><a href="ORM.html#.FindRegionID">FindRegionID</a></li><li data-type='method'><a href="ORM.html#.InsertAnnonce">InsertAnnonce</a></li><li data-type='method'><a href="ORM.html#.InsertRegion">InsertRegion</a></li><li data-type='method'><a href="ORM.html#.connectDatabase">connectDatabase</a></li><li data-type='method'><a href="ORM.html#.disconnectDatabase">disconnectDatabase</a></li><li data-type='method'><a href="ORM.html#.getAllRegions">getAllRegions</a></li></ul></li><li><a href="Pagepool.html">Pagepool</a><ul class='methods'><li data-type='method'><a href="Pagepool.html#releasePage">releasePage</a></li><li data-type='method'><a href="Pagepool.html#reservePage">reservePage</a></li></ul></li><li><a href="Region.html">Region</a></li></ul><h3>Global</h3><ul><li><a href="global.html#archieveScraper">archieveScraper</a></li><li><a href="global.html#careerjetScraping">careerjetScraping</a></li><li><a href="global.html#checkForDuplicates">checkForDuplicates</a></li><li><a href="global.html#checkIfExists">checkIfExists</a></li><li><a href="global.html#cleanup">cleanup</a></li><li><a href="global.html#closeBrowser">closeBrowser</a></li><li><a href="global.html#computeBodyHash">computeBodyHash</a></li><li><a href="global.html#countTotalLines">countTotalLines</a></li><li><a href="global.html#disconnectAllDatabases">disconnectAllDatabases</a></li><li><a href="global.html#executeQuery">executeQuery</a></li><li><a href="global.html#exportToCSV">exportToCSV</a></li><li><a href="global.html#handleErrors">handleErrors</a></li><li><a href="global.html#initBrowser">initBrowser</a></li><li><a href="global.html#insertData">insertData</a></li><li><a href="global.html#isDuplicateInFile">isDuplicateInFile</a></li><li><a href="global.html#jobIndexScraping">jobIndexScraping</a></li><li><a href="global.html#logAllTimings">logAllTimings</a></li><li><a href="global.html#logFailure">logFailure</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#main_parallel">main_parallel</a></li><li><a href="global.html#processJsonFile">processJsonFile</a></li><li><a href="global.html#retryOperation">retryOperation</a></li><li><a href="global.html#runDataFunctions">runDataFunctions</a></li><li><a href="global.html#runScraper">runScraper</a></li><li><a href="global.html#splitLargeJSONArray">splitLargeJSONArray</a></li><li><a href="global.html#sqlQueries">sqlQueries</a></li><li><a href="global.html#updateBindingTable">updateBindingTable</a></li></ul>
+</nav>
+
 <div id="main">
-
-    <h1 class="page-title">Home</h1>
+    
 
     
 
 
 
     
-
-
-    <h3> </h3>
-
 
 
 
@@ -38,8 +43,6 @@
 
 
     
-
-
 
 
 
@@ -54,7 +57,9 @@
 
 <header>
     
-        <h2>data_functions/bindingTableUpdater.js</h2>
+        <h2>
+        data_functions/bindingTableUpdater.js
+        </h2>
         
     
 </header>
@@ -63,37 +68,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Updates the binding table 'company_annonce_binding' by inserting new associationsbetween 'annonce' and 'companydata' based on CVR numbers. Logs any errors encountered during the process.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -107,8 +83,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Updates the binding table 'company_annonce_binding' by inserting new associationsbetween 'annonce' and 'companydata' based on CVR numbers. Logs any errors encountered during the process.</div>
+        
 
         
     
@@ -120,9 +126,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -147,7 +151,9 @@
 
 <header>
     
-        <h2>data_functions/csvConverter.js</h2>
+        <h2>
+        data_functions/csvConverter.js
+        </h2>
         
     
 </header>
@@ -156,37 +162,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Exports data from the database to a CSV file based on a selected query.It connects to the database, executes a query, processes the results, and writes them to a CSV file.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -200,8 +177,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Exports data from the database to a CSV file based on a selected query.It connects to the database, executes a query, processes the results, and writes them to a CSV file.</div>
+        
 
         
     
@@ -213,9 +220,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -240,7 +245,9 @@
 
 <header>
     
-        <h2>data_functions/duplicatesChecker.js</h2>
+        <h2>
+        data_functions/duplicatesChecker.js
+        </h2>
         
     
 </header>
@@ -249,37 +256,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Checks the 'annonce' table for potential duplicate entries based on title, body hash, and timestamp.Updates the 'possible_duplicate' column for records identified as duplicates.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -293,8 +271,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Checks the 'annonce' table for potential duplicate entries based on title, body hash, and timestamp.Updates the 'possible_duplicate' column for records identified as duplicates.</div>
+        
 
         
     
@@ -306,9 +314,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -333,7 +339,9 @@
 
 <header>
     
-        <h2>database/databaseConnector.js</h2>
+        <h2>
+        database/databaseConnector.js
+        </h2>
         
     
 </header>
@@ -342,37 +350,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Provides ORM functionalities for connecting to and interacting with a MySQL database,including managing database connections, performing CRUD operations, and caching results to optimize performance.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -386,8 +365,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Provides ORM functionalities for connecting to and interacting with a MySQL database,including managing database connections, performing CRUD operations, and caching results to optimize performance.</div>
+        
 
         
     
@@ -399,9 +408,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -426,7 +433,9 @@
 
 <header>
     
-        <h2>main.js</h2>
+        <h2>
+        main.js
+        </h2>
         
     
 </header>
@@ -435,37 +444,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Entry point for executing the parallel data processing module.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -479,8 +459,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Entry point for executing the parallel data processing module.</div>
+        
 
         
     
@@ -492,9 +502,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -519,7 +527,9 @@
 
 <header>
     
-        <h2>main_parallel.js</h2>
+        <h2>
+        main_parallel.js
+        </h2>
         
     
 </header>
@@ -528,37 +538,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Orchestrates the scraping of job listings from multiple sources in parallel,converts data to CSV, checks for duplicates, updates the binding table, and handles database disconnection.It uses Puppeteer for web scraping and manages execution timing for performance tracking.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -572,8 +553,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Orchestrates the scraping of job listings from multiple sources in parallel,converts data to CSV, checks for duplicates, updates the binding table, and handles database disconnection.It uses Puppeteer for web scraping and manages execution timing for performance tracking.</div>
+        
 
         
     
@@ -585,9 +596,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -612,7 +621,9 @@
 
 <header>
     
-        <h2>model/annonce.js</h2>
+        <h2>
+        model/annonce.js
+        </h2>
         
     
 </header>
@@ -621,37 +632,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Defines the Annonce class representing a record in the 'annonce' table of the database.This class models the structure of an announcement (annonce) with properties that map to the database fields.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -665,8 +647,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Defines the Annonce class representing a record in the 'annonce' table of the database.This class models the structure of an announcement (annonce) with properties that map to the database fields.</div>
+        
 
         
     
@@ -678,9 +690,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -705,7 +715,9 @@
 
 <header>
     
-        <h2>model/region.js</h2>
+        <h2>
+        model/region.js
+        </h2>
         
     
 </header>
@@ -714,37 +726,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Defines the Region class representing a record in the 'region' table of the database.This class models the structure of a region with properties that map to the database fields.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -758,8 +741,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Defines the Region class representing a record in the 'region' table of the database.This class models the structure of a region with properties that map to the database fields.</div>
+        
 
         
     
@@ -771,9 +784,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -798,7 +809,9 @@
 
 <header>
     
-        <h2>scrapers/careerjetScraper.js</h2>
+        <h2>
+        scrapers/careerjetScraper.js
+        </h2>
         
     
 </header>
@@ -807,37 +820,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Scraper class for extracting job listings from Careerjet.dk.This class extends the ScraperInterface and implements methods specific to scraping Careerjet.It handles pagination, error retries, and data extraction tailored to the Careerjet website structure.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -851,8 +835,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Scraper class for extracting job listings from Careerjet.dk.This class extends the ScraperInterface and implements methods specific to scraping Careerjet.It handles pagination, error retries, and data extraction tailored to the Careerjet website structure.</div>
+        
 
         
     
@@ -864,9 +878,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -891,7 +903,9 @@
 
 <header>
     
-        <h2>scrapers/jobindexScraper.js</h2>
+        <h2>
+        scrapers/jobindexScraper.js
+        </h2>
         
     
 </header>
@@ -900,37 +914,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Scraper class for extracting job listings from Jobindex.dk.This class extends the ScraperInterface and implements methods specific to scraping Jobindex.It handles pagination, error retries, data extraction, and CVR number retrieval from company pages.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -944,8 +929,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Scraper class for extracting job listings from Jobindex.dk.This class extends the ScraperInterface and implements methods specific to scraping Jobindex.It handles pagination, error retries, data extraction, and CVR number retrieval from company pages.</div>
+        
 
         
     
@@ -957,9 +972,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -984,7 +997,9 @@
 
 <header>
     
-        <h2>scrapers/scraperInterface.js</h2>
+        <h2>
+        scrapers/scraperInterface.js
+        </h2>
         
     
 </header>
@@ -993,37 +1008,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Provides a base class `JocscraperTemplate` that serves as an interface for all scrapers.It defines common methods and properties used by scraper subclasses to scrape different websites.Includes methods for database interactions, page scraping, error handling, and resource management.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -1037,8 +1023,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Provides a base class `JocscraperTemplate` that serves as an interface for all scrapers.It defines common methods and properties used by scraper subclasses to scrape different websites.Includes methods for database interactions, page scraping, error handling, and resource management.</div>
+        
 
         
     
@@ -1050,9 +1066,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -1077,7 +1091,9 @@
 
 <header>
     
-        <h2>utils/csvToJsonConverter.js</h2>
+        <h2>
+        utils/csvToJsonConverter.js
+        </h2>
         
     
 </header>
@@ -1086,37 +1102,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Converts multiple CSV files in a specified folder into a combined JSON file.It reads all CSV files in the given directory, processes them to remove duplicates based on the 'ID' field,and writes the standardized data to a single JSON file for easier database upload or other uses.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -1130,8 +1117,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Converts multiple CSV files in a specified folder into a combined JSON file.It reads all CSV files in the given directory, processes them to remove duplicates based on the 'ID' field,and writes the standardized data to a single JSON file for easier database upload or other uses.</div>
+        
 
         
     
@@ -1143,9 +1160,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -1170,7 +1185,9 @@
 
 <header>
     
-        <h2>utils/databaseUploader.js</h2>
+        <h2>
+        utils/databaseUploader.js
+        </h2>
         
     
 </header>
@@ -1179,37 +1196,8 @@
     <div class="container-overview">
     
         
-            <div class="description">This script reads data from a JSON file and uploads it to a MySQL database.It is used for restoration purposes in case of database corruption, utilizing daily scrapes as backups if incremental backups fail.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -1223,8 +1211,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">This script reads data from a JSON file and uploads it to a MySQL database.It is used for restoration purposes in case of database corruption, utilizing daily scrapes as backups if incremental backups fail.</div>
+        
 
         
     
@@ -1236,9 +1254,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -1263,7 +1279,9 @@
 
 <header>
     
-        <h2>utils/fileSizeFixer.js</h2>
+        <h2>
+        utils/fileSizeFixer.js
+        </h2>
         
     
 </header>
@@ -1272,37 +1290,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Splits a large JSON array file into smaller chunks to manage memory usage during data uploads.This utility script reads a large JSON array from a file and splits it into multiple smaller JSON files,each containing a specified maximum number of objects.It is useful when dealing with large datasets that need to be processed in smaller batches.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -1316,8 +1305,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Splits a large JSON array file into smaller chunks to manage memory usage during data uploads.This utility script reads a large JSON array from a file and splits it into multiple smaller JSON files,each containing a specified maximum number of objects.It is useful when dealing with large datasets that need to be processed in smaller batches.</div>
+        
 
         
     
@@ -1329,9 +1348,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -1356,7 +1373,9 @@
 
 <header>
     
-        <h2>utils/jobindexArchiveScraper.js</h2>
+        <h2>
+        utils/jobindexArchiveScraper.js
+        </h2>
         
     
 </header>
@@ -1365,37 +1384,8 @@
     <div class="container-overview">
     
         
-            <div class="description">Scraper class for extracting archived job listings from Jobindex.dk.This class extends the ScraperInterface and implements methods specific to scraping the archive section of Jobindex.It allows custom search criteria with custom region names/IDs and handles the differences in the archive's structure compared to the standard view.</div>
-        
-
-        
-
 
 <dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
 
     
     <dt class="tag-source">Source:</dt>
@@ -1409,8 +1399,38 @@
     
 
     
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 </dl>
 
+
+
+
+        
+            <div class="description">Scraper class for extracting archived job listings from Jobindex.dk.This class extends the ScraperInterface and implements methods specific to scraping the archive section of Jobindex.It allows custom search criteria with custom region names/IDs and handles the differences in the archive's structure compared to the standard view.</div>
+        
 
         
     
@@ -1422,9 +1442,7 @@
 
     
 
-    
-
-    
+     
 
     
 
@@ -1444,17 +1462,13 @@
 
 </div>
 
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Annonce.html">Annonce</a></li><li><a href="CareerjetScraper.html">CareerjetScraper</a></li><li><a href="JobindexArchiveScraper.html">JobindexArchiveScraper</a></li><li><a href="JobindexScraper.html">JobindexScraper</a></li><li><a href="JocscraperTemplate.html">JocscraperTemplate</a></li><li><a href="ORM.html">ORM</a></li><li><a href="Pagepool.html">Pagepool</a></li><li><a href="Region.html">Region</a></li></ul><h3>Global</h3><ul><li><a href="global.html#archieveScraper">archieveScraper</a></li><li><a href="global.html#careerjetScraping">careerjetScraping</a></li><li><a href="global.html#checkForDuplicates">checkForDuplicates</a></li><li><a href="global.html#checkIfExists">checkIfExists</a></li><li><a href="global.html#cleanup">cleanup</a></li><li><a href="global.html#closeBrowser">closeBrowser</a></li><li><a href="global.html#computeBodyHash">computeBodyHash</a></li><li><a href="global.html#countTotalLines">countTotalLines</a></li><li><a href="global.html#disconnectAllDatabases">disconnectAllDatabases</a></li><li><a href="global.html#executeQuery">executeQuery</a></li><li><a href="global.html#exportToCSV">exportToCSV</a></li><li><a href="global.html#handleErrors">handleErrors</a></li><li><a href="global.html#initBrowser">initBrowser</a></li><li><a href="global.html#insertData">insertData</a></li><li><a href="global.html#isDuplicateInFile">isDuplicateInFile</a></li><li><a href="global.html#jobIndexScraping">jobIndexScraping</a></li><li><a href="global.html#logAllTimings">logAllTimings</a></li><li><a href="global.html#logFailure">logFailure</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#main_parallel">main_parallel</a></li><li><a href="global.html#processJsonFile">processJsonFile</a></li><li><a href="global.html#retryOperation">retryOperation</a></li><li><a href="global.html#runDataFunctions">runDataFunctions</a></li><li><a href="global.html#runScraper">runScraper</a></li><li><a href="global.html#splitLargeJSONArray">splitLargeJSONArray</a></li><li><a href="global.html#sqlQueries">sqlQueries</a></li><li><a href="global.html#updateBindingTable">updateBindingTable</a></li></ul>
-</nav>
-
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Oct 24 2024 15:08:34 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> on Fri Oct 25 2024 11:07:14 GMT+0200 (Centraleuropæisk sommertid) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
 </body>
 </html>
