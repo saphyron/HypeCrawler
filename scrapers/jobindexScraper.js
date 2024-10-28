@@ -302,7 +302,7 @@ class JobindexScraper extends ScraperInterface {
     }
 
     // End the timer and log how long the scraping of this page took
-    console.timeEnd("jobindex runTime page number " + pageNum + " annonce " + index);
+    console.timeEnd("runTime page number " + pageNum + " annonce " + index);
   }
 }
 
